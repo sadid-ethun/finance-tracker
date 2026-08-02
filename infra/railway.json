@@ -1,0 +1,45 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "_comment": "Reference topology for the Railway project. Each service is created in the Railway dashboard from this repo; the values below document the intended build and deploy settings (PLAN.md section 12).",
+  "services": {
+    "api": {
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "apps/api/Dockerfile"
+      },
+      "deploy": {
+        "preDeployCommand": "alembic upgrade head",
+        "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+        "healthcheckPath": "/health",
+        "healthcheckTimeout": 30,
+        "restartPolicyType": "ON_FAILURE",
+        "numReplicas": 1
+      }
+    },
+    "worker": {
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "apps/api/Dockerfile"
+      },
+      "deploy": {
+        "_comment": "Same image as api, different entrypoint. Enabled in Phase 4.",
+        "startCommand": "arq app.workers.main.WorkerSettings",
+        "restartPolicyType": "ON_FAILURE",
+        "numReplicas": 1
+      }
+    },
+    "web": {
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "apps/web/Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "node apps/web/server.js",
+        "healthcheckPath": "/api/health",
+        "healthcheckTimeout": 30,
+        "restartPolicyType": "ON_FAILURE",
+        "numReplicas": 1
+      }
+    }
+  }
+}

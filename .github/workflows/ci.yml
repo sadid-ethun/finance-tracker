@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Path filtering keeps a web-only change from running the Python suite.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/ci.yml'
+            api:
+              - 'apps/api/**'
+              - '.github/workflows/ci.yml'
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter web lint
+
+      - name: Typecheck
+        run: pnpm --filter web typecheck
+
+      - name: Test
+        run: pnpm --filter web test
+
+      - name: Build
+        run: pnpm --filter web build
+
+  api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: finance
+          POSTGRES_PASSWORD: finance
+          POSTGRES_DB: finance_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finance"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+asyncpg://finance:finance@localhost:5432/finance_test
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Typecheck
+        run: uv run mypy app tests
+
+      - name: Migrate
+        run: uv run alembic upgrade head
+
+      - name: Test
+        run: uv run pytest
+
+  # Regenerates the OpenAPI schema and the TypeScript client from it. Any drift
+  # between the backend contract and what the frontend compiles against fails
+  # here rather than in production (PLAN.md section 19).
+  contract:
+    needs: changes
+    if: needs.changes.outputs.api == 'true' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: uv sync --frozen
+
+      - name: Export OpenAPI schema
+        working-directory: apps/api
+        run: uv run python scripts/export_openapi.py ../../packages/shared/openapi.json
+
+      - name: Regenerate TypeScript types
+        run: pnpm --filter web gen:api-types
+
+      - name: Fail if the committed contract is stale
+        run: |
+          # --porcelain rather than `git diff` so a brand-new untracked
+          # generated file is caught too, not just a modified one.
+          if [ -n "$(git status --porcelain -- packages/shared/)" ]; then
+            echo "::error::The API contract changed but packages/shared/ was not regenerated."
+            git status --short -- packages/shared/
+            git diff -- packages/shared/ | head -100
+            echo "Run: cd apps/api && uv run python scripts/export_openapi.py ../../packages/shared/openapi.json"
+            echo "Then: pnpm --filter web gen:api-types"
+            exit 1
+          fi
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

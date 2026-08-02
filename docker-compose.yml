@@ -1,0 +1,104 @@
+name: finance-tracker
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: finance
+      POSTGRES_PASSWORD: finance
+      POSTGRES_DB: finance
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance -d finance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+      target: runtime
+    environment:
+      ENVIRONMENT: local
+      DEBUG: "true"
+      DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
+      REDIS_URL: redis://redis:6379/0
+      WEB_URL: http://web:3000
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Migrations run on start locally; in production they are a Railway
+    # pre-deploy step so replicas cannot race (PLAN.md section 12).
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./apps/api/alembic:/app/alembic
+
+  worker:
+    build:
+      context: ./apps/api
+      target: runtime
+    environment:
+      ENVIRONMENT: local
+      DEBUG: "true"
+      DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
+      REDIS_URL: redis://redis:6379/0
+      WEB_URL: http://web:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # The arq worker arrives in Phase 4; until then this service stays idle so
+    # the topology is real but nothing pretends to run.
+    command: ["sh", "-c", "echo 'worker: idle until Phase 4' && sleep infinity"]
+    volumes:
+      - ./apps/api/app:/app/app
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:8000
+      DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      # Local development only — production reads this from Railway secrets.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-dev-secret-change-me-32chars}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:

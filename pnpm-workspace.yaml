@@ -1,0 +1,11 @@
+packages:
+  - "apps/web"
+  - "packages/*"
+
+# sharp powers Next's production image optimization; unrs-resolver backs the
+# ESLint import resolver. Both need their install scripts to fetch prebuilt
+# binaries, so they are explicitly trusted here.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
