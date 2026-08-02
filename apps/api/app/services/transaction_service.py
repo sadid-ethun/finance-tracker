@@ -6,9 +6,10 @@ covers listing, filtering, and hand-entered transactions.
 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import Select, and_, or_, select
+from sqlalchemy import ColumnElement, CursorResult, Select, and_, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NotFoundError
@@ -21,6 +22,7 @@ from app.services.account_service import get_account
 
 @dataclass(slots=True)
 class TransactionFilters:
+    query: str | None = None
     account_ids: list[UUID] | None = None
     category_ids: list[UUID] | None = None
     date_from: date | None = None
@@ -29,6 +31,7 @@ class TransactionFilters:
     max_amount: int | None = None
     uncategorized: bool = False
     include_hidden: bool = False
+    include_transfers: bool = True
 
 
 @dataclass(slots=True)
@@ -36,6 +39,26 @@ class Page:
     items: list[Transaction]
     next_cursor: str | None
     has_more: bool
+
+
+def _search_predicate(query: str) -> ColumnElement[bool]:
+    """Full-text search over name, merchant, and notes.
+
+    websearch_to_tsquery accepts what a person actually types ("coffee -tea",
+    quoted phrases) and, unlike to_tsquery, never raises on punctuation — so a
+    stray apostrophe cannot 500 the transaction list.
+    """
+    # Must mirror ix_transactions_search exactly (including ::regconfig) or the
+    # GIN index is bypassed and this becomes a sequential scan.
+    document = func.to_tsvector(
+        text("'english'::regconfig"),
+        func.coalesce(Transaction.name, "")
+        + " "
+        + func.coalesce(Transaction.merchant_name, "")
+        + " "
+        + func.coalesce(Transaction.notes, ""),
+    )
+    return document.op("@@")(func.websearch_to_tsquery(text("'english'::regconfig"), query))
 
 
 def _base_query(user_id: str, filters: TransactionFilters) -> Select[tuple[Transaction]]:
@@ -48,6 +71,10 @@ def _base_query(user_id: str, filters: TransactionFilters) -> Select[tuple[Trans
 
     if not filters.include_hidden:
         stmt = stmt.where(Transaction.is_hidden.is_(False))
+    if not filters.include_transfers:
+        stmt = stmt.where(Transaction.is_transfer.is_(False))
+    if filters.query:
+        stmt = stmt.where(_search_predicate(filters.query))
     if filters.account_ids:
         stmt = stmt.where(Transaction.account_id.in_(filters.account_ids))
     if filters.category_ids:
@@ -182,6 +209,34 @@ async def delete_transaction(db: AsyncSession, user_id: str, transaction_id: UUI
         _apply_to_balance(account, -transaction.amount)
 
     await db.commit()
+
+
+async def bulk_categorize(
+    db: AsyncSession,
+    user_id: str,
+    transaction_ids: list[UUID],
+    category_id: UUID,
+) -> int:
+    """Recategorize many transactions at once. Returns the number changed.
+
+    Scoped by user_id in the WHERE clause, so ids belonging to someone else are
+    silently skipped rather than updated.
+    """
+    if not transaction_ids:
+        return 0
+
+    result = await db.execute(
+        update(Transaction)
+        .where(
+            Transaction.id.in_(transaction_ids),
+            Transaction.user_id == user_id,
+            Transaction.deleted_at.is_(None),
+        )
+        .values(category_id=category_id, category_source="user")
+    )
+    await db.commit()
+    # UPDATE returns a CursorResult, which is what carries rowcount.
+    return int(cast("CursorResult[Any]", result).rowcount or 0)
 
 
 def _apply_to_balance(account: Account, amount: int) -> None:
