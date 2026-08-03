@@ -87,3 +87,29 @@ class AccountBalanceSnapshot(Base):
     __table_args__ = (
         UniqueConstraint("account_id", "date", name="uq_balance_snapshot_account_date"),
     )
+
+
+class NetWorthSnapshot(Base):
+    """One row per user per day, written by the nightly job.
+
+    Charts read snapshots rather than recomputing from transactions: net worth
+    on an arbitrary past date is expensive to derive, and the value is a fact
+    about that day that never changes afterwards.
+    """
+
+    __tablename__ = "net_worth_snapshots"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid7)
+    user_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
+    date: Mapped[date_type] = mapped_column(Date, nullable=False)
+
+    assets: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    liabilities: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    net_worth: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    cash: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    investments: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    credit: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+
+    __table_args__ = (UniqueConstraint("user_id", "date", name="uq_net_worth_snapshot_user_date"),)

@@ -137,6 +137,117 @@ export interface paths {
         patch: operations["update_category_api_v1_categories__category_id__patch"];
         trace?: never;
     };
+    "/api/v1/dashboard/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cash Flow */
+        get: operations["cash_flow_api_v1_dashboard_cash_flow_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/net-worth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Net Worth */
+        get: operations["net_worth_api_v1_dashboard_net_worth_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/recent-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent Transactions */
+        get: operations["recent_transactions_api_v1_dashboard_recent_transactions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take Snapshot
+         * @description Write today's snapshot now.
+         *
+         *     Normally the nightly job does this; exposed so a freshly connected account
+         *     produces a chart point immediately instead of after midnight.
+         */
+        post: operations["take_snapshot_api_v1_dashboard_snapshot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/spending-by-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Spending By Category */
+        get: operations["spending_by_category_api_v1_dashboard_spending_by_category_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboard/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description Every headline number in one request, to keep mobile fast.
+         */
+        get: operations["summary_api_v1_dashboard_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -743,6 +854,20 @@ export interface components {
             /** Updated */
             updated: number;
         };
+        /** CashFlowPoint */
+        CashFlowPoint: {
+            /** Income */
+            income: number;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Net */
+            net: number;
+            /** Spending */
+            spending: number;
+        };
         /** CategoryCreate */
         CategoryCreate: {
             /** Color */
@@ -788,6 +913,17 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        /** CategorySpend */
+        CategorySpend: {
+            /** Amount */
+            amount: number;
+            /** Category Id */
+            category_id: string | null;
+            /** Color */
+            color: string | null;
+            /** Name */
+            name: string;
+        };
         /** CategoryUpdate */
         CategoryUpdate: {
             /** Color */
@@ -800,6 +936,43 @@ export interface components {
             is_archived?: boolean | null;
             /** Name */
             name?: string | null;
+        };
+        /**
+         * DashboardSummary
+         * @description All values in minor units. Liabilities and spending are positive.
+         */
+        DashboardSummary: {
+            /** Assets */
+            assets: number;
+            /** Cash */
+            cash: number;
+            /** Credit */
+            credit: number;
+            /** Currency */
+            currency: string;
+            /** Investments */
+            investments: number;
+            /** Liabilities */
+            liabilities: number;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Monthly Income */
+            monthly_income: number;
+            /** Monthly Net */
+            monthly_net: number;
+            /** Monthly Spending */
+            monthly_spending: number;
+            /** Net Worth */
+            net_worth: number;
+            /** Net Worth Change */
+            net_worth_change: number | null;
+            /** Previous Month Income */
+            previous_month_income: number;
+            /** Previous Month Spending */
+            previous_month_spending: number;
         };
         /** ExchangeRequest */
         ExchangeRequest: {
@@ -865,6 +1038,20 @@ export interface components {
             image: string | null;
             /** Name */
             name: string;
+        };
+        /** NetWorthPoint */
+        NetWorthPoint: {
+            /** Assets */
+            assets: number;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Liabilities */
+            liabilities: number;
+            /** Net Worth */
+            net_worth: number;
         };
         /** Page[TransactionResponse] */
         Page_TransactionResponse_: {
@@ -1529,6 +1716,183 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CategoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cash_flow_api_v1_dashboard_cash_flow_get: {
+        parameters: {
+            query?: {
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowPoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    net_worth_api_v1_dashboard_net_worth_get: {
+        parameters: {
+            query?: {
+                range?: "1m" | "3m" | "6m" | "1y" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetWorthPoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recent_transactions_api_v1_dashboard_recent_transactions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    take_snapshot_api_v1_dashboard_snapshot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+        };
+    };
+    spending_by_category_api_v1_dashboard_spending_by_category_get: {
+        parameters: {
+            query?: {
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySpend"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_dashboard_summary_get: {
+        parameters: {
+            query?: {
+                month?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
                 };
             };
             /** @description Validation Error */

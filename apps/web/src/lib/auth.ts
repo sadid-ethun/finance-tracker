@@ -29,10 +29,20 @@ function createAuth() {
     max: 5,
   });
 
+  // localhost and 127.0.0.1 are the same machine but different origins, and
+  // tooling disagrees about which to use. Trust both, but only when the app is
+  // actually configured for local development — in production BETTER_AUTH_URL
+  // is a real domain and this list stays empty.
+  const isLocal =
+    JWT_ISSUER.includes("localhost") || JWT_ISSUER.includes("127.0.0.1");
+
   return betterAuth({
     database: pool,
     baseURL: JWT_ISSUER,
     secret: requireEnv("BETTER_AUTH_SECRET"),
+    trustedOrigins: isLocal
+      ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+      : [],
 
     emailAndPassword: {
       enabled: true,

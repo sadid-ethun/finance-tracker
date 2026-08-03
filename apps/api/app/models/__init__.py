@@ -5,7 +5,11 @@ Alembic autogenerates a migration.
 """
 
 from app.db.base import Base
-from app.models.account import Account, AccountBalanceSnapshot
+from app.models.account import (
+    Account,
+    AccountBalanceSnapshot,
+    NetWorthSnapshot,
+)
 from app.models.category import Category, Merchant
 from app.models.plaid_item import PlaidItem, SyncRun
 from app.models.rule import Rule
@@ -18,6 +22,7 @@ __all__ = [
     "Base",
     "Category",
     "Merchant",
+    "NetWorthSnapshot",
     "PlaidItem",
     "Rule",
     "SyncRun",

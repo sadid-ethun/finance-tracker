@@ -369,3 +369,96 @@ export function useRemovePlaidItem() {
     onSuccess: () => void client.invalidateQueries(),
   });
 }
+
+// -------------------------------------------------------- Phase 5: dashboard
+
+export type DashboardSummary = {
+  assets: number;
+  liabilities: number;
+  net_worth: number;
+  cash: number;
+  investments: number;
+  credit: number;
+  month: string;
+  monthly_income: number;
+  monthly_spending: number;
+  monthly_net: number;
+  previous_month_income: number;
+  previous_month_spending: number;
+  net_worth_change: number | null;
+  currency: string;
+};
+
+export type NetWorthPoint = {
+  date: string;
+  net_worth: number;
+  assets: number;
+  liabilities: number;
+};
+
+export type CategorySpend = {
+  category_id: string | null;
+  name: string;
+  color: string | null;
+  amount: number;
+};
+
+export type CashFlowPoint = {
+  month: string;
+  income: number;
+  spending: number;
+  net: number;
+};
+
+export type NetWorthRange = "1m" | "3m" | "6m" | "1y" | "all";
+
+export function useDashboardSummary() {
+  return useQuery({
+    queryKey: ["dashboard", "summary"],
+    queryFn: () => apiFetch<DashboardSummary>("/dashboard/summary"),
+    staleTime: 60_000,
+  });
+}
+
+export function useNetWorthSeries(range: NetWorthRange) {
+  return useQuery({
+    queryKey: ["dashboard", "net-worth", range],
+    queryFn: () => apiFetch<NetWorthPoint[]>(`/dashboard/net-worth?range=${range}`),
+    // Daily granularity — refetching more often cannot change the answer.
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useSpendingByCategory() {
+  return useQuery({
+    queryKey: ["dashboard", "spending-by-category"],
+    queryFn: () => apiFetch<CategorySpend[]>("/dashboard/spending-by-category"),
+    staleTime: 60_000,
+  });
+}
+
+export function useCashFlow(months = 6) {
+  return useQuery({
+    queryKey: ["dashboard", "cash-flow", months],
+    queryFn: () => apiFetch<CashFlowPoint[]>(`/dashboard/cash-flow?months=${months}`),
+    staleTime: 60_000,
+  });
+}
+
+export function useRecentTransactions(limit = 5) {
+  return useQuery({
+    queryKey: ["dashboard", "recent", limit],
+    queryFn: () =>
+      apiFetch<Transaction[]>(`/dashboard/recent-transactions?limit=${limit}`),
+  });
+}
+
+/** Writes today's snapshot and backfills, so a new account charts immediately. */
+export function useTakeSnapshot() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ backfilled: number }>("/dashboard/snapshot", { method: "POST" }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
+}

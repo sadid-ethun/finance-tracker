@@ -429,6 +429,35 @@
         "title": "BulkCategorizeResponse",
         "type": "object"
       },
+      "CashFlowPoint": {
+        "properties": {
+          "income": {
+            "title": "Income",
+            "type": "integer"
+          },
+          "month": {
+            "format": "date",
+            "title": "Month",
+            "type": "string"
+          },
+          "net": {
+            "title": "Net",
+            "type": "integer"
+          },
+          "spending": {
+            "title": "Spending",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "income",
+          "spending",
+          "net"
+        ],
+        "title": "CashFlowPoint",
+        "type": "object"
+      },
       "CategoryCreate": {
         "properties": {
           "color": {
@@ -579,6 +608,48 @@
         "title": "CategoryResponse",
         "type": "object"
       },
+      "CategorySpend": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "color",
+          "amount"
+        ],
+        "title": "CategorySpend",
+        "type": "object"
+      },
       "CategoryUpdate": {
         "properties": {
           "color": {
@@ -642,6 +713,93 @@
           }
         },
         "title": "CategoryUpdate",
+        "type": "object"
+      },
+      "DashboardSummary": {
+        "description": "All values in minor units. Liabilities and spending are positive.",
+        "properties": {
+          "assets": {
+            "title": "Assets",
+            "type": "integer"
+          },
+          "cash": {
+            "title": "Cash",
+            "type": "integer"
+          },
+          "credit": {
+            "title": "Credit",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "investments": {
+            "title": "Investments",
+            "type": "integer"
+          },
+          "liabilities": {
+            "title": "Liabilities",
+            "type": "integer"
+          },
+          "month": {
+            "format": "date",
+            "title": "Month",
+            "type": "string"
+          },
+          "monthly_income": {
+            "title": "Monthly Income",
+            "type": "integer"
+          },
+          "monthly_net": {
+            "title": "Monthly Net",
+            "type": "integer"
+          },
+          "monthly_spending": {
+            "title": "Monthly Spending",
+            "type": "integer"
+          },
+          "net_worth": {
+            "title": "Net Worth",
+            "type": "integer"
+          },
+          "net_worth_change": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Worth Change"
+          },
+          "previous_month_income": {
+            "title": "Previous Month Income",
+            "type": "integer"
+          },
+          "previous_month_spending": {
+            "title": "Previous Month Spending",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "assets",
+          "liabilities",
+          "net_worth",
+          "cash",
+          "investments",
+          "credit",
+          "month",
+          "monthly_income",
+          "monthly_spending",
+          "monthly_net",
+          "previous_month_income",
+          "previous_month_spending",
+          "net_worth_change",
+          "currency"
+        ],
+        "title": "DashboardSummary",
         "type": "object"
       },
       "ExchangeRequest": {
@@ -823,6 +981,35 @@
           "created_at"
         ],
         "title": "MeResponse",
+        "type": "object"
+      },
+      "NetWorthPoint": {
+        "properties": {
+          "assets": {
+            "title": "Assets",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "liabilities": {
+            "title": "Liabilities",
+            "type": "integer"
+          },
+          "net_worth": {
+            "title": "Net Worth",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "net_worth",
+          "assets",
+          "liabilities"
+        ],
+        "title": "NetWorthPoint",
         "type": "object"
       },
       "Page_TransactionResponse_": {
@@ -2299,6 +2486,319 @@
         "summary": "Update Category",
         "tags": [
           "categories"
+        ]
+      }
+    },
+    "/api/v1/dashboard/cash-flow": {
+      "get": {
+        "operationId": "cash_flow_api_v1_dashboard_cash_flow_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 6,
+              "maximum": 24,
+              "minimum": 2,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CashFlowPoint"
+                  },
+                  "title": "Response Cash Flow Api V1 Dashboard Cash Flow Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cash Flow",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/v1/dashboard/net-worth": {
+      "get": {
+        "operationId": "net_worth_api_v1_dashboard_net_worth_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "range",
+            "required": false,
+            "schema": {
+              "default": "6m",
+              "enum": [
+                "1m",
+                "3m",
+                "6m",
+                "1y",
+                "all"
+              ],
+              "title": "Range",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NetWorthPoint"
+                  },
+                  "title": "Response Net Worth Api V1 Dashboard Net Worth Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Net Worth",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/v1/dashboard/recent-transactions": {
+      "get": {
+        "operationId": "recent_transactions_api_v1_dashboard_recent_transactions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionResponse"
+                  },
+                  "title": "Response Recent Transactions Api V1 Dashboard Recent Transactions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Recent Transactions",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/v1/dashboard/snapshot": {
+      "post": {
+        "description": "Write today's snapshot now.\n\nNormally the nightly job does this; exposed so a freshly connected account\nproduces a chart point immediately instead of after midnight.",
+        "operationId": "take_snapshot_api_v1_dashboard_snapshot_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Take Snapshot Api V1 Dashboard Snapshot Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Take Snapshot",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/v1/dashboard/spending-by-category": {
+      "get": {
+        "operationId": "spending_by_category_api_v1_dashboard_spending_by_category_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategorySpend"
+                  },
+                  "title": "Response Spending By Category Api V1 Dashboard Spending By Category Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Spending By Category",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "description": "Every headline number in one request, to keep mobile fast.",
+        "operationId": "summary_api_v1_dashboard_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Summary",
+        "tags": [
+          "dashboard"
         ]
       }
     },
