@@ -9,8 +9,6 @@ Full technical design: [PLAN.md](PLAN.md).
 **Status: Phase 5 (Dashboard) complete.** Net worth, spending by category, cash flow,
 and recent activity, on top of Plaid sync, search, splits, transfers, and rules.
 Budgeting lands in Phase 6.
-automatically, on top of search, splits, transfers, rules, and manual entry.
-The dashboard lands in Phase 5.
 
 ## Plaid setup
 
