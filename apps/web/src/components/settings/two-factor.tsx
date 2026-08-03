@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 
 import { twoFactor, useSession } from "@/lib/auth-client";
@@ -26,9 +27,36 @@ export function TwoFactorSetup() {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [uri, setUri] = useState<string | null>(null);
+  // Kept with the URI it was generated from, so a stale QR from a previous
+  // enrolment attempt can never be shown for a new secret.
+  const [qr, setQr] = useState<{ forUri: string; dataUrl: string } | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
+
+  // Duo's manual path wants the base32 secret alone, not the otpauth:// URI.
+  const manualKey = uri
+    ? new URLSearchParams(uri.split("?")[1] ?? "").get("secret")
+    : null;
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!uri) return;
+    let cancelled = false;
+    // Rendered client-side so the secret never travels to a QR service.
+    QRCode.toDataURL(uri, { width: 220, margin: 1 })
+      .then((dataUrl) => {
+        if (!cancelled) setQr({ forUri: uri, dataUrl });
+      })
+      .catch(() => {
+        // Fall through to the manual key; no state reset needed because the
+        // render guard below only trusts a QR matching the current URI.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [uri]);
+
+  const qrSrc = qr && qr.forUri === uri ? qr.dataUrl : null;
 
   async function startEnrolment(event: React.FormEvent) {
     event.preventDefault();
@@ -164,13 +192,32 @@ export function TwoFactorSetup() {
       {step === "verify" && uri ? (
         <div className="mt-4 space-y-4">
           <div>
-            <p className="text-[13px] font-medium">1. Add this to your authenticator</p>
+            <p className="text-[13px] font-medium">1. Scan this with your authenticator</p>
             <p className="mt-1 text-[12px] text-muted-foreground">
-              Paste this setup key into 1Password, Authy, or Google Authenticator.
+              Works with Duo Mobile, 1Password, Authy, and Google Authenticator.
+              In Duo, choose Add → Third-party account → Use QR code.
             </p>
-            <code className="mt-2 block overflow-x-auto rounded-[12px] bg-secondary p-3 text-[11px] break-all">
-              {uri}
-            </code>
+
+            {qrSrc ? (
+              // White plate: a QR inverted by dark mode will not scan.
+              <div className="mt-3 flex justify-center rounded-[12px] bg-white p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={qrSrc} alt="Two-factor setup QR code" width={220} height={220} />
+              </div>
+            ) : null}
+
+            <details className="mt-3">
+              <summary className="cursor-pointer text-[12px] text-muted-foreground">
+                Can&apos;t scan? Enter the key by hand
+              </summary>
+              <p className="mt-2 text-[12px] text-muted-foreground">
+                Type this key into your authenticator. It is the secret on its
+                own — not the whole link, which Duo will reject.
+              </p>
+              <code className="tabular mt-2 block overflow-x-auto rounded-[12px] bg-secondary p-3 text-[12px] break-all">
+                {manualKey ?? uri}
+              </code>
+            </details>
           </div>
 
           {backupCodes.length > 0 ? (
