@@ -25,7 +25,7 @@ target_metadata = Base.metadata
 # as SQLAlchemy models. Without this filter, autogenerate sees them as "removed"
 # and emits DROP TABLE for the entire auth schema. They are still created and
 # altered by hand-written migrations — this only hides them from autogenerate.
-UNMANAGED_TABLES = frozenset({"session", "auth_account", "verification", "jwks"})
+UNMANAGED_TABLES = frozenset({"session", "auth_account", "verification", "jwks", "twoFactor"})
 
 # Expression indexes that SQLAlchemy cannot express as model metadata. Without
 # this, autogenerate reports them as "removed" and emits DROP INDEX — which for

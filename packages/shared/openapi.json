@@ -315,6 +315,47 @@
         "title": "AllocationSlice",
         "type": "object"
       },
+      "AuditEntry": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "entity_type",
+          "entity_id",
+          "created_at"
+        ],
+        "title": "AuditEntry",
+        "type": "object"
+      },
       "BalanceSnapshotResponse": {
         "properties": {
           "balance_available": {
@@ -388,6 +429,50 @@
           "credit"
         ],
         "title": "BalanceSummary",
+        "type": "object"
+      },
+      "Body_detect_import_columns_api_v1_data_import_detect_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_detect_import_columns_api_v1_data_import_detect_post",
+        "type": "object"
+      },
+      "Body_import_data_api_v1_data_import_post": {
+        "properties": {
+          "account_id": {
+            "format": "uuid",
+            "title": "Account Id",
+            "type": "string"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "invert_amounts": {
+            "default": false,
+            "title": "Invert Amounts",
+            "type": "boolean"
+          },
+          "mapping": {
+            "title": "Mapping",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "account_id",
+          "mapping"
+        ],
+        "title": "Body_import_data_api_v1_data_import_post",
         "type": "object"
       },
       "BudgetLineProgress": {
@@ -1313,6 +1398,37 @@
         "title": "HoldingResponse",
         "type": "object"
       },
+      "ImportResult": {
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "imported": {
+            "title": "Imported",
+            "type": "integer"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "imported",
+          "skipped",
+          "errors",
+          "account_id"
+        ],
+        "title": "ImportResult",
+        "type": "object"
+      },
       "InvestmentSummary": {
         "properties": {
           "currency": {
@@ -1776,6 +1892,84 @@
           "created_at"
         ],
         "title": "PlaidItemResponse",
+        "type": "object"
+      },
+      "PreferencesResponse": {
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "theme": {
+            "title": "Theme",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "week_starts_on": {
+            "title": "Week Starts On",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "theme",
+          "week_starts_on",
+          "timezone"
+        ],
+        "title": "PreferencesResponse",
+        "type": "object"
+      },
+      "PreferencesUpdate": {
+        "properties": {
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "week_starts_on": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Week Starts On"
+          }
+        },
+        "title": "PreferencesUpdate",
         "type": "object"
       },
       "ReadyResponse": {
@@ -2997,6 +3191,60 @@
         ]
       }
     },
+    "/api/v1/audit-log": {
+      "get": {
+        "operationId": "audit_log_api_v1_audit_log_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntry"
+                  },
+                  "title": "Response Audit Log Api V1 Audit Log Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Audit Log",
+        "tags": [
+          "data"
+        ]
+      }
+    },
     "/api/v1/budgets/{month}": {
       "get": {
         "description": "A month's budget with progress computed from live transactions.\n\nReturns an empty shell rather than 404 when no budget exists, so the client\nrenders its empty state without special-casing an error.",
@@ -4031,6 +4279,161 @@
         ]
       }
     },
+    "/api/v1/data/export": {
+      "get": {
+        "description": "Download everything. CSV writes major units; JSON preserves minor units.",
+        "operationId": "export_data_api_v1_data_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "pattern": "^(csv|json)$",
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export Data",
+        "tags": [
+          "data"
+        ]
+      }
+    },
+    "/api/v1/data/import": {
+      "post": {
+        "description": "Import a CSV into one account using a confirmed column mapping.",
+        "operationId": "import_data_api_v1_data_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_data_api_v1_data_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Import Data",
+        "tags": [
+          "data"
+        ]
+      }
+    },
+    "/api/v1/data/import/detect": {
+      "post": {
+        "description": "Guess the column mapping so the user confirms rather than types it.",
+        "operationId": "detect_import_columns_api_v1_data_import_detect_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_detect_import_columns_api_v1_data_import_detect_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Detect Import Columns Api V1 Data Import Detect Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Detect Import Columns",
+        "tags": [
+          "data"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "description": "Liveness: is the process up. Must not touch external dependencies.",
@@ -4648,6 +5051,76 @@
         "summary": "List Sync Runs",
         "tags": [
           "plaid"
+        ]
+      }
+    },
+    "/api/v1/preferences": {
+      "get": {
+        "operationId": "get_preferences_api_v1_preferences_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Preferences",
+        "tags": [
+          "data"
+        ]
+      },
+      "patch": {
+        "operationId": "update_preferences_api_v1_preferences_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Preferences",
+        "tags": [
+          "data"
         ]
       }
     },

@@ -17,6 +17,7 @@ dependencies = [
     "email-validator>=2.3.0",
     "plaid-python>=42.0.0",
     "arq>=0.28.0",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]

@@ -10,6 +10,7 @@ from app.models.account import (
     AccountBalanceSnapshot,
     NetWorthSnapshot,
 )
+from app.models.audit import AuditLog, UserPreferences
 from app.models.budget import Budget, BudgetCategory
 from app.models.category import Category, Merchant
 from app.models.investment import (
@@ -26,6 +27,7 @@ from app.models.user import User
 __all__ = [
     "Account",
     "AccountBalanceSnapshot",
+    "AuditLog",
     "Base",
     "Budget",
     "BudgetCategory",
@@ -41,4 +43,5 @@ __all__ = [
     "SyncRun",
     "Transaction",
     "User",
+    "UserPreferences",
 ]

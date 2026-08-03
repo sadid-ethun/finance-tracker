@@ -698,3 +698,84 @@ export function useCashFlowByCategory(kind: "income" | "expense") {
     staleTime: 60_000,
   });
 }
+
+// -------------------------------------------------------- Phase 8: settings
+
+export type Preferences = {
+  currency: string;
+  theme: string;
+  week_starts_on: number;
+  timezone: string;
+};
+
+export type AuditEntry = {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  created_at: string;
+};
+
+export function usePreferences() {
+  return useQuery({
+    queryKey: ["preferences"],
+    queryFn: () => apiFetch<Preferences>("/preferences"),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useUpdatePreferences() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Partial<Preferences>) =>
+      apiFetch<Preferences>("/preferences", {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["preferences"] }),
+  });
+}
+
+export function useAuditLog(limit = 25) {
+  return useQuery({
+    queryKey: ["audit-log", limit],
+    queryFn: () => apiFetch<AuditEntry[]>(`/audit-log?limit=${limit}`),
+  });
+}
+
+/** Category management reuses the existing list query. */
+export function useCreateCategory() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string; slug: string; kind: string; color?: string }) =>
+      apiFetch<Category>("/categories", { method: "POST", body: JSON.stringify(body) }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: qk.categories.all() }),
+  });
+}
+
+export function useUpdateCategory() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string } & Record<string, unknown>) =>
+      apiFetch<Category>(`/categories/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: qk.categories.all() }),
+  });
+}
+
+export function useRules() {
+  return useQuery({
+    queryKey: ["rules"],
+    queryFn: () => apiFetch<Rule[]>("/rules"),
+  });
+}
+
+export function useDeleteRule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/rules/${id}`, { method: "DELETE" }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["rules"] }),
+  });
+}

@@ -2,6 +2,7 @@
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 
 import { makeQueryClient } from "@/lib/query";
@@ -15,7 +16,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {/* Transaction filters live in the URL, so they stay shareable and
           back-button correct (PLAN.md section 14). */}
-      <NuqsAdapter>{children}</NuqsAdapter>
+      {/* attribute="class" matches the `.dark` selector in globals.css. */}
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <NuqsAdapter>{children}</NuqsAdapter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

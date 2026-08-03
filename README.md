@@ -6,9 +6,12 @@ views. Mobile-first.
 
 Full technical design: [PLAN.md](PLAN.md).
 
-**Status: Phase 7 (Investments & Cash Flow) complete.** All six core feature areas
-are built: dashboard, accounts, transactions, budgets, investments, and cash flow.
-Settings, import/export, and hardening land in Phase 8.
+**Status: Phase 8 (Settings & Hardening) complete.** Feature-complete and secured:
+TOTP two-factor, rate limiting, security headers, an audit log, CSV import/export,
+category and rule management, and dark mode. Phase 9 is the production cutover.
+
+> **Turn on two-factor before connecting real bank accounts.** Settings → Security.
+> PLAN.md section 8 treats this as a prerequisite for Plaid Production, not an option.
 
 ## Plaid setup
 

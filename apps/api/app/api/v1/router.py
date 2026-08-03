@@ -6,6 +6,7 @@ from app.api.v1.routes import (
     cash_flow,
     categories,
     dashboard,
+    data,
     health,
     investments,
     me,
@@ -24,6 +25,7 @@ api_router.include_router(categories.router)
 api_router.include_router(budgets.router)
 api_router.include_router(investments.router)
 api_router.include_router(cash_flow.router)
+api_router.include_router(data.router)
 api_router.include_router(transactions.router)
 api_router.include_router(rules.router)
 api_router.include_router(plaid.router)

@@ -12,6 +12,7 @@ from app.api.v1.routes import health, webhooks
 from app.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
+from app.core.middleware import register_middleware
 
 settings = get_settings()
 configure_logging(debug=settings.debug)
@@ -70,6 +71,9 @@ def create_app() -> FastAPI:
             duration_ms=duration_ms,
         )
         return response
+
+    # Security headers and rate limiting wrap everything below.
+    register_middleware(app, settings)
 
     register_exception_handlers(app)
 

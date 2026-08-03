@@ -1,14 +1,14 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { Connections } from "@/components/settings/connections";
+import { SettingsView } from "@/components/settings/settings-view";
 
 export default function SettingsPage() {
   return (
     <>
       <PageHeader
         title="Settings"
-        description="Bank connections and sync history. Categories and rules land in Phase 8."
+        description="Connections, security, categories, and your data."
       />
-      <Connections />
+      <SettingsView />
     </>
   );
 }

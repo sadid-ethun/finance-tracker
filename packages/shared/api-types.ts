@@ -95,6 +95,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit Log */
+        get: operations["audit_log_api_v1_audit_log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/budgets/{month}": {
         parameters: {
             query?: never;
@@ -392,6 +409,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/data/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Data
+         * @description Download everything. CSV writes major units; JSON preserves minor units.
+         */
+        get: operations["export_data_api_v1_data_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Data
+         * @description Import a CSV into one account using a confirmed column mapping.
+         */
+        post: operations["import_data_api_v1_data_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data/import/detect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Detect Import Columns
+         * @description Guess the column mapping so the user confirms rather than types it.
+         */
+        post: operations["detect_import_columns_api_v1_data_import_detect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -675,6 +752,24 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preferences */
+        get: operations["get_preferences_api_v1_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Preferences */
+        patch: operations["update_preferences_api_v1_preferences_patch"];
         trace?: never;
     };
     "/api/v1/rules": {
@@ -1055,6 +1150,22 @@ export interface components {
             /** Value */
             value: number;
         };
+        /** AuditEntry */
+        AuditEntry: {
+            /** Action */
+            action: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Entity Id */
+            entity_id: string | null;
+            /** Entity Type */
+            entity_type: string;
+            /** Id */
+            id: string;
+        };
         /** BalanceSnapshotResponse */
         BalanceSnapshotResponse: {
             /** Balance Available */
@@ -1089,6 +1200,28 @@ export interface components {
             liabilities: number;
             /** Net Worth */
             net_worth: number;
+        };
+        /** Body_detect_import_columns_api_v1_data_import_detect_post */
+        Body_detect_import_columns_api_v1_data_import_detect_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_import_data_api_v1_data_import_post */
+        Body_import_data_api_v1_data_import_post: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** File */
+            file: string;
+            /**
+             * Invert Amounts
+             * @default false
+             */
+            invert_amounts: boolean;
+            /** Mapping */
+            mapping: string;
         };
         /** BudgetLineProgress */
         BudgetLineProgress: {
@@ -1389,6 +1522,17 @@ export interface components {
             /** Value */
             value: number;
         };
+        /** ImportResult */
+        ImportResult: {
+            /** Account Id */
+            account_id: string;
+            /** Errors */
+            errors: string[];
+            /** Imported */
+            imported: number;
+            /** Skipped */
+            skipped: number;
+        };
         /** InvestmentSummary */
         InvestmentSummary: {
             /** Currency */
@@ -1542,6 +1686,28 @@ export interface components {
             last_successful_sync_at: string | null;
             /** Status */
             status: string;
+        };
+        /** PreferencesResponse */
+        PreferencesResponse: {
+            /** Currency */
+            currency: string;
+            /** Theme */
+            theme: string;
+            /** Timezone */
+            timezone: string;
+            /** Week Starts On */
+            week_starts_on: number;
+        };
+        /** PreferencesUpdate */
+        PreferencesUpdate: {
+            /** Currency */
+            currency?: string | null;
+            /** Theme */
+            theme?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Week Starts On */
+            week_starts_on?: number | null;
         };
         /** ReadyResponse */
         ReadyResponse: {
@@ -2065,6 +2231,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_TransactionResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audit_log_api_v1_audit_log_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEntry"][];
                 };
             };
             /** @description Validation Error */
@@ -2651,6 +2848,105 @@ export interface operations {
             };
         };
     };
+    export_data_api_v1_data_export_get: {
+        parameters: {
+            query?: {
+                format?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_data_api_v1_data_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_data_api_v1_data_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_import_columns_api_v1_data_import_detect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_detect_import_columns_api_v1_data_import_detect_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string | null;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_api_v1_health_get: {
         parameters: {
             query?: never;
@@ -3041,6 +3337,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SyncRunResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_preferences_api_v1_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesResponse"];
+                };
+            };
+        };
+    };
+    update_preferences_api_v1_preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferencesResponse"];
                 };
             };
             /** @description Validation Error */

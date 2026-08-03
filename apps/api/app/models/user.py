@@ -33,6 +33,11 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         "updatedAt", DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    #: Written by Better Auth's twoFactor plugin. Declared here so Alembic
+    #: autogenerate does not read it as a removed column and emit a DROP.
+    two_factor_enabled: Mapped[bool | None] = mapped_column(
+        "twoFactorEnabled", Boolean, nullable=True, server_default="false"
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.id} {self.email}>"
