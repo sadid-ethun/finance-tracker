@@ -7,6 +7,7 @@ Alembic autogenerates a migration.
 from app.db.base import Base
 from app.models.account import Account, AccountBalanceSnapshot
 from app.models.category import Category, Merchant
+from app.models.plaid_item import PlaidItem, SyncRun
 from app.models.rule import Rule
 from app.models.transaction import Transaction
 from app.models.user import User
@@ -17,7 +18,9 @@ __all__ = [
     "Base",
     "Category",
     "Merchant",
+    "PlaidItem",
     "Rule",
+    "SyncRun",
     "Transaction",
     "User",
 ]

@@ -37,6 +37,9 @@ class Account(Base, TimestampMixin):
     )
 
     # Populated from Phase 4 onward; null means a manual account.
+    plaid_item_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("plaid_items.id", ondelete="CASCADE"), nullable=True
+    )
     plaid_account_id: Mapped[str | None] = mapped_column(Text, nullable=True, unique=True)
 
     name: Mapped[str] = mapped_column(Text, nullable=False)

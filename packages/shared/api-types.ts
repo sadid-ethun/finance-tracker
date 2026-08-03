@@ -197,6 +197,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plaid/exchange": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange Public Token
+         * @description Exchange Link's public token and import the institution's accounts.
+         */
+        post: operations["exchange_public_token_api_v1_plaid_exchange_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plaid/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Items */
+        get: operations["list_items_api_v1_plaid_items_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plaid/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Item
+         * @description Disconnect an institution, telling Plaid to release the token first.
+         */
+        delete: operations["remove_item_api_v1_plaid_items__item_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plaid/items/{item_id}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Item
+         * @description Force a sync now, rather than waiting for a webhook or the hourly job.
+         */
+        post: operations["sync_item_api_v1_plaid_items__item_id__sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plaid/link-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Link Token
+         * @description Create a Link token.
+         *
+         *     `mode="update"` re-authenticates an existing connection rather than
+         *     creating a duplicate one.
+         */
+        post: operations["create_link_token_api_v1_plaid_link_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plaid/sync-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sync Runs
+         * @description Recent sync history, so a silently failing connection is visible.
+         */
+        get: operations["list_sync_runs_api_v1_plaid_sync_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rules": {
         parameters: {
             query?: never;
@@ -452,6 +572,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/plaid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Plaid Webhook */
+        post: operations["plaid_webhook_webhooks_plaid_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -664,6 +801,15 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /** ExchangeRequest */
+        ExchangeRequest: {
+            /** Institution Id */
+            institution_id?: string | null;
+            /** Institution Name */
+            institution_name?: string | null;
+            /** Public Token */
+            public_token: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -682,6 +828,22 @@ export interface components {
             status: "ok";
             /** Version */
             version: string;
+        };
+        /** LinkTokenRequest */
+        LinkTokenRequest: {
+            /** Item Id */
+            item_id?: string | null;
+            /**
+             * Mode
+             * @default connect
+             * @enum {string}
+             */
+            mode: "connect" | "update";
+        };
+        /** LinkTokenResponse */
+        LinkTokenResponse: {
+            /** Link Token */
+            link_token: string;
         };
         /** LinkTransferRequest */
         LinkTransferRequest: {
@@ -715,6 +877,34 @@ export interface components {
             has_more: boolean;
             /** Next Cursor */
             next_cursor?: string | null;
+        };
+        /**
+         * PlaidItemResponse
+         * @description Deliberately omits access_token_encrypted — it must never leave the API.
+         */
+        PlaidItemResponse: {
+            /** Consent Expires At */
+            consent_expires_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Institution Logo Url */
+            institution_logo_url: string | null;
+            /** Institution Name */
+            institution_name: string | null;
+            /** Last Error Code */
+            last_error_code: string | null;
+            /** Last Successful Sync At */
+            last_successful_sync_at: string | null;
+            /** Status */
+            status: string;
         };
         /** ReadyResponse */
         ReadyResponse: {
@@ -811,6 +1001,46 @@ export interface components {
         SplitRequest: {
             /** Parts */
             parts: components["schemas"]["SplitPartRequest"][];
+        };
+        /** SyncResultResponse */
+        SyncResultResponse: {
+            /** Added */
+            added: number;
+            /** Modified */
+            modified: number;
+            /** Removed */
+            removed: number;
+            /** Status */
+            status: string;
+        };
+        /** SyncRunResponse */
+        SyncRunResponse: {
+            /** Added */
+            added: number;
+            /** Error Code */
+            error_code: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Modified */
+            modified: number;
+            /** Plaid Item Id */
+            plaid_item_id: string | null;
+            /** Removed */
+            removed: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
         };
         /** TransactionCreate */
         TransactionCreate: {
@@ -1368,6 +1598,183 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+        };
+    };
+    exchange_public_token_api_v1_plaid_exchange_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExchangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaidItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_items_api_v1_plaid_items_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaidItemResponse"][];
+                };
+            };
+        };
+    };
+    remove_item_api_v1_plaid_items__item_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_item_api_v1_plaid_items__item_id__sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncResultResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_link_token_api_v1_plaid_link_token_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkTokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sync_runs_api_v1_plaid_sync_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncRunResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1988,6 +2395,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadyResponse"];
+                };
+            };
+        };
+    };
+    plaid_webhook_webhooks_plaid_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Plaid-Verification"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

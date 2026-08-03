@@ -281,3 +281,91 @@ export function useBulkCategorize() {
     onSuccess: invalidate,
   });
 }
+
+// ------------------------------------------------------------ Phase 4: Plaid
+
+export type PlaidItem = {
+  id: string;
+  institution_name: string | null;
+  institution_logo_url: string | null;
+  status: string;
+  last_successful_sync_at: string | null;
+  last_error_code: string | null;
+  created_at: string;
+};
+
+export type SyncRun = {
+  id: string;
+  plaid_item_id: string | null;
+  kind: string;
+  status: string;
+  added: number;
+  modified: number;
+  removed: number;
+  started_at: string;
+  finished_at: string | null;
+  error_code: string | null;
+};
+
+export function usePlaidItems() {
+  return useQuery({
+    queryKey: ["plaid", "items"],
+    queryFn: () => apiFetch<PlaidItem[]>("/plaid/items"),
+  });
+}
+
+export function useSyncRuns() {
+  return useQuery({
+    queryKey: ["plaid", "sync-runs"],
+    queryFn: () => apiFetch<SyncRun[]>("/plaid/sync-runs?limit=10"),
+  });
+}
+
+/** Fetched on demand: a link token is short-lived, so it is never cached. */
+export function useCreateLinkToken() {
+  return useMutation({
+    mutationFn: (body: { mode: "connect" | "update"; item_id?: string }) =>
+      apiFetch<{ link_token: string }>("/plaid/link-token", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  });
+}
+
+export function useExchangePublicToken() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      public_token: string;
+      institution_id?: string | null;
+      institution_name?: string | null;
+    }) =>
+      apiFetch<PlaidItem>("/plaid/exchange", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    // A new institution can change every number on screen.
+    onSuccess: () => void client.invalidateQueries(),
+  });
+}
+
+export function useSyncItem() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (itemId: string) =>
+      apiFetch<{ added: number; modified: number; removed: number; status: string }>(
+        `/plaid/items/${itemId}/sync`,
+        { method: "POST" },
+      ),
+    onSuccess: () => void client.invalidateQueries(),
+  });
+}
+
+export function useRemovePlaidItem() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (itemId: string) =>
+      apiFetch<void>(`/plaid/items/${itemId}`, { method: "DELETE" }),
+    onSuccess: () => void client.invalidateQueries(),
+  });
+}

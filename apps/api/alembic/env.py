@@ -27,6 +27,11 @@ target_metadata = Base.metadata
 # altered by hand-written migrations — this only hides them from autogenerate.
 UNMANAGED_TABLES = frozenset({"session", "auth_account", "verification", "jwks"})
 
+# Expression indexes that SQLAlchemy cannot express as model metadata. Without
+# this, autogenerate reports them as "removed" and emits DROP INDEX — which for
+# the full-text index would silently turn search into a sequential scan.
+UNMANAGED_INDEXES = frozenset({"ix_transactions_search"})
+
 
 def include_object(
     obj: object, name: str | None, type_: str, reflected: bool, compare_to: object
@@ -34,6 +39,8 @@ def include_object(
     if type_ == "table":
         return name not in UNMANAGED_TABLES
     if type_ == "index":
+        if name in UNMANAGED_INDEXES:
+            return False
         # Indexes belonging to those tables must be skipped for the same reason.
         owning_table = getattr(getattr(obj, "table", None), "name", None)
         return owning_table not in UNMANAGED_TABLES

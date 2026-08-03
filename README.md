@@ -6,9 +6,32 @@ views. Mobile-first.
 
 Full technical design: [PLAN.md](PLAN.md).
 
-**Status: Phase 2 (Accounts & Manual Data) complete.** A fully usable manual finance
-tracker: add accounts, record transactions, categorise them, and see net worth.
-Search, splits, and transfers land in Phase 3; Plaid in Phase 4.
+**Status: Phase 4 (Plaid Sandbox) complete.** Connect a bank and transactions import
+automatically, on top of search, splits, transfers, rules, and manual entry.
+The dashboard lands in Phase 5.
+
+## Plaid setup
+
+1. Create a free account at [dashboard.plaid.com](https://dashboard.plaid.com) and
+   copy your **Sandbox** keys from Developers → Keys.
+2. Generate an encryption key for access tokens at rest:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+3. Put `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `PLAID_ENCRYPTION_KEY` in `apps/api/.env`,
+   then restart the API. Settings → Connections will offer "Connect a bank".
+   In Sandbox, log in with username `user_good` and password `pass_good`.
+
+**Apply for Production access early.** Approval takes days to weeks and is the
+biggest schedule risk in this project — apply from the Plaid dashboard while still
+building against Sandbox. Cutover is then: swap `PLAID_SECRET`, set
+`PLAID_ENV=production`, set `PLAID_WEBHOOK_URL` to your public HTTPS URL, and
+re-link each institution.
+
+> Losing `PLAID_ENCRYPTION_KEY` means every connected bank must be re-linked.
+> Back it up somewhere other than this repository.
 
 ## Stack
 

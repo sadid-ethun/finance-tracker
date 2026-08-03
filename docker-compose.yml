@@ -72,9 +72,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # The arq worker arrives in Phase 4; until then this service stays idle so
-    # the topology is real but nothing pretends to run.
-    command: ["sh", "-c", "echo 'worker: idle until Phase 4' && sleep infinity"]
+    command: ["arq", "app.workers.main.WorkerSettings"]
     volumes:
       - ./apps/api/app:/app/app
 

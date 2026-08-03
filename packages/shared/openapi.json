@@ -644,6 +644,45 @@
         "title": "CategoryUpdate",
         "type": "object"
       },
+      "ExchangeRequest": {
+        "properties": {
+          "institution_id": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Id"
+          },
+          "institution_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Name"
+          },
+          "public_token": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Public Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "public_token"
+        ],
+        "title": "ExchangeRequest",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -684,6 +723,46 @@
           "environment"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "LinkTokenRequest": {
+        "properties": {
+          "item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "mode": {
+            "default": "connect",
+            "enum": [
+              "connect",
+              "update"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "title": "LinkTokenRequest",
+        "type": "object"
+      },
+      "LinkTokenResponse": {
+        "properties": {
+          "link_token": {
+            "title": "Link Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_token"
+        ],
+        "title": "LinkTokenResponse",
         "type": "object"
       },
       "LinkTransferRequest": {
@@ -776,6 +855,94 @@
           "data"
         ],
         "title": "Page[TransactionResponse]",
+        "type": "object"
+      },
+      "PlaidItemResponse": {
+        "description": "Deliberately omits access_token_encrypted \u2014 it must never leave the API.",
+        "properties": {
+          "consent_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Expires At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "institution_logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Logo Url"
+          },
+          "institution_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Name"
+          },
+          "last_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Code"
+          },
+          "last_successful_sync_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Successful Sync At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "institution_name",
+          "institution_logo_url",
+          "status",
+          "last_successful_sync_at",
+          "last_error_code",
+          "consent_expires_at",
+          "created_at"
+        ],
+        "title": "PlaidItemResponse",
         "type": "object"
       },
       "ReadyResponse": {
@@ -1015,6 +1182,117 @@
           "parts"
         ],
         "title": "SplitRequest",
+        "type": "object"
+      },
+      "SyncResultResponse": {
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "modified": {
+            "title": "Modified",
+            "type": "integer"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "added",
+          "modified",
+          "removed",
+          "status"
+        ],
+        "title": "SyncResultResponse",
+        "type": "object"
+      },
+      "SyncRunResponse": {
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "modified": {
+            "title": "Modified",
+            "type": "integer"
+          },
+          "plaid_item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plaid Item Id"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plaid_item_id",
+          "kind",
+          "status",
+          "added",
+          "modified",
+          "removed",
+          "started_at",
+          "finished_at",
+          "error_code"
+        ],
+        "title": "SyncRunResponse",
         "type": "object"
       },
       "TransactionCreate": {
@@ -2092,6 +2370,276 @@
         "summary": "Read Me",
         "tags": [
           "me"
+        ]
+      }
+    },
+    "/api/v1/plaid/exchange": {
+      "post": {
+        "description": "Exchange Link's public token and import the institution's accounts.",
+        "operationId": "exchange_public_token_api_v1_plaid_exchange_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaidItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Exchange Public Token",
+        "tags": [
+          "plaid"
+        ]
+      }
+    },
+    "/api/v1/plaid/items": {
+      "get": {
+        "operationId": "list_items_api_v1_plaid_items_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaidItemResponse"
+                  },
+                  "title": "Response List Items Api V1 Plaid Items Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Items",
+        "tags": [
+          "plaid"
+        ]
+      }
+    },
+    "/api/v1/plaid/items/{item_id}": {
+      "delete": {
+        "description": "Disconnect an institution, telling Plaid to release the token first.",
+        "operationId": "remove_item_api_v1_plaid_items__item_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Item",
+        "tags": [
+          "plaid"
+        ]
+      }
+    },
+    "/api/v1/plaid/items/{item_id}/sync": {
+      "post": {
+        "description": "Force a sync now, rather than waiting for a webhook or the hourly job.",
+        "operationId": "sync_item_api_v1_plaid_items__item_id__sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncResultResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sync Item",
+        "tags": [
+          "plaid"
+        ]
+      }
+    },
+    "/api/v1/plaid/link-token": {
+      "post": {
+        "description": "Create a Link token.\n\n`mode=\"update\"` re-authenticates an existing connection rather than\ncreating a duplicate one.",
+        "operationId": "create_link_token_api_v1_plaid_link_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkTokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Link Token",
+        "tags": [
+          "plaid"
+        ]
+      }
+    },
+    "/api/v1/plaid/sync-runs": {
+      "get": {
+        "description": "Recent sync history, so a silently failing connection is visible.",
+        "operationId": "list_sync_runs_api_v1_plaid_sync_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SyncRunResponse"
+                  },
+                  "title": "Response List Sync Runs Api V1 Plaid Sync Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Sync Runs",
+        "tags": [
+          "plaid"
         ]
       }
     },
@@ -3201,6 +3749,57 @@
         "summary": "Ready",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/webhooks/plaid": {
+      "post": {
+        "operationId": "plaid_webhook_webhooks_plaid_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Plaid-Verification",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plaid-Verification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Plaid Webhook Webhooks Plaid Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Plaid Webhook",
+        "tags": [
+          "webhooks"
         ]
       }
     }

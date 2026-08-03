@@ -15,6 +15,8 @@ dependencies = [
     "pyjwt[crypto]>=2.10",
     "httpx>=0.28",
     "email-validator>=2.3.0",
+    "plaid-python>=42.0.0",
+    "arq>=0.28.0",
 ]
 
 [dependency-groups]
@@ -24,6 +26,7 @@ dev = [
     "httpx>=0.28",
     "ruff>=0.8",
     "mypy>=1.14",
+    "respx>=0.23.1",
 ]
 
 [tool.ruff]
@@ -46,6 +49,12 @@ exclude = ["alembic/versions/"]
 
 [[tool.mypy.overrides]]
 module = ["alembic.*"]
+ignore_missing_imports = true
+
+# plaid-python ships no py.typed marker. Our own wrappers around it are fully
+# typed; this only silences the vendored SDK.
+[[tool.mypy.overrides]]
+module = ["plaid.*", "arq.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

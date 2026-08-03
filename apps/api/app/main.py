@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
-from app.api.v1.routes import health
+from app.api.v1.routes import health, webhooks
 from app.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
@@ -76,6 +76,8 @@ def create_app() -> FastAPI:
     # Health lives at the root as well as under /api/v1 so platform probes do not
     # have to know the API version.
     app.include_router(health.router)
+    # Plaid posts to a fixed public URL, so the webhook is not versioned.
+    app.include_router(webhooks.router)
     app.include_router(api_router, prefix="/api/v1")
 
     return app

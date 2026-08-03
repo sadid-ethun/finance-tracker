@@ -52,6 +52,29 @@ class Settings(BaseSettings):
     # How long to cache the fetched public keys before refetching.
     jwks_cache_seconds: int = 3600
 
+    # ---- plaid ------------------------------------------------------------
+    plaid_client_id: str = ""
+    plaid_secret: str = ""
+    plaid_env: Literal["sandbox", "production"] = "sandbox"
+    # Comma-separated. The first key encrypts; the rest only decrypt, which is
+    # what makes key rotation possible without downtime.
+    plaid_encryption_key: str = ""
+    # Public URL Plaid posts webhooks to. Empty locally, where there is no
+    # inbound route from the internet.
+    plaid_webhook_url: str = ""
+    plaid_products: list[str] = ["transactions"]
+    plaid_country_codes: list[str] = ["US"]
+    #: How much history to pull when an item is first connected.
+    plaid_initial_backfill_days: int = 730
+
+    @property
+    def plaid_encryption_keys(self) -> list[str]:
+        return [k for k in self.plaid_encryption_key.split(",") if k.strip()]
+
+    @property
+    def plaid_configured(self) -> bool:
+        return bool(self.plaid_client_id and self.plaid_secret)
+
     @property
     def jwks_url(self) -> str:
         return f"{self.web_url.rstrip('/')}/api/auth/jwks"
