@@ -58,12 +58,27 @@ jobs:
           pnpm --filter web test
           pnpm --filter web build
 
+  # Skipped until Railway exists. Without this guard every push to main fails
+  # at `railway up` with an empty token, which trains you to ignore a red CI
+  # badge — the one signal that has to stay trustworthy. Setting the
+  # PRODUCTION_URL repo variable is the last step of Railway setup, so it
+  # doubles as the switch that turns real deploys on.
   deploy:
     needs: verify
+    if: vars.PRODUCTION_URL != ''
     runs-on: ubuntu-latest
     environment: production
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check the Railway token is present
+        run: |
+          if [ -z "${RAILWAY_TOKEN}" ]; then
+            echo "::error::RAILWAY_TOKEN is not set. Add it under Settings -> Secrets and variables -> Actions -> Secrets."
+            exit 1
+          fi
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli

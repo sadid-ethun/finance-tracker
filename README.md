@@ -212,7 +212,18 @@ Required on `web`: `DATABASE_URL`, `API_INTERNAL_URL`, `BETTER_AUTH_SECRET`,
 
 Push to `main`. `.github/workflows/deploy.yml` re-runs the full suite, deploys all
 three services, and fails the run if the production healthcheck never passes.
-It needs `RAILWAY_TOKEN` as a secret and `PRODUCTION_URL` as a variable.
+
+Under **Settings → Secrets and variables → Actions**, set:
+
+| Name | Kind | Value |
+|---|---|---|
+| `RAILWAY_TOKEN` | Secret | Railway project token |
+| `PRODUCTION_URL` | Variable | `https://<your-web-domain>` — no trailing slash |
+
+Set `RAILWAY_TOKEN` **first**. The deploy job is gated on `PRODUCTION_URL` being
+non-empty, so until you add that variable every push runs the verify suite and
+skips deployment. That is what keeps `main` green before Railway exists; adding
+`PRODUCTION_URL` is what arms real deploys.
 
 ### 5. Switch Plaid to Production
 
