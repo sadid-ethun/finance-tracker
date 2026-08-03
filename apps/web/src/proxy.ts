@@ -33,5 +33,11 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Everything except API routes, static assets, and image optimisation.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|webp)$).*)"],
+  // manifest.webmanifest must be listed explicitly: browsers fetch it
+  // while signed out to decide whether the app is installable, and
+  // redirecting it to /login silently disables the install prompt. Found
+  // by requesting it against a running container — a build cannot catch it.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots.txt|.*\\.(?:svg|png|jpg|jpeg|webp|ico|webmanifest)$).*)",
+  ],
 };
