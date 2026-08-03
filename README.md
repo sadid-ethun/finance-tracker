@@ -6,9 +6,10 @@ views. Mobile-first.
 
 Full technical design: [PLAN.md](PLAN.md).
 
-**Status: Phase 8 (Settings & Hardening) complete.** Feature-complete and secured:
-TOTP two-factor, rate limiting, security headers, an audit log, CSV import/export,
-category and rule management, and dark mode. Phase 9 is the production cutover.
+**Status: Phase 9 (Production Cutover) — code complete, deployment pending.**
+Everything in PLAN.md is built. What remains is infrastructure only: creating the
+Railway project, pointing a domain at it, and switching Plaid to Production.
+See [Going to production](#going-to-production).
 
 > **Turn on two-factor before connecting real bank accounts.** Settings → Security.
 > PLAN.md section 8 treats this as a prerequisite for Plaid Production, not an option.
@@ -158,3 +159,109 @@ These are load-bearing — see PLAN.md for the reasoning.
   signed-out visitors; the API verifies every request independently.
 - **Alembic owns the auth schema.** Better Auth's own migrate command is never run
   against this database — change `apps/web/src/lib/auth.ts` and the migration together.
+
+## Going to production
+
+Everything below needs your accounts and credentials, so none of it is done yet.
+Work top to bottom — the order matters.
+
+### 1. Turn on two-factor first
+
+Settings → Security. PLAN.md section 8 treats this as a prerequisite for
+Production Plaid, not an option: from here on the app holds read access to real
+bank data.
+
+### 2. Create the Railway project
+
+Four services from this repo, plus Postgres and Redis. `infra/railway.json`
+documents the intended build and deploy settings for each.
+
+| Service | Dockerfile | Start | Healthcheck |
+|---|---|---|---|
+| `api` | `apps/api/Dockerfile` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` |
+| `worker` | `apps/api/Dockerfile` | `arq app.workers.main.WorkerSettings` | — |
+| `web` | `apps/web/Dockerfile` | `node apps/web/server.js` | `/api/health` |
+
+Set `alembic upgrade head` as the **pre-deploy command on `api` only**. Running it
+from the app entrypoint would race across replicas.
+
+### 3. Set environment variables
+
+Generate fresh secrets for production — never reuse the local ones:
+
+```bash
+openssl rand -base64 32
+```
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Required on `api` and `worker`: `ENVIRONMENT=production`, `DATABASE_URL`,
+`REDIS_URL`, `WEB_URL`, `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV=production`,
+`PLAID_ENCRYPTION_KEY`, `PLAID_WEBHOOK_URL`.
+
+Required on `web`: `DATABASE_URL`, `API_INTERNAL_URL`, `BETTER_AUTH_SECRET`,
+`BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`.
+
+> **Back up `PLAID_ENCRYPTION_KEY` somewhere outside Railway and outside this
+> repo.** It is not in database dumps. Lose it and every connected bank must be
+> re-linked, because the stored access tokens become undecryptable.
+
+### 4. Deploy
+
+Push to `main`. `.github/workflows/deploy.yml` re-runs the full suite, deploys all
+three services, and fails the run if the production healthcheck never passes.
+It needs `RAILWAY_TOKEN` as a secret and `PRODUCTION_URL` as a variable.
+
+### 5. Switch Plaid to Production
+
+1. Confirm Production access is approved in the Plaid dashboard.
+2. Set `PLAID_SECRET` to the Production secret and `PLAID_ENV=production`.
+3. Set `PLAID_WEBHOOK_URL` to `https://<your-api-domain>/webhooks/plaid`.
+4. Re-link each institution through Settings → Connections. Sandbox items do not
+   carry over; their access tokens are only valid in Sandbox.
+5. After the first sync, run Dashboard → snapshot to backfill the net-worth chart.
+
+### 6. Verify with real data
+
+Reconcile before trusting anything:
+
+```bash
+curl -s https://<your-domain>/api/proxy/api/v1/accounts/summary
+```
+
+Net worth should equal the sum of your account balances, with credit cards and
+loans subtracting. If it does not, check for transfers that detection has not
+paired — Settings shows unpaired activity as ordinary spending.
+
+### 7. Back up, and prove the backup works
+
+```bash
+DATABASE_URL=<production-url> ./infra/scripts/backup.sh ./backups
+```
+
+```bash
+ADMIN_URL=<admin-url> ./infra/scripts/restore-drill.sh ./backups/<file>.dump
+```
+
+The drill restores into a throwaway database, prints row counts, and drops it.
+It fails loudly if the restore is structurally valid but empty. Run it quarterly —
+an untested backup is a guess.
+
+## Known limitations
+
+Honest list of what is not production-hardened yet:
+
+- **The rate limiter is in-memory.** Correct on a single instance. Running more
+  than one `api` replica means each enforces its own quota, so the effective
+  limit becomes N times what is configured. Move it to Redis before scaling.
+- **Sentry is not wired.** PLAN.md section 17 calls for it; it needs a DSN from
+  your account. Deliberately left absent rather than stubbed, so nothing looks
+  like monitoring that is not.
+- **No DB-backed integration tests.** The suite is unit tests plus in-process API
+  tests. PLAN.md section 18 calls for testcontainers Postgres; several bugs found
+  during development were only caught by manual live runs.
+- **Investment cost basis depends on the institution.** Plaid does not always
+  report one; those positions are excluded from gain figures and counted
+  separately rather than being treated as pure profit.

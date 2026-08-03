@@ -1,0 +1,107 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never let two deploys race a migration against each other.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # Deploying a broken build is worse than not deploying, so the full suite
+  # runs again here rather than trusting the PR run.
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: finance
+          POSTGRES_PASSWORD: finance
+          POSTGRES_DB: finance_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U finance"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+asyncpg://finance:finance@localhost:5432/finance_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: API checks
+        working-directory: apps/api
+        run: |
+          uv sync --frozen
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy app tests
+          uv run alembic upgrade head
+          uv run pytest
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Web checks
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter web lint
+          pnpm --filter web typecheck
+          pnpm --filter web test
+          pnpm --filter web build
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      # Migrations run as a Railway pre-deploy command on the api service, not
+      # here, so they cannot race across replicas. See infra/railway.json.
+      - name: Deploy API
+        run: railway up --service api --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy worker
+        run: railway up --service worker --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy web
+        run: railway up --service web --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for rollout
+        run: sleep 45
+
+      - name: Health check
+        run: |
+          set -e
+          for attempt in 1 2 3 4 5; do
+            if curl -fsS "${{ vars.PRODUCTION_URL }}/api/health"; then
+              echo "Web is healthy."
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in 15s."
+            sleep 15
+          done
+          echo "::error::Production healthcheck never passed."
+          exit 1

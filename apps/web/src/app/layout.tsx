@@ -11,6 +11,19 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Finance Tracker",
   description: "Personal finance dashboard",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Finance",
+    // Matches the canvas so the iOS status bar blends into the page.
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
+  // Financial data must never be indexed, even if the URL leaks.
+  robots: { index: false, follow: false },
 };
 
 // Mobile-first: lock the viewport to device width and tint the browser chrome
