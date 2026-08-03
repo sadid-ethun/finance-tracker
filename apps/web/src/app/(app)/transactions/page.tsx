@@ -1,30 +1,16 @@
-"use client";
-
-import { Plus } from "lucide-react";
-
 import { PageHeader } from "@/components/layout/page-header";
-import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
-import { TransactionList } from "@/components/transactions/transaction-list";
+import { AddTransactionButton } from "@/components/transactions/transactions-view";
+import { TransactionsBoundary } from "@/components/transactions/transactions-boundary";
 
 export default function TransactionsPage() {
-  const addButton = (
-    <AddTransactionDialog
-      trigger={
-        <>
-          <Plus className="size-4" /> Add
-        </>
-      }
-    />
-  );
-
   return (
     <>
       <PageHeader
         title="Transactions"
-        description="Search and filters arrive in Phase 3."
-        action={addButton}
+        description="Search, filter, split, and categorize."
+        action={<AddTransactionButton />}
       />
-      <TransactionList emptyAction={addButton} />
+      <TransactionsBoundary />
     </>
   );
 }

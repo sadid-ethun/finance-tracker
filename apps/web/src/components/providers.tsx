@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { useState } from "react";
 
 import { makeQueryClient } from "@/lib/query";
@@ -10,5 +11,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // render never shares a cache between users.
   const [queryClient] = useState(makeQueryClient);
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* Transaction filters live in the URL, so they stay shareable and
+          back-button correct (PLAN.md section 14). */}
+      <NuqsAdapter>{children}</NuqsAdapter>
+    </QueryClientProvider>
+  );
 }
