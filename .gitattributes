@@ -1,0 +1,24 @@
+# Normalise line endings so a Windows checkout does not show every file as
+# modified. Without this, generated files (packages/shared) come back dirty
+# immediately after regeneration, which false-positives the CI contract gate.
+* text=auto eol=lf
+
+# Shell scripts must keep LF or they will not run under bash.
+*.sh text eol=lf
+
+# Windows-only tooling expects CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary — never touch.
+*.png binary
+*.jpg binary
+*.ico binary
+*.webp binary
+
+# Generated: collapse in diffs and exclude from language statistics, but still
+# reviewed by the CI contract job.
+packages/shared/api-types.ts linguist-generated=true
+packages/shared/openapi.json linguist-generated=true
+pnpm-lock.yaml linguist-generated=true
+apps/api/uv.lock linguist-generated=true
