@@ -10,6 +10,7 @@ from app.models.account import (
     AccountBalanceSnapshot,
     NetWorthSnapshot,
 )
+from app.models.budget import Budget, BudgetCategory
 from app.models.category import Category, Merchant
 from app.models.plaid_item import PlaidItem, SyncRun
 from app.models.rule import Rule
@@ -20,6 +21,8 @@ __all__ = [
     "Account",
     "AccountBalanceSnapshot",
     "Base",
+    "Budget",
+    "BudgetCategory",
     "Category",
     "Merchant",
     "NetWorthSnapshot",

@@ -462,3 +462,103 @@ export function useTakeSnapshot() {
     onSuccess: () => void client.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 }
+
+// ---------------------------------------------------------- Phase 6: budgets
+
+export type BudgetLine = {
+  category_id: string;
+  name: string;
+  color: string | null;
+  budgeted: number;
+  spent: number;
+  remaining: number;
+  percent: number;
+  over: boolean;
+};
+
+export type UnbudgetedSpend = {
+  category_id: string;
+  name: string;
+  color: string | null;
+  spent: number;
+};
+
+export type BudgetProgress = {
+  month: string;
+  exists: boolean;
+  total_income_expected: number | null;
+  note: string | null;
+  total_budgeted: number;
+  total_spent: number;
+  total_remaining: number;
+  categories: BudgetLine[];
+  unbudgeted: UnbudgetedSpend[];
+  unbudgeted_spent: number;
+};
+
+export type BudgetSuggestion = {
+  category_id: string;
+  name: string;
+  color: string | null;
+  suggested: number;
+};
+
+export function useBudget(month: string) {
+  return useQuery({
+    queryKey: ["budgets", month],
+    queryFn: () => apiFetch<BudgetProgress>(`/budgets/${month}`),
+    staleTime: 30_000,
+  });
+}
+
+export function useBudgetSuggestions(month: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["budgets", month, "suggestions"],
+    queryFn: () => apiFetch<BudgetSuggestion[]>(`/budgets/${month}/suggestions`),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+function useBudgetInvalidation() {
+  const client = useQueryClient();
+  return () => void client.invalidateQueries({ queryKey: ["budgets"] });
+}
+
+export function useSetBudgetCategory(month: string) {
+  const invalidate = useBudgetInvalidation();
+  return useMutation({
+    mutationFn: ({ categoryId, amount }: { categoryId: string; amount: number }) =>
+      apiFetch<BudgetProgress>(`/budgets/${month}/categories/${categoryId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ amount }),
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpsertBudget(month: string) {
+  const invalidate = useBudgetInvalidation();
+  return useMutation({
+    mutationFn: (body: {
+      categories: { category_id: string; amount: number }[];
+      total_income_expected?: number | null;
+    }) =>
+      apiFetch<BudgetProgress>(`/budgets/${month}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useCopyBudget(month: string) {
+  const invalidate = useBudgetInvalidation();
+  return useMutation({
+    mutationFn: (source: string) =>
+      apiFetch<BudgetProgress>(`/budgets/${month}/copy-from?source=${source}`, {
+        method: "POST",
+      }),
+    onSuccess: invalidate,
+  });
+}

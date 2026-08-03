@@ -362,6 +362,234 @@
         "title": "BalanceSummary",
         "type": "object"
       },
+      "BudgetLineProgress": {
+        "properties": {
+          "budgeted": {
+            "title": "Budgeted",
+            "type": "integer"
+          },
+          "category_id": {
+            "title": "Category Id",
+            "type": "string"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "over": {
+            "title": "Over",
+            "type": "boolean"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "integer"
+          },
+          "remaining": {
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "spent": {
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "color",
+          "budgeted",
+          "spent",
+          "remaining",
+          "percent",
+          "over"
+        ],
+        "title": "BudgetLineProgress",
+        "type": "object"
+      },
+      "BudgetLineRequest": {
+        "properties": {
+          "amount": {
+            "minimum": 0.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "format": "uuid",
+            "title": "Category Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category_id",
+          "amount"
+        ],
+        "title": "BudgetLineRequest",
+        "type": "object"
+      },
+      "BudgetProgress": {
+        "description": "All amounts are positive minor units; `total_remaining` may be negative.",
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetLineProgress"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "exists": {
+            "title": "Exists",
+            "type": "boolean"
+          },
+          "month": {
+            "format": "date",
+            "title": "Month",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "total_budgeted": {
+            "title": "Total Budgeted",
+            "type": "integer"
+          },
+          "total_income_expected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Income Expected"
+          },
+          "total_remaining": {
+            "title": "Total Remaining",
+            "type": "integer"
+          },
+          "total_spent": {
+            "title": "Total Spent",
+            "type": "integer"
+          },
+          "unbudgeted": {
+            "items": {
+              "$ref": "#/components/schemas/UnbudgetedSpend"
+            },
+            "title": "Unbudgeted",
+            "type": "array"
+          },
+          "unbudgeted_spent": {
+            "title": "Unbudgeted Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "exists",
+          "total_income_expected",
+          "note",
+          "total_budgeted",
+          "total_spent",
+          "total_remaining",
+          "categories",
+          "unbudgeted",
+          "unbudgeted_spent"
+        ],
+        "title": "BudgetProgress",
+        "type": "object"
+      },
+      "BudgetSuggestion": {
+        "properties": {
+          "category_id": {
+            "title": "Category Id",
+            "type": "string"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "suggested": {
+            "title": "Suggested",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "color",
+          "suggested"
+        ],
+        "title": "BudgetSuggestion",
+        "type": "object"
+      },
+      "BudgetUpsertRequest": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetLineRequest"
+            },
+            "maxItems": 100,
+            "title": "Categories",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "total_income_expected": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Income Expected"
+          }
+        },
+        "title": "BudgetUpsertRequest",
+        "type": "object"
+      },
       "BulkCategorizeRequest": {
         "properties": {
           "category_id": {
@@ -456,6 +684,20 @@
           "net"
         ],
         "title": "CashFlowPoint",
+        "type": "object"
+      },
+      "CategoryAmountRequest": {
+        "properties": {
+          "amount": {
+            "minimum": 0.0,
+            "title": "Amount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "amount"
+        ],
+        "title": "CategoryAmountRequest",
         "type": "object"
       },
       "CategoryCreate": {
@@ -1795,6 +2037,41 @@
         "title": "TransactionUpdate",
         "type": "object"
       },
+      "UnbudgetedSpend": {
+        "properties": {
+          "category_id": {
+            "title": "Category Id",
+            "type": "string"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "spent": {
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "color",
+          "spent"
+        ],
+        "title": "UnbudgetedSpend",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2274,6 +2551,305 @@
         "summary": "Account Transactions",
         "tags": [
           "accounts"
+        ]
+      }
+    },
+    "/api/v1/budgets/{month}": {
+      "get": {
+        "description": "A month's budget with progress computed from live transactions.\n\nReturns an empty shell rather than 404 when no budget exists, so the client\nrenders its empty state without special-casing an error.",
+        "operationId": "get_budget_api_v1_budgets__month__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetProgress"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Budget",
+        "tags": [
+          "budgets"
+        ]
+      },
+      "put": {
+        "description": "Replace the whole month. Omitted categories are removed.",
+        "operationId": "upsert_budget_api_v1_budgets__month__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetProgress"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upsert Budget",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
+    "/api/v1/budgets/{month}/categories/{category_id}": {
+      "patch": {
+        "description": "Set one category's limit. Zero removes it from the budget.",
+        "operationId": "set_category_amount_api_v1_budgets__month__categories__category_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "category_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Category Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryAmountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetProgress"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Category Amount",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
+    "/api/v1/budgets/{month}/copy-from": {
+      "post": {
+        "description": "Copy another month's limits onto this one.",
+        "operationId": "copy_budget_api_v1_budgets__month__copy_from_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Source",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetProgress"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Copy Budget",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
+    "/api/v1/budgets/{month}/suggestions": {
+      "get": {
+        "description": "Average recent spend per category, to seed a first budget.",
+        "operationId": "suggestions_api_v1_budgets__month__suggestions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lookback",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 12,
+              "minimum": 1,
+              "title": "Lookback",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetSuggestion"
+                  },
+                  "title": "Response Suggestions Api V1 Budgets  Month  Suggestions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Suggestions",
+        "tags": [
+          "budgets"
         ]
       }
     },

@@ -6,9 +6,9 @@ views. Mobile-first.
 
 Full technical design: [PLAN.md](PLAN.md).
 
-**Status: Phase 5 (Dashboard) complete.** Net worth, spending by category, cash flow,
-and recent activity, on top of Plaid sync, search, splits, transfers, and rules.
-Budgeting lands in Phase 6.
+**Status: Phase 6 (Budgets) complete.** Monthly category limits with live progress,
+on top of the dashboard, Plaid sync, search, splits, transfers, and rules.
+Investments and cash flow land in Phase 7.
 
 ## Plaid setup
 

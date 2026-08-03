@@ -95,6 +95,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/budgets/{month}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Budget
+         * @description A month's budget with progress computed from live transactions.
+         *
+         *     Returns an empty shell rather than 404 when no budget exists, so the client
+         *     renders its empty state without special-casing an error.
+         */
+        get: operations["get_budget_api_v1_budgets__month__get"];
+        /**
+         * Upsert Budget
+         * @description Replace the whole month. Omitted categories are removed.
+         */
+        put: operations["upsert_budget_api_v1_budgets__month__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/budgets/{month}/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Category Amount
+         * @description Set one category's limit. Zero removes it from the budget.
+         */
+        patch: operations["set_category_amount_api_v1_budgets__month__categories__category_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/budgets/{month}/copy-from": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copy Budget
+         * @description Copy another month's limits onto this one.
+         */
+        post: operations["copy_budget_api_v1_budgets__month__copy_from_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/budgets/{month}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggestions
+         * @description Average recent spend per category, to seed a first budget.
+         */
+        get: operations["suggestions_api_v1_budgets__month__suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/categories": {
         parameters: {
             query?: never;
@@ -830,6 +917,84 @@ export interface components {
             /** Net Worth */
             net_worth: number;
         };
+        /** BudgetLineProgress */
+        BudgetLineProgress: {
+            /** Budgeted */
+            budgeted: number;
+            /** Category Id */
+            category_id: string;
+            /** Color */
+            color: string | null;
+            /** Name */
+            name: string;
+            /** Over */
+            over: boolean;
+            /** Percent */
+            percent: number;
+            /** Remaining */
+            remaining: number;
+            /** Spent */
+            spent: number;
+        };
+        /** BudgetLineRequest */
+        BudgetLineRequest: {
+            /** Amount */
+            amount: number;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+        };
+        /**
+         * BudgetProgress
+         * @description All amounts are positive minor units; `total_remaining` may be negative.
+         */
+        BudgetProgress: {
+            /** Categories */
+            categories: components["schemas"]["BudgetLineProgress"][];
+            /** Exists */
+            exists: boolean;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Note */
+            note: string | null;
+            /** Total Budgeted */
+            total_budgeted: number;
+            /** Total Income Expected */
+            total_income_expected: number | null;
+            /** Total Remaining */
+            total_remaining: number;
+            /** Total Spent */
+            total_spent: number;
+            /** Unbudgeted */
+            unbudgeted: components["schemas"]["UnbudgetedSpend"][];
+            /** Unbudgeted Spent */
+            unbudgeted_spent: number;
+        };
+        /** BudgetSuggestion */
+        BudgetSuggestion: {
+            /** Category Id */
+            category_id: string;
+            /** Color */
+            color: string | null;
+            /** Name */
+            name: string;
+            /** Suggested */
+            suggested: number;
+        };
+        /** BudgetUpsertRequest */
+        BudgetUpsertRequest: {
+            /** Categories */
+            categories?: components["schemas"]["BudgetLineRequest"][];
+            /** Note */
+            note?: string | null;
+            /** Total Income Expected */
+            total_income_expected?: number | null;
+        };
         /** BulkCategorizeRequest */
         BulkCategorizeRequest: {
             /**
@@ -867,6 +1032,11 @@ export interface components {
             net: number;
             /** Spending */
             spending: number;
+        };
+        /** CategoryAmountRequest */
+        CategoryAmountRequest: {
+            /** Amount */
+            amount: number;
         };
         /** CategoryCreate */
         CategoryCreate: {
@@ -1330,6 +1500,17 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
+        /** UnbudgetedSpend */
+        UnbudgetedSpend: {
+            /** Category Id */
+            category_id: string;
+            /** Color */
+            color: string | null;
+            /** Name */
+            name: string;
+            /** Spent */
+            spent: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1586,6 +1767,174 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_TransactionResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_budget_api_v1_budgets__month__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_budget_api_v1_budgets__month__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_category_amount_api_v1_budgets__month__categories__category_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                month: string;
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryAmountRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copy_budget_api_v1_budgets__month__copy_from_post: {
+        parameters: {
+            query: {
+                source: string;
+            };
+            header?: never;
+            path: {
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggestions_api_v1_budgets__month__suggestions_get: {
+        parameters: {
+            query?: {
+                lookback?: number;
+            };
+            header?: never;
+            path: {
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetSuggestion"][];
                 };
             };
             /** @description Validation Error */
