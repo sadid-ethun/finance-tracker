@@ -30,6 +30,7 @@ from app.models.plaid_item import PlaidItem, SyncRun
 from app.models.rule import Rule
 from app.models.transaction import Transaction
 from app.services.categorization import categorize
+from app.services.category_service import ensure_categories
 from app.services.plaid import client
 from app.services.plaid.mappers import map_transaction
 from app.services.transfer_service import detect_transfers
@@ -61,6 +62,16 @@ BANK_OWNED_FIELDS = (
 
 async def sync_item_transactions(db: AsyncSession, item: PlaidItem) -> SyncRun:
     """Drain Plaid's sync feed for one item and persist it atomically."""
+    # The default taxonomy is seeded lazily on first read of /categories. A user
+    # who connects a bank before ever opening the app would otherwise have no
+    # categories for Plaid's taxonomy to map onto, and every imported
+    # transaction would land uncategorized with no second chance — a sync only
+    # categorizes each row once.
+    #
+    # Deliberately before the SyncRun below: this commits, and it must not do so
+    # inside the transaction that carries the cursor and its rows.
+    await ensure_categories(db, item.user_id)
+
     run = SyncRun(
         user_id=item.user_id,
         plaid_item_id=item.id,
