@@ -18,8 +18,9 @@ from app.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.db.session import SessionLocal
 from app.models.plaid_item import PlaidItem
-from app.services import dashboard_service
+from app.services import dashboard_service, investment_service
 from app.services.plaid import client, sync
+from app.services.plaid import investments as plaid_investments
 
 settings = get_settings()
 configure_logging(debug=settings.debug)
@@ -115,6 +116,29 @@ async def snapshot_balances(ctx: dict[str, Any]) -> int:
     return count
 
 
+async def snapshot_holdings(ctx: dict[str, Any]) -> int:
+    """Nightly: record each investment account's value for the performance chart."""
+    async with SessionLocal() as db:
+        count = await investment_service.snapshot_holdings(db)
+    logger.info("holding_snapshots_written", accounts=count)
+    return count
+
+
+async def sync_investments(ctx: dict[str, Any]) -> int:
+    """Daily: refresh holdings. Plaid has no cursor here, so this is a full
+    refresh and safe to repeat."""
+    from app.models.user import User
+
+    synced = 0
+    async with SessionLocal() as db:
+        user_ids = list((await db.scalars(select(User.id))).all())
+        for user_id in user_ids:
+            runs = await plaid_investments.sync_all_investments(db, user_id)
+            synced += len(runs)
+    logger.info("investments_synced", items=synced)
+    return synced
+
+
 async def startup(ctx: dict[str, Any]) -> None:
     logger.info("worker_starting", environment=settings.environment)
 
@@ -133,6 +157,8 @@ class WorkerSettings:
         refresh_item_health,
         snapshot_net_worth,
         snapshot_balances,
+        snapshot_holdings,
+        sync_investments,
     ]
     cron_jobs: ClassVar[list[Any]] = [
         # Safety net for missed webhooks.
@@ -143,6 +169,9 @@ class WorkerSettings:
         # Balances first: net worth is derived from them.
         cron(snapshot_balances, hour=2, minute=0),
         cron(snapshot_net_worth, hour=2, minute=15),
+        # Holdings refresh before their snapshot, so the value is current.
+        cron(sync_investments, hour=2, minute=20),
+        cron(snapshot_holdings, hour=2, minute=30),
     ]
     on_startup = startup
     on_shutdown = shutdown

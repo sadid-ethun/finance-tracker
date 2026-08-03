@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.account import NetWorthSnapshot
@@ -37,6 +37,11 @@ RANGE_DAYS: dict[str, int | None] = {
 }
 
 
+def _transfer_category_ids(user_id: str) -> Select[tuple[Any]]:
+    """Categories whose kind is 'transfer' (Transfer, Credit Card Payment...)."""
+    return select(Category.id).where(Category.user_id == user_id, Category.kind == "transfer")
+
+
 def _spendable(user_id: str) -> list[ColumnElement[bool]]:
     """The shared predicate for every money aggregation."""
     return [
@@ -45,8 +50,17 @@ def _spendable(user_id: str) -> list[ColumnElement[bool]]:
         Transaction.is_hidden.is_(False),
         # Split parents are containers; children hold the amounts.
         Transaction.is_split.is_(False),
-        # Internal movement is neither income nor spending.
+        # Detected or manually linked internal movement.
         Transaction.is_transfer.is_(False),
+        # Also exclude anything categorized as a transfer even when detection
+        # never paired it. A credit-card payment is the clearest case: counting
+        # it as spending double-counts the purchases it settles. The NULL arm is
+        # required because `NOT IN` yields NULL for uncategorized rows, which
+        # would silently drop them.
+        or_(
+            Transaction.category_id.is_(None),
+            Transaction.category_id.not_in(_transfer_category_ids(user_id)),
+        ),
     ]
 
 

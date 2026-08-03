@@ -182,6 +182,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cash-flow/by-category": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** By Category */
+        get: operations["by_category_api_v1_cash_flow_by_category_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-flow/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description Trailing totals, averages, and the best and worst months.
+         */
+        get: operations["summary_api_v1_cash_flow_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash-flow/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Trends
+         * @description Monthly series with a 3-month rolling average to smooth spiky months.
+         */
+        get: operations["trends_api_v1_cash_flow_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/categories": {
         parameters: {
             query?: never;
@@ -367,6 +424,111 @@ export interface paths {
          * @description Readiness: can the process actually serve traffic.
          */
         get: operations["ready_api_v1_health_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/investments/allocation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Allocation */
+        get: operations["allocation_api_v1_investments_allocation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/investments/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holdings */
+        get: operations["holdings_api_v1_investments_holdings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/investments/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Performance */
+        get: operations["performance_api_v1_investments_performance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/investments/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_v1_investments_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/investments/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Investments
+         * @description Refresh holdings now, and snapshot so the chart has a point today.
+         */
+        post: operations["sync_investments_api_v1_investments_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/investments/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Investment Transactions */
+        get: operations["investment_transactions_api_v1_investments_transactions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -882,6 +1044,17 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /** AllocationSlice */
+        AllocationSlice: {
+            /** Color */
+            color: string;
+            /** Name */
+            name: string;
+            /** Percent */
+            percent: number;
+            /** Value */
+            value: number;
+        };
         /** BalanceSnapshotResponse */
         BalanceSnapshotResponse: {
             /** Balance Available */
@@ -1094,6 +1267,19 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** CategoryTotal */
+        CategoryTotal: {
+            /** Amount */
+            amount: number;
+            /** Category Id */
+            category_id: string | null;
+            /** Color */
+            color: string | null;
+            /** Name */
+            name: string;
+            /** Transaction Count */
+            transaction_count: number;
+        };
         /** CategoryUpdate */
         CategoryUpdate: {
             /** Color */
@@ -1172,6 +1358,88 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** HoldingResponse */
+        HoldingResponse: {
+            /** Account Id */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /** Asset Class */
+            asset_class: string;
+            /** Cost Basis */
+            cost_basis: number | null;
+            /** Currency */
+            currency: string;
+            /** Gain */
+            gain: number | null;
+            /** Gain Percent */
+            gain_percent: number | null;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Price */
+            price: number | null;
+            /** Quantity */
+            quantity: string;
+            /** Security Id */
+            security_id: string;
+            /** Ticker */
+            ticker: string | null;
+            /** Value */
+            value: number;
+        };
+        /** InvestmentSummary */
+        InvestmentSummary: {
+            /** Currency */
+            currency: string;
+            /** Day Change */
+            day_change: number | null;
+            /** Holdings Count */
+            holdings_count: number;
+            /** Positions Without Cost Basis */
+            positions_without_cost_basis: number;
+            /** Total Cost Basis */
+            total_cost_basis: number;
+            /** Total Gain */
+            total_gain: number;
+            /** Total Gain Percent */
+            total_gain_percent: number | null;
+            /** Total Value */
+            total_value: number;
+        };
+        /** InvestmentTransactionResponse */
+        InvestmentTransactionResponse: {
+            /** Account Id */
+            account_id: string;
+            /** Amount */
+            amount: number;
+            /** Currency */
+            currency: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Fees */
+            fees: number | null;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Price */
+            price: number | null;
+            /** Quantity */
+            quantity: string | null;
+            /** Security Name */
+            security_name: string | null;
+            /** Subtype */
+            subtype: string | null;
+            /** Ticker */
+            ticker: string | null;
+            /** Type */
+            type: string | null;
+        };
         /** LinkTokenRequest */
         LinkTokenRequest: {
             /** Item Id */
@@ -1234,6 +1502,18 @@ export interface components {
             has_more: boolean;
             /** Next Cursor */
             next_cursor?: string | null;
+        };
+        /** PerformancePoint */
+        PerformancePoint: {
+            /** Cost Basis */
+            cost_basis: number | null;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Value */
+            value: number;
         };
         /**
          * PlaidItemResponse
@@ -1499,6 +1779,24 @@ export interface components {
             name?: string | null;
             /** Notes */
             notes?: string | null;
+        };
+        /** TrendPoint */
+        TrendPoint: {
+            /** Income */
+            income: number;
+            /** Income Avg 3M */
+            income_avg_3m: number;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Net */
+            net: number;
+            /** Spending */
+            spending: number;
+            /** Spending Avg 3M */
+            spending_avg_3m: number;
         };
         /** UnbudgetedSpend */
         UnbudgetedSpend: {
@@ -1948,6 +2246,104 @@ export interface operations {
             };
         };
     };
+    by_category_api_v1_cash_flow_by_category_get: {
+        parameters: {
+            query?: {
+                kind?: "income" | "expense";
+                from?: string | null;
+                to?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryTotal"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_cash_flow_summary_get: {
+        parameters: {
+            query?: {
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trends_api_v1_cash_flow_trends_get: {
+        parameters: {
+            query?: {
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendPoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_categories_api_v1_categories_get: {
         parameters: {
             query?: {
@@ -2291,6 +2687,172 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadyResponse"];
+                };
+            };
+        };
+    };
+    allocation_api_v1_investments_allocation_get: {
+        parameters: {
+            query?: {
+                group_by?: "asset_class" | "account" | "security";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocationSlice"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    holdings_api_v1_investments_holdings_get: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldingResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    performance_api_v1_investments_performance_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformancePoint"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_investments_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvestmentSummary"];
+                };
+            };
+        };
+    };
+    sync_investments_api_v1_investments_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    investment_transactions_api_v1_investments_transactions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvestmentTransactionResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

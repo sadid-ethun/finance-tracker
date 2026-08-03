@@ -562,3 +562,139 @@ export function useCopyBudget(month: string) {
     onSuccess: invalidate,
   });
 }
+
+// --------------------------------------------- Phase 7: investments & cash flow
+
+export type InvestmentSummary = {
+  total_value: number;
+  total_cost_basis: number;
+  total_gain: number;
+  total_gain_percent: number | null;
+  positions_without_cost_basis: number;
+  day_change: number | null;
+  holdings_count: number;
+  currency: string;
+};
+
+export type HoldingRow = {
+  id: string;
+  account_id: string;
+  account_name: string;
+  ticker: string | null;
+  name: string;
+  asset_class: string;
+  quantity: string;
+  price: number | null;
+  value: number;
+  cost_basis: number | null;
+  gain: number | null;
+  gain_percent: number | null;
+  currency: string;
+};
+
+export type AllocationSlice = {
+  name: string;
+  value: number;
+  percent: number;
+  color: string;
+};
+
+export type PerformancePoint = { date: string; value: number; cost_basis: number | null };
+
+export type CategoryTotal = {
+  category_id: string | null;
+  name: string;
+  color: string | null;
+  amount: number;
+  transaction_count: number;
+};
+
+export type TrendPoint = {
+  month: string;
+  income: number;
+  spending: number;
+  net: number;
+  spending_avg_3m: number;
+  income_avg_3m: number;
+};
+
+export type CashFlowSummary = {
+  months: number;
+  total_income: number;
+  total_spending: number;
+  net: number;
+  average_income: number;
+  average_spending: number;
+  average_net: number;
+  best_month: string | null;
+  worst_month: string | null;
+  currency: string;
+};
+
+export function useInvestmentSummary() {
+  return useQuery({
+    queryKey: ["investments", "summary"],
+    queryFn: () => apiFetch<InvestmentSummary>("/investments/summary"),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useHoldings() {
+  return useQuery({
+    queryKey: ["investments", "holdings"],
+    queryFn: () => apiFetch<HoldingRow[]>("/investments/holdings"),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useAllocation(groupBy: "asset_class" | "account" | "security") {
+  return useQuery({
+    queryKey: ["investments", "allocation", groupBy],
+    queryFn: () =>
+      apiFetch<AllocationSlice[]>(`/investments/allocation?group_by=${groupBy}`),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useInvestmentPerformance(days = 180) {
+  return useQuery({
+    queryKey: ["investments", "performance", days],
+    queryFn: () => apiFetch<PerformancePoint[]>(`/investments/performance?days=${days}`),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useSyncInvestments() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ items_synced: number; holdings_added: number }>("/investments/sync", {
+        method: "POST",
+      }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["investments"] }),
+  });
+}
+
+export function useCashFlowSummary(months = 12) {
+  return useQuery({
+    queryKey: ["cash-flow", "summary", months],
+    queryFn: () => apiFetch<CashFlowSummary>(`/cash-flow/summary?months=${months}`),
+    staleTime: 60_000,
+  });
+}
+
+export function useCashFlowTrends(months = 12) {
+  return useQuery({
+    queryKey: ["cash-flow", "trends", months],
+    queryFn: () => apiFetch<TrendPoint[]>(`/cash-flow/trends?months=${months}`),
+    staleTime: 60_000,
+  });
+}
+
+export function useCashFlowByCategory(kind: "income" | "expense") {
+  return useQuery({
+    queryKey: ["cash-flow", "by-category", kind],
+    queryFn: () => apiFetch<CategoryTotal[]>(`/cash-flow/by-category?kind=${kind}`),
+    staleTime: 60_000,
+  });
+}

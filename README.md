@@ -6,9 +6,9 @@ views. Mobile-first.
 
 Full technical design: [PLAN.md](PLAN.md).
 
-**Status: Phase 6 (Budgets) complete.** Monthly category limits with live progress,
-on top of the dashboard, Plaid sync, search, splits, transfers, and rules.
-Investments and cash flow land in Phase 7.
+**Status: Phase 7 (Investments & Cash Flow) complete.** All six core feature areas
+are built: dashboard, accounts, transactions, budgets, investments, and cash flow.
+Settings, import/export, and hardening land in Phase 8.
 
 ## Plaid setup
 

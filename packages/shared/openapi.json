@@ -287,6 +287,34 @@
         "title": "AccountUpdate",
         "type": "object"
       },
+      "AllocationSlice": {
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "number"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "percent",
+          "color"
+        ],
+        "title": "AllocationSlice",
+        "type": "object"
+      },
       "BalanceSnapshotResponse": {
         "properties": {
           "balance_available": {
@@ -892,6 +920,53 @@
         "title": "CategorySpend",
         "type": "object"
       },
+      "CategoryTotal": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "transaction_count": {
+            "title": "Transaction Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category_id",
+          "name",
+          "color",
+          "amount",
+          "transaction_count"
+        ],
+        "title": "CategoryTotal",
+        "type": "object"
+      },
       "CategoryUpdate": {
         "properties": {
           "color": {
@@ -1125,6 +1200,304 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HoldingResponse": {
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "account_name": {
+            "title": "Account Name",
+            "type": "string"
+          },
+          "asset_class": {
+            "title": "Asset Class",
+            "type": "string"
+          },
+          "cost_basis": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Basis"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "gain": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gain"
+          },
+          "gain_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gain Percent"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "security_id": {
+            "title": "Security Id",
+            "type": "string"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticker"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "account_id",
+          "account_name",
+          "security_id",
+          "ticker",
+          "name",
+          "asset_class",
+          "quantity",
+          "price",
+          "value",
+          "cost_basis",
+          "gain",
+          "gain_percent",
+          "currency"
+        ],
+        "title": "HoldingResponse",
+        "type": "object"
+      },
+      "InvestmentSummary": {
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "day_change": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Change"
+          },
+          "holdings_count": {
+            "title": "Holdings Count",
+            "type": "integer"
+          },
+          "positions_without_cost_basis": {
+            "title": "Positions Without Cost Basis",
+            "type": "integer"
+          },
+          "total_cost_basis": {
+            "title": "Total Cost Basis",
+            "type": "integer"
+          },
+          "total_gain": {
+            "title": "Total Gain",
+            "type": "integer"
+          },
+          "total_gain_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Gain Percent"
+          },
+          "total_value": {
+            "title": "Total Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_value",
+          "total_cost_basis",
+          "total_gain",
+          "total_gain_percent",
+          "positions_without_cost_basis",
+          "day_change",
+          "holdings_count",
+          "currency"
+        ],
+        "title": "InvestmentSummary",
+        "type": "object"
+      },
+      "InvestmentTransactionResponse": {
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "fees": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fees"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "security_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Security Name"
+          },
+          "subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtype"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticker"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          }
+        },
+        "required": [
+          "id",
+          "account_id",
+          "date",
+          "name",
+          "type",
+          "subtype",
+          "ticker",
+          "security_name",
+          "quantity",
+          "price",
+          "fees",
+          "amount",
+          "currency"
+        ],
+        "title": "InvestmentTransactionResponse",
+        "type": "object"
+      },
       "LinkTokenRequest": {
         "properties": {
           "item_id": {
@@ -1284,6 +1657,37 @@
           "data"
         ],
         "title": "Page[TransactionResponse]",
+        "type": "object"
+      },
+      "PerformancePoint": {
+        "properties": {
+          "cost_basis": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Basis"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "value",
+          "cost_basis"
+        ],
+        "title": "PerformancePoint",
         "type": "object"
       },
       "PlaidItemResponse": {
@@ -2035,6 +2439,45 @@
           }
         },
         "title": "TransactionUpdate",
+        "type": "object"
+      },
+      "TrendPoint": {
+        "properties": {
+          "income": {
+            "title": "Income",
+            "type": "integer"
+          },
+          "income_avg_3m": {
+            "title": "Income Avg 3M",
+            "type": "integer"
+          },
+          "month": {
+            "format": "date",
+            "title": "Month",
+            "type": "string"
+          },
+          "net": {
+            "title": "Net",
+            "type": "integer"
+          },
+          "spending": {
+            "title": "Spending",
+            "type": "integer"
+          },
+          "spending_avg_3m": {
+            "title": "Spending Avg 3M",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "income",
+          "spending",
+          "net",
+          "spending_avg_3m",
+          "income_avg_3m"
+        ],
+        "title": "TrendPoint",
         "type": "object"
       },
       "UnbudgetedSpend": {
@@ -2853,6 +3296,216 @@
         ]
       }
     },
+    "/api/v1/cash-flow/by-category": {
+      "get": {
+        "operationId": "by_category_api_v1_cash_flow_by_category_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "expense",
+              "enum": [
+                "income",
+                "expense"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryTotal"
+                  },
+                  "title": "Response By Category Api V1 Cash Flow By Category Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "By Category",
+        "tags": [
+          "cash-flow"
+        ]
+      }
+    },
+    "/api/v1/cash-flow/summary": {
+      "get": {
+        "description": "Trailing totals, averages, and the best and worst months.",
+        "operationId": "summary_api_v1_cash_flow_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 24,
+              "minimum": 2,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Summary Api V1 Cash Flow Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Summary",
+        "tags": [
+          "cash-flow"
+        ]
+      }
+    },
+    "/api/v1/cash-flow/trends": {
+      "get": {
+        "description": "Monthly series with a 3-month rolling average to smooth spiky months.",
+        "operationId": "trends_api_v1_cash_flow_trends_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 24,
+              "minimum": 3,
+              "title": "Months",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TrendPoint"
+                  },
+                  "title": "Response Trends Api V1 Cash Flow Trends Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Trends",
+        "tags": [
+          "cash-flow"
+        ]
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "description": "Defaults are seeded on first read, so this is never empty.",
@@ -3419,6 +4072,285 @@
         "summary": "Ready",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/investments/allocation": {
+      "get": {
+        "operationId": "allocation_api_v1_investments_allocation_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "default": "asset_class",
+              "enum": [
+                "asset_class",
+                "account",
+                "security"
+              ],
+              "title": "Group By",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AllocationSlice"
+                  },
+                  "title": "Response Allocation Api V1 Investments Allocation Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Allocation",
+        "tags": [
+          "investments"
+        ]
+      }
+    },
+    "/api/v1/investments/holdings": {
+      "get": {
+        "operationId": "holdings_api_v1_investments_holdings_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HoldingResponse"
+                  },
+                  "title": "Response Holdings Api V1 Investments Holdings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Holdings",
+        "tags": [
+          "investments"
+        ]
+      }
+    },
+    "/api/v1/investments/performance": {
+      "get": {
+        "operationId": "performance_api_v1_investments_performance_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 180,
+              "maximum": 1825,
+              "minimum": 7,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PerformancePoint"
+                  },
+                  "title": "Response Performance Api V1 Investments Performance Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Performance",
+        "tags": [
+          "investments"
+        ]
+      }
+    },
+    "/api/v1/investments/summary": {
+      "get": {
+        "operationId": "summary_api_v1_investments_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestmentSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Summary",
+        "tags": [
+          "investments"
+        ]
+      }
+    },
+    "/api/v1/investments/sync": {
+      "post": {
+        "description": "Refresh holdings now, and snapshot so the chart has a point today.",
+        "operationId": "sync_investments_api_v1_investments_sync_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sync Investments Api V1 Investments Sync Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sync Investments",
+        "tags": [
+          "investments"
+        ]
+      }
+    },
+    "/api/v1/investments/transactions": {
+      "get": {
+        "operationId": "investment_transactions_api_v1_investments_transactions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InvestmentTransactionResponse"
+                  },
+                  "title": "Response Investment Transactions Api V1 Investments Transactions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Investment Transactions",
+        "tags": [
+          "investments"
         ]
       }
     },

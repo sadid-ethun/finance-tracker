@@ -12,6 +12,12 @@ from app.models.account import (
 )
 from app.models.budget import Budget, BudgetCategory
 from app.models.category import Category, Merchant
+from app.models.investment import (
+    Holding,
+    HoldingSnapshot,
+    InvestmentTransaction,
+    Security,
+)
 from app.models.plaid_item import PlaidItem, SyncRun
 from app.models.rule import Rule
 from app.models.transaction import Transaction
@@ -24,10 +30,14 @@ __all__ = [
     "Budget",
     "BudgetCategory",
     "Category",
+    "Holding",
+    "HoldingSnapshot",
+    "InvestmentTransaction",
     "Merchant",
     "NetWorthSnapshot",
     "PlaidItem",
     "Rule",
+    "Security",
     "SyncRun",
     "Transaction",
     "User",

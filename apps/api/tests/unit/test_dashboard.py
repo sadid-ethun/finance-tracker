@@ -36,9 +36,25 @@ def test_scopes_to_the_user() -> None:
     assert "user_id" in _clauses()
 
 
-def test_predicate_has_all_five_guards() -> None:
+def test_predicate_has_all_six_guards() -> None:
     """A regression here is silent, so the count is asserted explicitly."""
-    assert len(_spendable("u_1")) == 5
+    assert len(_spendable("u_1")) == 6
+
+
+def test_excludes_transfer_kind_categories() -> None:
+    """A credit-card payment counted as spending double-counts its purchases.
+
+    is_transfer only covers pairs detection actually matched; a payment whose
+    amounts never lined up would otherwise slip through as spending.
+    """
+    clauses = _clauses()
+    assert "kind" in clauses
+
+
+def test_transfer_category_exclusion_keeps_uncategorized_rows() -> None:
+    """NOT IN yields NULL for uncategorized rows, which would drop them."""
+    clauses = _clauses()
+    assert "category_id IS NULL" in clauses
 
 
 # ------------------------------------------------------------- month bounds
