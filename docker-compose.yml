@@ -48,8 +48,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # Migrations run on start locally; in production they are a Railway
-    # pre-deploy step so replicas cannot race (PLAN.md section 12).
+    # Migrations run on start locally; in production infra/scripts/deploy.sh
+    # runs them as a one-off before starting services, so a crash-looping
+    # container cannot re-enter them halfway through (PLAN.md section 12).
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
@@ -87,7 +88,7 @@ services:
       DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_APP_URL: http://localhost:3000
-      # Local development only — production reads this from Railway secrets.
+      # Local development only — production reads this from the VM's .env.
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-dev-secret-change-me-32chars}
     ports:
       - "3000:3000"

@@ -2,9 +2,13 @@
 #
 # Database backup.
 #
-# Railway takes its own daily snapshots; this is the second copy that lives
-# somewhere Railway does not, because a backup you cannot restore without the
-# provider still working is not really a backup.
+# The VM has no provider-managed snapshots behind it, so this is not a second
+# copy — it is the only one. Run it on a schedule and get the output off the
+# box, because a backup sitting on the disk it is meant to protect is not
+# really a backup.
+#
+# deploy.sh takes its own dump immediately before every migration; this is the
+# routine one, for everything that is not a deploy.
 #
 # Usage:
 #   DATABASE_URL=postgresql://... ./infra/scripts/backup.sh [output-dir]

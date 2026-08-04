@@ -1,0 +1,145 @@
+# Production topology for a single VM (Oracle Cloud Ampere / any arm64 or
+# x86 host). Differs from docker-compose.yml in the ways that matter:
+#
+#   * nothing is published except Caddy — Postgres, Redis, the API and the web
+#     app are reachable only on the internal compose network;
+#   * no source bind-mounts and no --reload;
+#   * migrations are NOT run by the api entrypoint (see infra/scripts/deploy.sh)
+#     so a restart loop can never re-run them mid-flight;
+#   * every secret is required, with no fallback. `${VAR:?}` fails the whole
+#     command when a value is missing, which is the difference between a
+#     deploy that refuses to start and one that silently comes up with a
+#     default password on the public internet.
+#
+# Usage on the VM:  docker compose -f docker-compose.prod.yml <cmd>
+# Values come from a `.env` file sitting next to this one — never committed.
+
+name: finance-tracker
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN to your public hostname}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL for Let\'s Encrypt}
+    depends_on:
+      - web
+      - api
+    networks:
+      default:
+        aliases:
+          # The API verifies JWTs against the issuer Better Auth stamps into
+          # them, which is the *public* URL. Resolving that hostname to Caddy
+          # from inside the network keeps the JWKS fetch on the box instead of
+          # hairpinning out to the public IP and back — which Oracle's NAT
+          # does not reliably support.
+          - ${DOMAIN}
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: finance
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: finance
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance -d finance"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # appendonly keeps the arq queue across a reboot; the free VM is not
+    # backed by anything, so an unflushed queue is a lost sync.
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./apps/api
+      target: runtime
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
+      REDIS_URL: redis://redis:6379/0
+      WEB_URL: https://${DOMAIN:?}
+      CORS_ORIGINS: '["https://${DOMAIN}"]'
+      PLAID_CLIENT_ID: ${PLAID_CLIENT_ID:?}
+      PLAID_SECRET: ${PLAID_SECRET:?}
+      PLAID_ENV: ${PLAID_ENV:-production}
+      PLAID_ENCRYPTION_KEY: ${PLAID_ENCRYPTION_KEY:?}
+      PLAID_WEBHOOK_URL: https://${DOMAIN}/webhooks/plaid
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./apps/api
+      target: runtime
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
+      REDIS_URL: redis://redis:6379/0
+      WEB_URL: https://${DOMAIN:?}
+      PLAID_CLIENT_ID: ${PLAID_CLIENT_ID:?}
+      PLAID_SECRET: ${PLAID_SECRET:?}
+      PLAID_ENV: ${PLAID_ENV:-production}
+      PLAID_ENCRYPTION_KEY: ${PLAID_ENCRYPTION_KEY:?}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    command: ["arq", "app.workers.main.WorkerSettings"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:8000
+      DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?generate a fresh one, do not reuse dev}
+      BETTER_AUTH_URL: https://${DOMAIN:?}
+      NEXT_PUBLIC_APP_URL: https://${DOMAIN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

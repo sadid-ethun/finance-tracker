@@ -710,32 +710,46 @@ This app holds bank credentials-by-proxy and complete financial history. Treated
 
 # 12. Deployment Architecture
 
-Railway project, four services from one repo.
+A single VM running `docker-compose.prod.yml`, with Caddy as the only process listening to the internet.
+
+> **Revised after Phase 9.** This section originally specified Railway. The app is five processes and the `worker` runs cron, so it must be always-on — and by 2026 no PaaS free tier covers that shape: Render charges $7/mo minimum for background workers and expires free Postgres after 30 days, Fly removed its free allowances, Koyeb closed signups. Free serverless Redis does not fit either: arq polls on a 0.5s delay, roughly 5.2M commands/month against Upstash's 500K free allowance. One VM is both cheaper and structurally simpler than assembling four free tiers. **Oracle Cloud Always Free** (Ampere ARM, 2 OCPU / 12 GB since June 2026) is the $0 option; any arm64 or x86 host is a drop-in.
 
 ```mermaid
 graph LR
-    GH[GitHub main] -->|Actions| RW[Railway]
-    RW --> W["web<br/>Next.js<br/>public"]
-    RW --> A["api<br/>FastAPI<br/>private + webhook path public"]
-    RW --> K["worker<br/>arq<br/>no ingress"]
-    RW --> DB[("Postgres<br/>daily backups")]
-    RW --> R[("Redis")]
-    W -.private network.-> A
-    K -.-> DB
-    K -.-> R
+    GH[GitHub main] -->|Actions, SSH| VM[VM]
+    subgraph VM["Single VM — docker compose"]
+        C["caddy<br/>:80 :443<br/>TLS, only public listener"]
+        W["web<br/>Next.js"]
+        A["api<br/>FastAPI"]
+        K["worker<br/>arq, cron"]
+        DB[("Postgres<br/>volume")]
+        R[("Redis<br/>appendonly")]
+    end
+    C -->|"/*"| W
+    C -->|"/webhooks/plaid"| A
+    W --> A
+    W --> DB
+    A --> DB
+    A --> R
+    K --> DB
+    K --> R
 ```
 
 | Service | Build | Start | Health |
 |---|---|---|---|
-| web | Dockerfile (Next standalone output) | `node server.js` | `/api/health` |
+| caddy | `caddy:2-alpine` | Caddyfile | ACME managed automatically |
+| web | Dockerfile (Next standalone output) | `node apps/web/server.js` | `/api/health` |
 | api | Dockerfile (uv, python:3.12-slim) | `uvicorn app.main:app` | `/health` (liveness), `/health/ready` (DB+Redis) |
 | worker | same image as api | `arq app.workers.main.WorkerSettings` | heartbeat key in Redis |
 
-- **Environments:** `production` (from `main`) and `staging` (from `develop`), each with its own Postgres and Plaid Sandbox keys. Staging exists so Plaid webhook changes get exercised before touching real data.
-- **Migrations** run as a Railway pre-deploy command (`alembic upgrade head`) — not in the app entrypoint, which would race across replicas.
-- **Rollback:** Railway keeps prior deployments; migrations are written forward-compatible (add column → backfill → switch reads → drop in a later release) so a code rollback never strands the schema.
-- **Domain:** `finance.<yourdomain>` on web; the API is private-network only except `/webhooks/plaid`, which needs a public route for Plaid to reach.
-- **Cost estimate:** ~$15–25/mo on Railway Hobby for all four services plus Postgres and Redis at personal scale.
+- **Ingress:** only Caddy publishes ports. Postgres, Redis, `api`, and `web` are reachable solely on the internal compose network. `/webhooks/plaid` routes to `api` ahead of the catch-all, because the Next.js proxy would answer it with a 307 to `/login` and Plaid would score that as a delivery failure.
+- **Issuer resolution:** `WEB_URL` on the API must be the *public* URL, since the API validates the JWT issuer Better Auth stamps in. Caddy carries a compose network alias for the domain so that JWKS fetch resolves on-box rather than hairpinning out to the public IP and back, which Oracle's NAT does not reliably support.
+- **Builds** happen on the VM. Cross-building arm64 under QEMU in Actions makes the Next.js build a tens-of-minutes job, and shipping the result would need a registry to move an image onto the machine that could have built it.
+- **Migrations** run as a one-off `compose run --rm api alembic upgrade head` in `deploy.sh`, before services start — not from the app entrypoint, where a crash-looping container would re-enter them halfway through. A verified `pg_dump` is taken immediately beforehand.
+- **Environments:** production only. Staging was dropped with Railway — a second VM doubles the ops surface for a single-user app, and Plaid Sandbox exercises webhook changes just as well locally.
+- **Rollback:** `git checkout <sha> && ./infra/scripts/deploy.sh`. Migrations stay forward-compatible (add column → backfill → switch reads → drop later) so a code rollback never strands the schema.
+- **Backups** are entirely ours now: `deploy.sh` dumps before every migration, and `infra/scripts/backup.sh` handles the routine copy. Both must be moved off the VM — there is no provider snapshot behind this disk.
+- **Cost:** $0 on Oracle Always Free; ~€4/mo on a Hetzner CX22 if Oracle capacity or signup proves difficult.
 
 ---
 

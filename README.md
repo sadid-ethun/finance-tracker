@@ -8,7 +8,7 @@ Full technical design: [PLAN.md](PLAN.md).
 
 **Status: Phase 9 (Production Cutover) — code complete, deployment pending.**
 Everything in PLAN.md is built. What remains is infrastructure only: creating the
-Railway project, pointing a domain at it, and switching Plaid to Production.
+VM, pointing a domain at it, and switching Plaid to Production.
 See [Going to production](#going-to-production).
 
 > **Turn on two-factor before connecting real bank accounts.** Settings → Security.
@@ -46,14 +46,14 @@ re-link each institution.
 | Database | PostgreSQL 16, Redis |
 | Auth | Better Auth (Phase 1) |
 | Bank data | Plaid (Phase 4) |
-| Deploy | Railway, Docker, GitHub Actions |
+| Deploy | Docker Compose on a single VM, Caddy, GitHub Actions |
 
 ## Layout
 
 ```
 apps/web     Next.js frontend
 apps/api     FastAPI backend (also runs the worker, same image)
-infra/       Railway topology reference
+infra/       Caddy config, provisioning and deploy scripts
 ```
 
 ## Prerequisites
@@ -171,23 +171,45 @@ Settings → Security. PLAN.md section 8 treats this as a prerequisite for
 Production Plaid, not an option: from here on the app holds read access to real
 bank data.
 
-### 2. Create the Railway project
+### 2. Create the VM
 
-Four services from this repo, plus Postgres and Redis. `infra/railway.json`
-documents the intended build and deploy settings for each.
+The app is five processes — `web`, `api`, `worker`, Postgres, Redis — and the
+`worker` runs cron (nightly balance and net-worth snapshots), so it has to be
+always-on. Platform-as-a-service free tiers host one web service that sleeps;
+that combination silently skips the snapshot jobs and the net-worth chart stops
+filling in. One small VM running `docker-compose.prod.yml` is both cheaper and
+simpler here.
 
-| Service | Dockerfile | Start | Healthcheck |
-|---|---|---|---|
-| `api` | `apps/api/Dockerfile` | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` | `/health` |
-| `worker` | `apps/api/Dockerfile` | `arq app.workers.main.WorkerSettings` | — |
-| `web` | `apps/web/Dockerfile` | `node apps/web/server.js` | `/api/health` |
+**Oracle Cloud Always Free** gives an Ampere ARM VM at no cost — 2 OCPU / 12 GB
+as of June 2026, roughly six times what this needs. Any arm64 or x86 host works
+the same way; Hetzner CX22 at ~€4/mo is the fallback if Oracle's capacity or
+signup fights you.
 
-Set `alembic upgrade head` as the **pre-deploy command on `api` only**. Running it
-from the app entrypoint would race across replicas.
+1. Create an **Ampere A1** instance, Ubuntu 24.04, and save the SSH key.
+2. Point your domain's **A record** at the instance's public IP. Do this before
+   deploying — Caddy cannot obtain a certificate until the name resolves.
+3. In the Oracle console, **VCN → Security List → add ingress** for TCP 80 and
+   443 from `0.0.0.0/0`.
+4. SSH in and run the provisioner:
 
-### 3. Set environment variables
+```bash
+curl -fsSL https://raw.githubusercontent.com/sadid-ethun/finance-tracker/main/infra/scripts/provision-oracle.sh | bash
+```
 
-Generate fresh secrets for production — never reuse the local ones:
+It installs Docker, adds swap, clones the repo, and opens 80/443 in the host
+firewall. That last part is not redundant with step 3: Oracle's Ubuntu images
+ship an iptables ruleset ending in `REJECT`, so packets reach the VM and get
+dropped locally even when the cloud Security List allows them. Both halves are
+required, and nothing logs it when only one is done.
+
+Log out and back in afterwards so the `docker` group takes effect.
+
+### 3. Fill in the environment
+
+`provision-oracle.sh` copies `.env.production.example` to `~/finance-tracker/.env`.
+Fill in every value. Generate the two secrets **fresh** — the dev ones have sat
+in plaintext on your laptop, which was fine for sandbox data and is not fine for
+real bank data:
 
 ```bash
 openssl rand -base64 32
@@ -197,33 +219,57 @@ openssl rand -base64 32
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-Required on `api` and `worker`: `ENVIRONMENT=production`, `DATABASE_URL`,
-`REDIS_URL`, `WEB_URL`, `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV=production`,
-`PLAID_ENCRYPTION_KEY`, `PLAID_WEBHOOK_URL`.
+`docker-compose.prod.yml` declares every secret as `${VAR:?}`, so a missing value
+fails the command outright rather than starting with an empty default.
 
-Required on `web`: `DATABASE_URL`, `API_INTERNAL_URL`, `BETTER_AUTH_SECRET`,
-`BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`.
-
-> **Back up `PLAID_ENCRYPTION_KEY` somewhere outside Railway and outside this
+> **Back up `PLAID_ENCRYPTION_KEY` somewhere outside the VM and outside this
 > repo.** It is not in database dumps. Lose it and every connected bank must be
 > re-linked, because the stored access tokens become undecryptable.
 
 ### 4. Deploy
 
-Push to `main`. `.github/workflows/deploy.yml` re-runs the full suite, deploys all
-three services, and fails the run if the production healthcheck never passes.
+First deploy is by hand, so you can watch it:
 
-Under **Settings → Secrets and variables → Actions**, set:
+```bash
+cd ~/finance-tracker && ./infra/scripts/deploy.sh
+```
+
+That pulls `main`, builds the images **on the VM**, waits for Postgres, takes a
+verified pre-deploy dump, runs `alembic upgrade head` as a one-off, and brings
+everything up behind Caddy. Migrations are deliberately not in the `api`
+entrypoint — a crash-looping container would otherwise re-enter them mid-flight.
+
+Images build on the box rather than in CI because cross-building arm64 under
+QEMU in GitHub Actions turns the Next.js build into a tens-of-minutes job, and
+shipping the result would need a registry to move an image onto the same
+machine that could have built it directly.
+
+Afterwards, pushes to `main` deploy automatically. Under
+**Settings → Secrets and variables → Actions**, set:
 
 | Name | Kind | Value |
 |---|---|---|
-| `RAILWAY_TOKEN` | Secret | Railway project token |
-| `PRODUCTION_URL` | Variable | `https://<your-web-domain>` — no trailing slash |
+| `DEPLOY_HOST` | Secret | VM public IP or hostname |
+| `DEPLOY_USER` | Secret | `ubuntu` |
+| `DEPLOY_SSH_KEY` | Secret | Private key with access to the VM |
+| `DEPLOY_KNOWN_HOSTS` | Secret | Output of `ssh-keyscan <host>` |
+| `PRODUCTION_URL` | Variable | `https://<your-domain>` — no trailing slash |
 
-Set `RAILWAY_TOKEN` **first**. The deploy job is gated on `PRODUCTION_URL` being
-non-empty, so until you add that variable every push runs the verify suite and
-skips deployment. That is what keeps `main` green before Railway exists; adding
-`PRODUCTION_URL` is what arms real deploys.
+Use a **deploy-only SSH key**, not your personal one:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/finance-deploy -C "github-actions-deploy"
+```
+
+Append the public half to `~/.ssh/authorized_keys` on the VM and put the private
+half in `DEPLOY_SSH_KEY`. `DEPLOY_KNOWN_HOSTS` pins the host key — without it the
+workflow would need `StrictHostKeyChecking=no`, which hands the deploy session to
+whoever answers on port 22.
+
+Add `PRODUCTION_URL` **last**. The deploy job is gated on it being non-empty, so
+until then every push runs the verify suite and cleanly skips deployment. That is
+what keeps `main` green while the server is still being set up; adding it is what
+arms real deploys.
 
 ### 5. Switch Plaid to Production
 

@@ -58,55 +58,63 @@ jobs:
           pnpm --filter web test
           pnpm --filter web build
 
-  # Skipped until Railway exists. Without this guard every push to main fails
-  # at `railway up` with an empty token, which trains you to ignore a red CI
-  # badge — the one signal that has to stay trustworthy. Setting the
-  # PRODUCTION_URL repo variable is the last step of Railway setup, so it
-  # doubles as the switch that turns real deploys on.
+  # Skipped until the VM exists. Without this guard every push to main fails
+  # at the SSH step, which trains you to ignore a red CI badge — the one
+  # signal that has to stay trustworthy. Setting the PRODUCTION_URL repo
+  # variable is the last step of server setup, so it doubles as the switch
+  # that turns real deploys on.
   deploy:
     needs: verify
     if: vars.PRODUCTION_URL != ''
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Check the Railway token is present
+      - name: Check the deploy secrets are present
         run: |
-          if [ -z "${RAILWAY_TOKEN}" ]; then
-            echo "::error::RAILWAY_TOKEN is not set. Add it under Settings -> Secrets and variables -> Actions -> Secrets."
+          missing=""
+          [ -z "${SSH_HOST}" ] && missing="${missing} DEPLOY_HOST"
+          [ -z "${SSH_USER}" ] && missing="${missing} DEPLOY_USER"
+          [ -z "${SSH_KEY}" ] && missing="${missing} DEPLOY_SSH_KEY"
+          if [ -n "${missing}" ]; then
+            echo "::error::Missing repository secrets:${missing}"
             exit 1
           fi
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      # Migrations run as a Railway pre-deploy command on the api service, not
-      # here, so they cannot race across replicas. See infra/railway.json.
-      - name: Deploy API
-        run: railway up --service api --detach
+      # Pinning the host key means a DNS hijack or a MITM cannot silently
+      # receive the deploy. StrictHostKeyChecking=no would hand the session to
+      # whoever answers on port 22.
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${SSH_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
 
-      - name: Deploy worker
-        run: railway up --service worker --detach
+      # The build happens on the VM. Building arm64 here would mean QEMU
+      # emulation, which turns the Next.js build into a tens-of-minutes job,
+      # and shipping the result would need a registry to move an image onto
+      # the same machine that could have built it directly.
+      - name: Deploy
+        run: |
+          ssh -o BatchMode=yes -o ConnectTimeout=15 \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            'cd ~/finance-tracker && ./infra/scripts/deploy.sh'
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Deploy web
-        run: railway up --service web --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
 
   smoke:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for rollout
-        run: sleep 45
-
       - name: Health check
         run: |
           set -e

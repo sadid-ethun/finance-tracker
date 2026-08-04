@@ -1,0 +1,46 @@
+# TLS terminator and the only process on this box listening to the internet.
+# Certificates are obtained and renewed automatically from Let's Encrypt and
+# persisted in the caddy_data volume — losing that volume means re-issuing,
+# which brushes against rate limits, so keep it.
+{
+	email {$ACME_EMAIL}
+	# Nothing on this host should ever be served over plaintext.
+	auto_https disable_redirects
+}
+
+# Plain HTTP exists only to redirect and to answer ACME challenges.
+http://{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+https://{$DOMAIN} {
+	encode zstd gzip
+
+	# Plaid posts webhooks straight at the API. The Next.js app has no route
+	# for this path, and its proxy would answer with a 307 to /login — Plaid
+	# would treat that as a delivery failure and eventually disable the
+	# webhook. Ordering matters: this handle must come before the catch-all.
+	handle /webhooks/plaid* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		# The API sets HSTS on its own responses in production; this covers
+		# the browser-facing surface, which is the one that matters for it.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Don't advertise the reverse proxy's version to scanners.
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
