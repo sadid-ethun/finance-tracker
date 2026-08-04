@@ -165,11 +165,16 @@ These are load-bearing — see PLAN.md for the reasoning.
 Everything below needs your accounts and credentials, so none of it is done yet.
 Work top to bottom — the order matters.
 
-### 1. Turn on two-factor first
+### 1. Prerequisites
 
-Settings → Security. PLAN.md section 8 treats this as a prerequisite for
-Production Plaid, not an option: from here on the app holds read access to real
-bank data.
+- **A domain you control.** Caddy obtains a certificate over HTTP-01, so the
+  name must resolve to the VM before the first deploy. Any registrar works;
+  a `duckdns.org` subdomain is free and Let's Encrypt issues for it.
+- **Plaid Production access approved**, if you intend to connect real banks.
+  Approval takes days to weeks — start it before the rest of this.
+
+Two-factor comes later, at step 5. It is enrolled per database, so whatever you
+turned on locally does not carry over to the server.
 
 ### 2. Create the VM
 
@@ -244,7 +249,28 @@ QEMU in GitHub Actions turns the Next.js build into a tens-of-minutes job, and
 shipping the result would need a registry to move an image onto the same
 machine that could have built it directly.
 
-Afterwards, pushes to `main` deploy automatically. Under
+### 5. Create your login
+
+Signup is disabled, so the owner account is seeded once, by hand. Pass the
+credentials on the command line rather than putting them in `.env`:
+
+```bash
+docker compose -f docker-compose.prod.yml --profile seed run --rm -e OWNER_EMAIL=you@example.com -e OWNER_PASSWORD='a long passphrase' seed
+```
+
+Safe to re-run — it exits without changes if the account already exists.
+
+The `seed` service builds the Dockerfile's `builder` stage, not `runtime`: the
+runtime image is Next's standalone output, which deliberately carries no source
+and no devDependencies, so `tsx` and this script are not in it. The profile
+keeps it out of `up`.
+
+Then sign in and **turn on two-factor immediately**, at Settings → Security.
+This is a fresh database; the 2FA enrolment on your laptop does not carry over.
+
+### 6. Turn on automatic deploys
+
+Pushes to `main` deploy automatically. Under
 **Settings → Secrets and variables → Actions**, set:
 
 | Name | Kind | Value |
@@ -271,16 +297,21 @@ until then every push runs the verify suite and cleanly skips deployment. That i
 what keeps `main` green while the server is still being set up; adding it is what
 arms real deploys.
 
-### 5. Switch Plaid to Production
+### 7. Switch Plaid to Production
 
 1. Confirm Production access is approved in the Plaid dashboard.
-2. Set `PLAID_SECRET` to the Production secret and `PLAID_ENV=production`.
-3. Set `PLAID_WEBHOOK_URL` to `https://<your-api-domain>/webhooks/plaid`.
-4. Re-link each institution through Settings → Connections. Sandbox items do not
-   carry over; their access tokens are only valid in Sandbox.
+2. On the VM, set `PLAID_SECRET` to the Production secret and
+   `PLAID_ENV=production` in `.env`, then `docker compose -f
+   docker-compose.prod.yml up -d api worker` to pick them up.
+3. In the Plaid dashboard, set the webhook to
+   `https://<your-domain>/webhooks/plaid`. Caddy routes that path to the API
+   ahead of the catch-all; the compose file already passes the same value to
+   the API as `PLAID_WEBHOOK_URL`.
+4. Link each institution through Settings → Connections. Sandbox items do not
+   carry over — their access tokens are only valid in Sandbox.
 5. After the first sync, run Dashboard → snapshot to backfill the net-worth chart.
 
-### 6. Verify with real data
+### 8. Verify with real data
 
 Reconcile before trusting anything:
 
@@ -292,19 +323,32 @@ Net worth should equal the sum of your account balances, with credit cards and
 loans subtracting. If it does not, check for transfers that detection has not
 paired — Settings shows unpaired activity as ordinary spending.
 
-### 7. Back up, and prove the backup works
+### 9. Back up, and prove the backup works
+
+Nothing sits behind this disk — there is no provider snapshot. `deploy.sh` dumps
+before every migration, but those land on the same volume they protect, so the
+routine backup has to leave the box.
+
+On the VM, schedule it:
 
 ```bash
-DATABASE_URL=<production-url> ./infra/scripts/backup.sh ./backups
+(crontab -l 2>/dev/null; echo '0 3 * * * cd ~/finance-tracker && docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U finance -d finance --format=custom --no-owner > ~/backups/nightly-$(date -u +\%Y\%m\%d).dump') | crontab -
 ```
 
+Then get `~/backups` off the VM — object storage, another machine, anywhere
+that is not this disk — and prove a dump actually restores:
+
 ```bash
-ADMIN_URL=<admin-url> ./infra/scripts/restore-drill.sh ./backups/<file>.dump
+ADMIN_URL=<admin-url> ./infra/scripts/restore-drill.sh ~/backups/<file>.dump
 ```
 
 The drill restores into a throwaway database, prints row counts, and drops it.
 It fails loudly if the restore is structurally valid but empty. Run it quarterly —
 an untested backup is a guess.
+
+Back up `PLAID_ENCRYPTION_KEY` separately, somewhere that is not the VM. It is
+not in any dump. Restoring a database without it gives you every transaction and
+no working bank connection.
 
 ## Known limitations
 

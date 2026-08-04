@@ -136,6 +136,35 @@ services:
       api:
         condition: service_started
 
+  # One-off owner seeding. Signup is disabled in the Better Auth config, so
+  # this is the only way the account is created.
+  #
+  # It builds the `builder` stage rather than `runtime` because the runtime
+  # image is Next's standalone output, which deliberately contains no source
+  # and no devDependencies — so tsx and this script are not in it.
+  #
+  # Behind a profile, so it never starts as part of `up`. Pass the credentials
+  # at run time rather than putting them in .env:
+  #
+  #   docker compose -f docker-compose.prod.yml --profile seed run --rm \
+  #     -e OWNER_EMAIL=you@example.com -e OWNER_PASSWORD='...' seed
+  seed:
+    profiles: ["seed"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: builder
+    environment:
+      DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?}
+      BETTER_AUTH_URL: https://${DOMAIN:?}
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+    command: ["pnpm", "--filter", "web", "seed:owner"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:
