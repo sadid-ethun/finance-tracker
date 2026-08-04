@@ -33,15 +33,6 @@ services:
     depends_on:
       - web
       - api
-    networks:
-      default:
-        aliases:
-          # The API verifies JWTs against the issuer Better Auth stamps into
-          # them, which is the *public* URL. Resolving that hostname to Caddy
-          # from inside the network keeps the JWKS fetch on the box instead of
-          # hairpinning out to the public IP and back — which Oracle's NAT
-          # does not reliably support.
-          - ${DOMAIN}
 
   postgres:
     image: postgres:16-alpine
@@ -82,7 +73,13 @@ services:
       DEBUG: "false"
       DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
       REDIS_URL: redis://redis:6379/0
+      # WEB_URL is the issuer Better Auth stamps into tokens, so it must be the
+      # public URL. The JWKS itself is fetched over the compose network: going
+      # out to the public IP and back would depend on NAT hairpinning, which
+      # Oracle does not reliably support, and on Caddy being up to authenticate
+      # a request Caddy is not involved in.
       WEB_URL: https://${DOMAIN:?}
+      JWKS_BASE_URL: http://web:3000
       CORS_ORIGINS: '["https://${DOMAIN}"]'
       PLAID_CLIENT_ID: ${PLAID_CLIENT_ID:?}
       PLAID_SECRET: ${PLAID_SECRET:?}
@@ -107,6 +104,7 @@ services:
       DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
       REDIS_URL: redis://redis:6379/0
       WEB_URL: https://${DOMAIN:?}
+      JWKS_BASE_URL: http://web:3000
       PLAID_CLIENT_ID: ${PLAID_CLIENT_ID:?}
       PLAID_SECRET: ${PLAID_SECRET:?}
       PLAID_ENV: ${PLAID_ENV:-production}

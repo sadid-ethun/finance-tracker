@@ -124,3 +124,47 @@ def test_unreachable_jwks_raises_unauthenticated(settings: Settings) -> None:
 
     with pytest.raises(UnauthenticatedError):
         decode_token("not-a-real-token", broken)
+
+
+def test_jwks_url_defaults_to_web_url() -> None:
+    """With no override the fetch address follows the public URL."""
+    settings = Settings(environment="test", web_url="https://finance.example.com")
+
+    assert settings.jwks_url == "https://finance.example.com/api/auth/jwks"
+    assert settings.jwt_issuer == "https://finance.example.com"
+
+
+def test_jwks_base_url_does_not_change_the_issuer() -> None:
+    """The fetch address and the expected issuer are separate concerns.
+
+    Under docker-compose the browser reaches the web app at localhost:3000 —
+    which is what Better Auth stamps as `iss` — but the API must fetch the keys
+    over the compose network, where `localhost` is the API container itself.
+    Deriving both from one setting means either the fetch fails or every
+    request 401s on an issuer mismatch.
+    """
+    settings = Settings(
+        environment="test",
+        web_url="http://localhost:3000",
+        jwks_base_url="http://web:3000",
+    )
+
+    assert settings.jwks_url == "http://web:3000/api/auth/jwks"
+    assert settings.jwt_issuer == "http://localhost:3000"
+
+
+def test_token_from_the_public_issuer_verifies_when_jwks_is_internal(
+    keypair: tuple[Ed25519PrivateKey, Any],
+) -> None:
+    """The end the bug was actually felt at: a real token must still verify."""
+    private_key, public_key = keypair
+    settings = Settings(
+        environment="test",
+        web_url=ISSUER,
+        jwks_base_url="http://web:3000",
+        jwt_audience=AUDIENCE,
+    )
+
+    claims = decode_with(public_key, make_token(private_key), settings)
+
+    assert claims["sub"] == "user_123"

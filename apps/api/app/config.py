@@ -46,8 +46,19 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
 
     # ---- auth -------------------------------------------------------------
-    # Base URL of the web app, which hosts Better Auth and serves the JWKS.
+    # Public base URL of the web app. Better Auth stamps this into every token
+    # as `iss`, so this value is an *identity*, not an address: it must match
+    # BETTER_AUTH_URL exactly or verification rejects every request.
     web_url: str = "http://localhost:3000"
+    # Where to actually fetch the JWKS from, when that differs from web_url.
+    # Empty means "same as web_url", which is right whenever the API can reach
+    # the web app at its public address.
+    #
+    # They differ under docker-compose: the browser reaches the web app at
+    # http://localhost:3000, so that is the issuer, but `localhost` inside the
+    # API container is the API container. Conflating the two silently 401s
+    # every request, which looks like an auth bug and is really a DNS one.
+    jwks_base_url: str = ""
     jwt_audience: str = "finance-tracker-api"
     # How long to cache the fetched public keys before refetching.
     jwks_cache_seconds: int = 3600
@@ -77,10 +88,13 @@ class Settings(BaseSettings):
 
     @property
     def jwks_url(self) -> str:
-        return f"{self.web_url.rstrip('/')}/api/auth/jwks"
+        """Address the public keys are fetched from."""
+        base = self.jwks_base_url or self.web_url
+        return f"{base.rstrip('/')}/api/auth/jwks"
 
     @property
     def jwt_issuer(self) -> str:
+        """Expected `iss` claim. Always the public URL, never the fetch address."""
         return self.web_url.rstrip("/")
 
     @property

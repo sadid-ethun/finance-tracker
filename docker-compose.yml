@@ -39,7 +39,13 @@ services:
       DEBUG: "true"
       DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
       REDIS_URL: redis://redis:6379/0
-      WEB_URL: http://web:3000
+      # The issuer is what the browser sees, because that is what Better Auth
+      # stamps into the token. The JWKS fetch is over the compose network,
+      # because `localhost` in here is this container. Setting WEB_URL to
+      # http://web:3000 makes the fetch work and then 401s every request on an
+      # issuer mismatch.
+      WEB_URL: http://localhost:3000
+      JWKS_BASE_URL: http://web:3000
       CORS_ORIGINS: '["http://localhost:3000"]'
     ports:
       - "8000:8000"
@@ -67,7 +73,8 @@ services:
       DEBUG: "true"
       DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
       REDIS_URL: redis://redis:6379/0
-      WEB_URL: http://web:3000
+      WEB_URL: http://localhost:3000
+      JWKS_BASE_URL: http://web:3000
     depends_on:
       postgres:
         condition: service_healthy
