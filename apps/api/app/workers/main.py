@@ -177,4 +177,9 @@ class WorkerSettings:
     on_shutdown = shutdown
     max_tries = 3
     job_timeout = 300
+    # arq writes a health key to Redis on this interval and expires it one
+    # second later, and `arq ... --check` reports on that key. The default of
+    # an hour would leave a dead worker reporting healthy for up to an hour —
+    # useless as a container healthcheck. 30s costs one Redis SET per 30s.
+    health_check_interval = 30
     keep_result = 3600

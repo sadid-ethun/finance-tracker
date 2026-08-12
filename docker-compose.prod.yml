@@ -111,6 +111,17 @@ services:
       PLAID_ENCRYPTION_KEY: ${PLAID_ENCRYPTION_KEY:?}
       SENTRY_DSN: ${SENTRY_DSN:-}
     command: ["arq", "app.workers.main.WorkerSettings"]
+    # The image's HEALTHCHECK curls localhost:8000, which is right for the API
+    # and wrong here — the worker runs arq and listens on nothing, so it would
+    # sit permanently unhealthy. A container that always reads unhealthy is
+    # worse than none: it teaches you to ignore the column. `--check` reads the
+    # heartbeat arq writes to Redis, which is what actually indicates life.
+    healthcheck:
+      test: ["CMD", "arq", "app.workers.main.WorkerSettings", "--check"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
