@@ -26,11 +26,52 @@ echo "==> Opening 80 and 443 in the host firewall"
 # common reason a working container is unreachable from the internet, and it
 # costs people hours because nothing logs it.
 #
-# The rules are inserted *before* the trailing REJECT, then persisted.
-sudo iptables -I INPUT 6 -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -p tcp --dport 443 -j ACCEPT
+# The rule must go *before* that REJECT. iptables evaluates top-down and stops
+# at the first match, so an ACCEPT below the REJECT is silently inert — it
+# appears in the chain, reads correctly, and does nothing. The REJECT's line
+# number varies between images, so it is looked up rather than assumed.
+open_port() {
+  local port="$1"
+  # Drop any existing copy first. Without this, re-running the script sees the
+  # rule already present and returns success while leaving it in the wrong
+  # position — the exact failure this function exists to prevent.
+  while sudo iptables -C INPUT -p tcp --dport "${port}" -j ACCEPT 2>/dev/null; do
+    sudo iptables -D INPUT -p tcp --dport "${port}" -j ACCEPT
+  done
+
+  local reject_line
+  reject_line="$(sudo iptables -L INPUT -n --line-numbers |
+    awk '$2 == "REJECT" { print $1; exit }')"
+
+  if [[ -n "${reject_line}" ]]; then
+    sudo iptables -I INPUT "${reject_line}" -p tcp --dport "${port}" -j ACCEPT
+  else
+    # No REJECT in the chain (some images), so appending is safe.
+    sudo iptables -A INPUT -p tcp --dport "${port}" -j ACCEPT
+  fi
+}
+
+open_port 80
+open_port 443
+
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent netfilter-persistent
 sudo netfilter-persistent save
+
+# Fail loudly rather than leaving a box that looks provisioned and is not
+# reachable. Both ports must sit above the REJECT to have any effect.
+for port in 80 443; do
+  accept_line="$(sudo iptables -L INPUT -n --line-numbers |
+    awk -v p="dpt:${port}" '$2 == "ACCEPT" && $0 ~ p { print $1; exit }')"
+  reject_line="$(sudo iptables -L INPUT -n --line-numbers |
+    awk '$2 == "REJECT" { print $1; exit }')"
+  if [[ -n "${reject_line}" && ( -z "${accept_line}" || ${accept_line} -gt ${reject_line} ) ]]; then
+    echo "ERROR: the ACCEPT rule for port ${port} is missing or sits below the" >&2
+    echo "       REJECT at line ${reject_line}, so it has no effect." >&2
+    sudo iptables -L INPUT -n --line-numbers >&2
+    exit 1
+  fi
+done
+echo "    ports 80 and 443 accepted ahead of the REJECT"
 
 echo "==> Adding swap"
 # 12GB is comfortable for running the stack, but `pnpm --filter web build`
