@@ -68,7 +68,26 @@ class Holding(Base, TimestampMixin):
     #: Fractional shares are routine, so this is Decimal — never float, and
     #: never an integer count.
     quantity: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False)
+    #: What Plaid reports. Overwritten on every sync — never edit it.
     cost_basis: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    #: A basis you entered yourself, which wins over Plaid's when set.
+    #:
+    #: Plaid's cost_basis is only as good as the institution behind it, and it
+    #: is demonstrably wrong sometimes: Robinhood's own UI showed $358.22/share
+    #: for a position Plaid reported at $473.82, understating the gain by $578
+    #: while every other position on the same account matched to the cent.
+    #: A wrong basis is invisible — the total still looks plausible — so the
+    #: only defence is being able to correct it.
+    #:
+    #: Kept in a separate column so a sync cannot clobber it, the same way
+    #: category_source protects a hand-set transaction category.
+    cost_basis_override: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+
+    @property
+    def effective_cost_basis(self) -> int | None:
+        """The basis every calculation should use."""
+        return self.cost_basis_override if self.cost_basis_override is not None else self.cost_basis
+
     institution_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     institution_value: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False, server_default="USD")

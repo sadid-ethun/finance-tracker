@@ -11,6 +11,7 @@ import {
   useAllocation,
   useHoldings,
   useInvestmentSummary,
+  useSetCostBasis,
   useSyncInvestments,
   type HoldingRow,
 } from "@/hooks/use-finance";
@@ -231,6 +232,26 @@ export function InvestmentsView() {
 }
 
 function HoldingRowItem({ holding }: { holding: HoldingRow }) {
+  const [editing, setEditing] = useState(false);
+  // Dollars in the input, minor units on the wire — the user types 1791.10,
+  // the API stores 179110.
+  const [draft, setDraft] = useState(() =>
+    holding.cost_basis !== null ? (holding.cost_basis / 100).toFixed(2) : "",
+  );
+  const setCostBasis = useSetCostBasis();
+
+  function save(event: React.FormEvent) {
+    event.preventDefault();
+    const trimmed = draft.trim();
+    // Empty clears the override and falls back to whatever Plaid reports.
+    const parsed = trimmed === "" ? null : Math.round(Number(trimmed) * 100);
+    if (parsed !== null && !Number.isFinite(parsed)) return;
+    setCostBasis.mutate(
+      { id: holding.id, costBasis: parsed },
+      { onSuccess: () => setEditing(false) },
+    );
+  }
+
   return (
     <li className="flex items-center gap-3 p-4">
       <span className="min-w-0 flex-1">
@@ -266,6 +287,42 @@ function HoldingRowItem({ holding }: { holding: HoldingRow }) {
           />
         ) : (
           <span className="block text-[12px] text-muted-foreground">no basis</span>
+        )}
+
+        {editing ? (
+          <form onSubmit={save} className="mt-1.5 flex items-center gap-1.5">
+            <input
+              inputMode="decimal"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Total cost"
+              aria-label={`Cost basis for ${holding.name}`}
+              autoFocus
+              className="tabular h-8 w-28 rounded-[10px] border border-input bg-background px-2 text-right text-[13px] outline-none focus:border-ring"
+            />
+            <button
+              type="submit"
+              disabled={setCostBasis.isPending}
+              className="h-8 rounded-[10px] bg-primary px-2.5 text-[12px] font-semibold text-primary-foreground disabled:opacity-60"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="h-8 rounded-[10px] border border-border px-2 text-[12px]"
+            >
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="mt-0.5 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2"
+          >
+            {holding.cost_basis_is_override ? "basis edited" : "edit basis"}
+          </button>
         )}
       </span>
     </li>

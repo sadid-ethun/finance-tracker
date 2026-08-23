@@ -1117,6 +1117,26 @@
         "title": "CategoryUpdate",
         "type": "object"
       },
+      "CostBasisUpdate": {
+        "description": "A hand-entered cost basis, or null to fall back to Plaid's.",
+        "properties": {
+          "cost_basis": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total cost of the position in minor units, not per share.",
+            "title": "Cost Basis"
+          }
+        },
+        "title": "CostBasisUpdate",
+        "type": "object"
+      },
       "DashboardSummary": {
         "description": "All values in minor units. Liabilities and spending are positive.",
         "properties": {
@@ -1310,6 +1330,10 @@
             ],
             "title": "Cost Basis"
           },
+          "cost_basis_is_override": {
+            "title": "Cost Basis Is Override",
+            "type": "boolean"
+          },
           "currency": {
             "title": "Currency",
             "type": "string"
@@ -1343,6 +1367,17 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "plaid_cost_basis": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plaid Cost Basis"
           },
           "price": {
             "anyOf": [
@@ -1391,6 +1426,8 @@
           "price",
           "value",
           "cost_basis",
+          "cost_basis_is_override",
+          "plaid_cost_basis",
           "gain",
           "gain_percent",
           "currency"
@@ -4594,6 +4631,65 @@
           }
         ],
         "summary": "Holdings",
+        "tags": [
+          "investments"
+        ]
+      }
+    },
+    "/api/v1/investments/holdings/{holding_id}/cost-basis": {
+      "patch": {
+        "description": "Correct a cost basis Plaid got wrong, or clear the correction with null.\n\nStored separately from Plaid's value so the next sync cannot overwrite it.",
+        "operationId": "set_cost_basis_api_v1_investments_holdings__holding_id__cost_basis_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "holding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Holding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CostBasisUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Cost Basis",
         "tags": [
           "investments"
         ]

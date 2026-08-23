@@ -592,7 +592,11 @@ export type HoldingRow = {
   quantity: string;
   price: number | null;
   value: number;
+  /** The basis in use: your override when set, otherwise Plaid's. */
   cost_basis: number | null;
+  cost_basis_is_override: boolean;
+  /** What Plaid reports, kept so a correction can be compared to what it replaced. */
+  plaid_cost_basis: number | null;
   gain: number | null;
   gain_percent: number | null;
   currency: string;
@@ -636,6 +640,21 @@ export type CashFlowSummary = {
   worst_month: string | null;
   currency: string;
 };
+
+export function useSetCostBasis() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, costBasis }: { id: string; costBasis: number | null }) =>
+      apiFetch<HoldingRow>(`/investments/holdings/${id}/cost-basis`, {
+        method: "PATCH",
+        body: JSON.stringify({ cost_basis: costBasis }),
+      }),
+    onSuccess: () => {
+      // The summary totals are derived from the same basis, so both move.
+      void qc.invalidateQueries({ queryKey: ["investments"] });
+    },
+  });
+}
 
 export function useInvestmentSummary() {
   return useQuery({

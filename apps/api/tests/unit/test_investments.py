@@ -3,7 +3,7 @@
 import inspect
 from decimal import Decimal
 
-from app.models.investment import Security
+from app.models.investment import Holding, Security
 from app.services import investment_service
 from app.services.investment_service import asset_class
 from app.services.plaid.investments import _minor
@@ -74,12 +74,33 @@ def test_gain_excludes_positions_without_cost_basis() -> None:
 
 def test_holdings_report_null_gain_when_basis_unknown() -> None:
     source = inspect.getsource(investment_service.list_holdings)
-    assert "if h.cost_basis is not None else None" in source
+    assert "if h.effective_cost_basis is not None" in source
 
 
 def test_gain_percent_guards_zero_basis() -> None:
     source = inspect.getsource(investment_service.list_holdings)
-    assert "if h.cost_basis" in source
+    assert "if h.effective_cost_basis" in source
+
+
+def test_effective_basis_prefers_the_override() -> None:
+    assert Holding(cost_basis=236910, cost_basis_override=179110).effective_cost_basis == 179110
+
+
+def test_effective_basis_falls_back_to_plaid_when_not_overridden() -> None:
+    assert Holding(cost_basis=236910, cost_basis_override=None).effective_cost_basis == 236910
+
+
+def test_effective_basis_is_none_when_neither_is_known() -> None:
+    assert Holding(cost_basis=None, cost_basis_override=None).effective_cost_basis is None
+
+
+def test_a_zero_override_is_honoured_rather_than_treated_as_unset() -> None:
+    """Zero is a legitimate basis — a gifted or fully vested position.
+
+    Testing truthiness instead of `is not None` would silently fall back to
+    Plaid's figure here and report the wrong gain.
+    """
+    assert Holding(cost_basis=236910, cost_basis_override=0).effective_cost_basis == 0
 
 
 def gain_percent(value: int, basis: int) -> float | None:
@@ -107,7 +128,7 @@ def test_cost_basis_is_treated_as_a_total_not_per_share() -> None:
     """
     source = inspect.getsource(investment_service.list_holdings)
     # Gain is a plain subtraction of the stored basis.
-    assert "h.institution_value - h.cost_basis" in source
+    assert "h.institution_value - h.effective_cost_basis" in source
     # And the basis is never scaled by the share count anywhere.
     assert "quantity * " not in source
     assert "* h.quantity" not in source
@@ -134,3 +155,33 @@ def test_summary_reports_the_value_the_gain_is_measured_against() -> None:
     # The gain must be the difference from the invested value, never from the
     # portfolio total.
     assert "gain = valued_with_basis - total_cost" in source
+
+
+def test_a_hand_entered_cost_basis_wins_over_plaids() -> None:
+    """Plaid's cost basis is only as good as the institution behind it.
+
+    Observed in production: Robinhood's own UI reported $358.22/share for a
+    position Plaid returned at $473.82, understating the gain by $578 while
+    every other position on the same account matched to the cent. A wrong
+    basis is invisible — the total still looks plausible — so the override
+    has to take precedence wherever the basis is read.
+    """
+    source = inspect.getsource(investment_service)
+
+    # The list path reads through the model property.
+    assert '"cost_basis": h.effective_cost_basis' in source
+    # The summary path coalesces in SQL rather than re-deriving it.
+    assert "func.coalesce(Holding.cost_basis_override, Holding.cost_basis)" in source
+
+
+def test_the_override_is_a_separate_column_from_plaids_value() -> None:
+    """A sync must not be able to undo a correction.
+
+    Writing the correction over cost_basis would work until the next sync
+    overwrote it, which is the same trap category_source exists to avoid for
+    transactions.
+    """
+    source = inspect.getsource(Holding)
+
+    assert "cost_basis_override" in source
+    assert "def effective_cost_basis" in source

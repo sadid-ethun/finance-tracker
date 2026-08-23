@@ -3,7 +3,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.deps import CurrentUser, DbSession
 from app.services import investment_service
@@ -29,6 +29,16 @@ class InvestmentSummary(BaseModel):
     currency: str
 
 
+class CostBasisUpdate(BaseModel):
+    """A hand-entered cost basis, or null to fall back to Plaid's."""
+
+    cost_basis: int | None = Field(
+        default=None,
+        ge=0,
+        description="Total cost of the position in minor units, not per share.",
+    )
+
+
 class HoldingResponse(BaseModel):
     id: str
     account_id: str
@@ -42,7 +52,12 @@ class HoldingResponse(BaseModel):
     quantity: str
     price: int | None
     value: int
+    #: The basis in use — your override when set, otherwise Plaid's.
     cost_basis: int | None
+    cost_basis_is_override: bool
+    #: What Plaid reports, kept visible so a correction can be compared against
+    #: the value it replaced rather than hiding it.
+    plaid_cost_basis: int | None
     gain: int | None
     gain_percent: float | None
     currency: str
@@ -90,6 +105,23 @@ async def holdings(
 ) -> list[HoldingResponse]:
     rows = await investment_service.list_holdings(db, user.id, account_id=account_id)
     return [HoldingResponse(**r) for r in rows]
+
+
+@router.patch("/holdings/{holding_id}/cost-basis", response_model=HoldingResponse)
+async def set_cost_basis(
+    holding_id: UUID,
+    payload: CostBasisUpdate,
+    user: CurrentUser,
+    db: DbSession,
+) -> HoldingResponse:
+    """Correct a cost basis Plaid got wrong, or clear the correction with null.
+
+    Stored separately from Plaid's value so the next sync cannot overwrite it.
+    """
+    row = await investment_service.set_cost_basis_override(
+        db, user.id, holding_id, payload.cost_basis
+    )
+    return HoldingResponse(**row)
 
 
 @router.get("/allocation", response_model=list[AllocationSlice])

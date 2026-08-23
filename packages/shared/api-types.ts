@@ -543,6 +543,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/investments/holdings/{holding_id}/cost-basis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Cost Basis
+         * @description Correct a cost basis Plaid got wrong, or clear the correction with null.
+         *
+         *     Stored separately from Plaid's value so the next sync cannot overwrite it.
+         */
+        patch: operations["set_cost_basis_api_v1_investments_holdings__holding_id__cost_basis_patch"];
+        trace?: never;
+    };
     "/api/v1/investments/performance": {
         parameters: {
             query?: never;
@@ -1427,6 +1449,17 @@ export interface components {
             name?: string | null;
         };
         /**
+         * CostBasisUpdate
+         * @description A hand-entered cost basis, or null to fall back to Plaid's.
+         */
+        CostBasisUpdate: {
+            /**
+             * Cost Basis
+             * @description Total cost of the position in minor units, not per share.
+             */
+            cost_basis?: number | null;
+        };
+        /**
          * DashboardSummary
          * @description All values in minor units. Liabilities and spending are positive.
          */
@@ -1501,6 +1534,8 @@ export interface components {
             asset_class: string;
             /** Cost Basis */
             cost_basis: number | null;
+            /** Cost Basis Is Override */
+            cost_basis_is_override: boolean;
             /** Currency */
             currency: string;
             /** Gain */
@@ -1511,6 +1546,8 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+            /** Plaid Cost Basis */
+            plaid_cost_basis: number | null;
             /** Price */
             price: number | null;
             /** Quantity */
@@ -3038,6 +3075,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HoldingResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_cost_basis_api_v1_investments_holdings__holding_id__cost_basis_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                holding_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CostBasisUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldingResponse"];
                 };
             };
             /** @description Validation Error */

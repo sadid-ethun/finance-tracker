@@ -14,6 +14,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import NotFoundError
 from app.models.account import Account
 from app.models.investment import Holding, HoldingSnapshot, InvestmentTransaction, Security
 
@@ -75,11 +76,19 @@ async def list_holdings(
             "quantity": str(h.quantity),
             "price": h.institution_price,
             "value": h.institution_value,
-            "cost_basis": h.cost_basis,
-            "gain": (h.institution_value - h.cost_basis) if h.cost_basis is not None else None,
+            "cost_basis": h.effective_cost_basis,
+            "cost_basis_is_override": h.cost_basis_override is not None,
+            "plaid_cost_basis": h.cost_basis,
+            "gain": (
+                (h.institution_value - h.effective_cost_basis)
+                if h.effective_cost_basis is not None
+                else None
+            ),
             "gain_percent": (
-                round((h.institution_value - h.cost_basis) / h.cost_basis * 100, 2)
-                if h.cost_basis
+                round(
+                    (h.institution_value - h.effective_cost_basis) / h.effective_cost_basis * 100, 2
+                )
+                if h.effective_cost_basis
                 else None
             ),
             "currency": h.currency,
@@ -88,11 +97,44 @@ async def list_holdings(
     ]
 
 
+async def set_cost_basis_override(
+    db: AsyncSession,
+    user_id: str,
+    holding_id: UUID,
+    cost_basis: int | None,
+) -> dict[str, Any]:
+    """Set or clear a hand-entered cost basis for one holding.
+
+    Written to its own column rather than over Plaid's, so a sync cannot undo
+    it and the original stays visible for comparison. Passing None clears the
+    correction and falls back to whatever the institution reports.
+    """
+    holding = await db.scalar(
+        select(Holding).where(Holding.id == holding_id, Holding.user_id == user_id)
+    )
+    if holding is None:
+        raise NotFoundError("Holding not found.")
+
+    holding.cost_basis_override = cost_basis
+    await db.commit()
+
+    rows = await list_holdings(db, user_id, account_id=holding.account_id)
+    for row in rows:
+        if row["id"] == str(holding_id):
+            return row
+    raise NotFoundError("Holding not found.")
+
+
 async def summary(db: AsyncSession, user_id: str) -> dict[str, Any]:
     """Total value, cost basis, and gain across all investment accounts."""
     rows = (
         await db.execute(
-            select(Holding.institution_value, Holding.cost_basis)
+            select(
+                Holding.institution_value,
+                # A hand-entered basis wins over Plaid's, which is only as good
+                # as the institution behind it and is sometimes simply wrong.
+                func.coalesce(Holding.cost_basis_override, Holding.cost_basis).label("cost_basis"),
+            )
             .join(Account, Account.id == Holding.account_id)
             .where(Holding.user_id == user_id, Account.deleted_at.is_(None))
         )
