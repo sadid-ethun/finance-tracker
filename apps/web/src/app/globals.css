@@ -115,10 +115,32 @@
     border-color: var(--border);
   }
 
+  html {
+    /* Tapping anything on mobile WebKit flashes a translucent highlight box.
+       It reads as a rendering artefact on cards and chart surfaces, which are
+       not obviously "buttons", so suppress it. Focus and active states below
+       still communicate that something was pressed. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* A pointer press should not leave a focus ring behind — that is what looks
+     like a stray blue outline after tapping a chart. Keyboard focus still
+     must be visible, and :focus-visible is the browser's own judgement of
+     which input method is in play. Removing the outline outright would fail
+     WCAG 2.4.7 and make the app unusable without a pointer. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   /* Balances must never jitter as values update — see PLAN.md section 21. */
@@ -134,5 +156,21 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Installed as a PWA there is no browser chrome, so a scrollbar is the only
+   thing on screen that still looks like a web page. Touch scrolling needs no
+   affordance, so hide it — but only in standalone: in a normal browser tab
+   the scrollbar is a real navigation aid, and on desktop removing it would be
+   a regression rather than polish. */
+@media (display-mode: standalone) {
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 }
