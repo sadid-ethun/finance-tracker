@@ -94,7 +94,6 @@ services:
       API_INTERNAL_URL: http://api:8000
       DATABASE_URL: postgresql://finance:finance@postgres:5432/finance
       BETTER_AUTH_URL: http://localhost:3000
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
       # Local development only — production reads this from the VM's .env.
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-dev-secret-change-me-32chars}
     ports:

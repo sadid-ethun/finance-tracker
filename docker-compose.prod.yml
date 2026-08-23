@@ -140,7 +140,6 @@ services:
       DATABASE_URL: postgresql://finance:${POSTGRES_PASSWORD:?}@postgres:5432/finance
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?generate a fresh one, do not reuse dev}
       BETTER_AUTH_URL: https://${DOMAIN:?}
-      NEXT_PUBLIC_APP_URL: https://${DOMAIN}
     depends_on:
       postgres:
         condition: service_healthy
