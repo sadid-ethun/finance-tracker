@@ -88,7 +88,7 @@ export function InvestmentsView() {
         {summary.data ? (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-card border border-border bg-card p-4">
-              <p className="text-[13px] text-muted-foreground">Total gain</p>
+              <p className="text-[13px] text-muted-foreground">Unrealized gain</p>
               <Money
                 minorUnits={summary.data.total_gain}
                 colored
@@ -119,7 +119,10 @@ export function InvestmentsView() {
 
         {summary.data && summary.data.positions_without_cost_basis > 0 ? (
           <p className="mt-3 text-[12px] text-muted-foreground">
-            Gain is measured against{" "}
+            Unrealized only: what your current positions are worth versus what
+            they cost. It excludes gains you have already realised by selling,
+            dividends, interest, and account bonuses — so it will not match an
+            all-time return figure from your broker. Measured against{" "}
             <Money
               minorUnits={summary.data.invested_value}
               currency={summary.data.currency}
