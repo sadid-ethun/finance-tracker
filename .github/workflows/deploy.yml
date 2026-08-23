@@ -116,10 +116,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Health check
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
         run: |
           set -e
+          # Normalise before use. A value pasted with a stray newline, a space,
+          # or wrapped in quotes reaches curl as a malformed URL, and curl
+          # reports that as a request failure — so a settings typo reads as
+          # five connection errors and an unreachable site. Strip whitespace
+          # and quotes, drop any trailing slash, then say what is being called.
+          url="$(printf '%s' "${PRODUCTION_URL}" | tr -d '[:space:]\047\042' | sed 's#/*$##')"
+
+          case "${url}" in
+            https://*) ;;
+            *)
+              echo "::error::PRODUCTION_URL must be an https:// URL. Got: '${url}'"
+              exit 1
+              ;;
+          esac
+
+          echo "Checking ${url}/api/health"
           for attempt in 1 2 3 4 5; do
-            if curl -fsS "${{ vars.PRODUCTION_URL }}/api/health"; then
+            if curl -fsS "${url}/api/health"; then
               echo "Web is healthy."
               exit 0
             fi
