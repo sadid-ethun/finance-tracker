@@ -1450,6 +1450,10 @@
             "title": "Holdings Count",
             "type": "integer"
           },
+          "invested_value": {
+            "title": "Invested Value",
+            "type": "integer"
+          },
           "positions_without_cost_basis": {
             "title": "Positions Without Cost Basis",
             "type": "integer"
@@ -1480,6 +1484,7 @@
         },
         "required": [
           "total_value",
+          "invested_value",
           "total_cost_basis",
           "total_gain",
           "total_gain_percent",

@@ -567,6 +567,12 @@ export function useCopyBudget(month: string) {
 
 export type InvestmentSummary = {
   total_value: number;
+  /**
+   * Value of only the positions that have a cost basis. `total_value` also
+   * includes cash and margin, which have none, so `total_value -
+   * total_cost_basis` is not the gain and must never be shown as if it were.
+   */
+  invested_value: number;
   total_cost_basis: number;
   total_gain: number;
   total_gain_percent: number | null;

@@ -119,6 +119,7 @@ async def summary(db: AsyncSession, user_id: str) -> dict[str, Any]:
 
     return {
         "total_value": total_value,
+        "invested_value": valued_with_basis,
         "total_cost_basis": total_cost,
         "total_gain": gain,
         "total_gain_percent": round(gain / total_cost * 100, 2) if total_cost else None,

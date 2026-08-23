@@ -109,6 +109,7 @@ export function InvestmentsView() {
                 className="mt-0.5 block text-[18px] font-semibold"
               />
               <p className="mt-0.5 text-[12px] text-muted-foreground">
+                {summary.data.holdings_count - summary.data.positions_without_cost_basis} of{" "}
                 {summary.data.holdings_count} position
                 {summary.data.holdings_count === 1 ? "" : "s"}
               </p>
@@ -118,10 +119,21 @@ export function InvestmentsView() {
 
         {summary.data && summary.data.positions_without_cost_basis > 0 ? (
           <p className="mt-3 text-[12px] text-muted-foreground">
-            {summary.data.positions_without_cost_basis} position
-            {summary.data.positions_without_cost_basis === 1 ? " has" : "s have"} no
-            cost basis from your institution, so {summary.data.positions_without_cost_basis === 1 ? "it is" : "they are"} excluded
-            from the gain figures.
+            Gain is measured against{" "}
+            <Money
+              minorUnits={summary.data.invested_value}
+              currency={summary.data.currency}
+              className="font-medium"
+            />{" "}
+            of holdings. The other {summary.data.positions_without_cost_basis} position
+            {summary.data.positions_without_cost_basis === 1 ? "" : "s"} —{" "}
+            <Money
+              minorUnits={summary.data.total_value - summary.data.invested_value}
+              currency={summary.data.currency}
+              className="font-medium"
+            />
+            , typically cash and margin — {summary.data.positions_without_cost_basis === 1 ? "has" : "have"} no
+            cost basis from your institution, so {summary.data.positions_without_cost_basis === 1 ? "it is" : "they are"} excluded.
           </p>
         ) : null}
       </section>

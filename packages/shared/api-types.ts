@@ -1541,6 +1541,8 @@ export interface components {
             day_change: number | null;
             /** Holdings Count */
             holdings_count: number;
+            /** Invested Value */
+            invested_value: number;
             /** Positions Without Cost Basis */
             positions_without_cost_basis: number;
             /** Total Cost Basis */

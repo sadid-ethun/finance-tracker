@@ -14,6 +14,11 @@ router = APIRouter(prefix="/investments", tags=["investments"])
 
 class InvestmentSummary(BaseModel):
     total_value: int
+    #: Value of just the positions that have a cost basis. total_value cannot
+    #: be reconciled against total_cost_basis on its own — it also contains
+    #: cash and margin balances, which have no basis — so this is the figure
+    #: total_gain is actually the difference from.
+    invested_value: int
     total_cost_basis: int
     total_gain: int
     total_gain_percent: float | None

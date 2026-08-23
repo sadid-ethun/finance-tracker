@@ -117,3 +117,20 @@ def test_gain_is_value_minus_total_basis() -> None:
     """213 shares now worth $7,397.49 against a $6,390.00 total basis."""
     value, basis = 739749, 639000
     assert value - basis == 100749
+
+
+def test_summary_reports_the_value_the_gain_is_measured_against() -> None:
+    """total_value cannot be reconciled against total_cost_basis.
+
+    A portfolio contains cash and margin balances, which carry no cost basis
+    and are excluded from the gain. Showing value and basis side by side
+    without the invested figure invites subtracting one from the other, which
+    yields a number that is not the gain and is not anything else either.
+    """
+    source = inspect.getsource(investment_service.summary)
+
+    assert '"invested_value": valued_with_basis' in source
+    assert '"total_gain": gain' in source
+    # The gain must be the difference from the invested value, never from the
+    # portfolio total.
+    assert "gain = valued_with_basis - total_cost" in source
