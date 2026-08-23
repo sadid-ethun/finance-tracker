@@ -72,12 +72,20 @@ async def sync_item_transactions(db: AsyncSession, item: PlaidItem) -> SyncRun:
     # inside the transaction that carries the cursor and its rows.
     await ensure_categories(db, item.user_id)
 
+    # Captured while the instance is still live. The except block below runs
+    # after a rollback, which expires every ORM object in the session; reading
+    # item.id there would lazy-load and raise MissingGreenlet from inside the
+    # error handler, losing the Plaid error it was meant to record.
+    user_id = item.user_id
+    item_pk = item.id
+    run_started_at = datetime.now(UTC)
+
     run = SyncRun(
-        user_id=item.user_id,
-        plaid_item_id=item.id,
+        user_id=user_id,
+        plaid_item_id=item_pk,
         kind="transactions",
         status="running",
-        started_at=datetime.now(UTC),
+        started_at=run_started_at,
     )
     db.add(run)
     await db.flush()
@@ -129,7 +137,10 @@ async def sync_item_transactions(db: AsyncSession, item: PlaidItem) -> SyncRun:
 
     except client.PlaidError as exc:
         await db.rollback()
-        await _record_failure(db, item, run, exc)
+        # Identifiers, not the ORM instance: rollback has expired `item`, so
+        # reading an attribute off it here would lazy-load and raise
+        # MissingGreenlet from inside the error handler.
+        await _record_failure(db, item_pk, user_id, run_started_at, exc)
         raise
 
     # Transfer pairing runs after the data lands, so both sides of a movement
@@ -211,12 +222,21 @@ async def _persist(
 
 
 async def _record_failure(
-    db: AsyncSession, item: PlaidItem, run: SyncRun, exc: client.PlaidError
+    db: AsyncSession,
+    item_pk: Any,
+    user_id: str,
+    run_started_at: datetime,
+    exc: client.PlaidError,
 ) -> None:
-    """Persist the failure so a broken connection is visible, not silent."""
+    """Persist the failure so a broken connection is visible, not silent.
+
+    Takes plain identifiers rather than the ORM instances: the caller has just
+    rolled back, which expires them, and any attribute read would attempt IO
+    where async SQLAlchemy cannot do it.
+    """
     code = exc.plaid_error_code or "UNKNOWN"
 
-    fresh_item = await db.get(PlaidItem, item.id)
+    fresh_item = await db.get(PlaidItem, item_pk)
     if fresh_item is not None:
         if code in client.REAUTH_ERROR_CODES:
             fresh_item.status = "login_required"
@@ -227,11 +247,11 @@ async def _record_failure(
 
     db.add(
         SyncRun(
-            user_id=item.user_id,
-            plaid_item_id=item.id,
+            user_id=user_id,
+            plaid_item_id=item_pk,
             kind="transactions",
             status="error",
-            started_at=run.started_at,
+            started_at=run_started_at,
             finished_at=datetime.now(UTC),
             error_code=code,
             error_message=str(exc.detail),
@@ -239,7 +259,7 @@ async def _record_failure(
     )
     await db.commit()
 
-    logger.warning("plaid_sync_failed", item_id=str(item.id), plaid_error_code=code)
+    logger.warning("plaid_sync_failed", item_id=str(item_pk), plaid_error_code=code)
 
 
 async def sync_user(db: AsyncSession, user_id: str) -> list[SyncRun]:

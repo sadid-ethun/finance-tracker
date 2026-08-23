@@ -1,9 +1,13 @@
 from typing import Annotated
 from uuid import UUID
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import APIRouter, Query, status
 
+from app.config import get_settings
 from app.core.errors import ValidationError
+from app.core.logging import get_logger
 from app.deps import CurrentUser, DbSession
 from app.schemas.plaid import (
     ExchangeRequest,
@@ -15,7 +19,30 @@ from app.schemas.plaid import (
 )
 from app.services.plaid import link, sync
 
+logger = get_logger(__name__)
+
 router = APIRouter(prefix="/plaid", tags=["plaid"])
+
+
+async def _enqueue_investments_sync() -> None:
+    """Refresh holdings shortly after a connection is made.
+
+    Transactions arrive on their own — Plaid posts a webhook and the handler
+    queues a sync. Holdings have no such trigger: the only investments sync is
+    a cron at 02:20, so connecting a brokerage in the morning left the
+    Investments tab empty until the small hours, which is indistinguishable
+    from it being broken.
+
+    A queue failure must not fail the connection: the account is already
+    linked and the nightly cron still covers it.
+    """
+    settings = get_settings()
+    try:
+        pool = await create_pool(RedisSettings.from_dsn(settings.redis_url))
+        await pool.enqueue_job("sync_investments")
+        await pool.aclose()
+    except Exception as exc:
+        logger.warning("investments_enqueue_failed", error=str(exc))
 
 
 @router.post("/link-token", response_model=LinkTokenResponse)
@@ -50,6 +77,7 @@ async def exchange_public_token(
         institution_id=payload.institution_id,
         institution_name=payload.institution_name,
     )
+    await _enqueue_investments_sync()
     return PlaidItemResponse.model_validate(item)
 
 

@@ -73,7 +73,12 @@ class Settings(BaseSettings):
     # Public URL Plaid posts webhooks to. Empty locally, where there is no
     # inbound route from the internet.
     plaid_webhook_url: str = ""
-    plaid_products: list[str] = ["transactions"]
+    #: Products requested when linking. `investments` must be here at link
+    #: time: Plaid grants consent per product when the user authorises, and
+    #: /investments/holdings/get returns ADDITIONAL_CONSENT_REQUIRED without
+    #: it. Adding it later does not apply to already-linked items — those need
+    #: re-linking through Link update mode.
+    plaid_products: list[str] = ["transactions", "investments"]
     plaid_country_codes: list[str] = ["US"]
     #: How much history to pull when an item is first connected.
     plaid_initial_backfill_days: int = 730

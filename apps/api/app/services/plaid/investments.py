@@ -85,12 +85,21 @@ async def _upsert_securities(
 
 async def sync_item_investments(db: AsyncSession, item: PlaidItem) -> SyncRun:
     """Refresh holdings and investment transactions for one item."""
+    # Read before the try. `db.rollback()` in the except block expires every
+    # ORM instance in the session, so touching item.user_id there triggers a
+    # lazy refresh — IO, which async SQLAlchemy cannot perform outside a
+    # greenlet. That raised MissingGreenlet *from the error handler*, masking
+    # the Plaid error that caused it and leaving no sync_runs row behind.
+    user_id = item.user_id
+    item_pk = item.id
+    started_at = datetime.now(UTC)
+
     run = SyncRun(
-        user_id=item.user_id,
-        plaid_item_id=item.id,
+        user_id=user_id,
+        plaid_item_id=item_pk,
         kind="investments",
         status="running",
-        started_at=datetime.now(UTC),
+        started_at=started_at,
     )
     db.add(run)
     await db.flush()
@@ -185,11 +194,11 @@ async def sync_item_investments(db: AsyncSession, item: PlaidItem) -> SyncRun:
     except client.PlaidError as exc:
         await db.rollback()
         run_row = SyncRun(
-            user_id=item.user_id,
-            plaid_item_id=item.id,
+            user_id=user_id,
+            plaid_item_id=item_pk,
             kind="investments",
             status="error",
-            started_at=run.started_at,
+            started_at=started_at,
             finished_at=datetime.now(UTC),
             error_code=exc.plaid_error_code or "UNKNOWN",
             error_message=str(exc.detail),
@@ -198,7 +207,7 @@ async def sync_item_investments(db: AsyncSession, item: PlaidItem) -> SyncRun:
         await db.commit()
         logger.warning(
             "plaid_investments_sync_failed",
-            item_id=str(item.id),
+            item_id=str(item_pk),
             plaid_error_code=exc.plaid_error_code,
         )
         raise
