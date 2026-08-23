@@ -174,3 +174,24 @@
     height: 0;
   }
 }
+
+/* iOS Safari zooms the viewport whenever a focused input's font size is under
+   16px, and never zooms back out — which is what makes tapping a field feel
+   like the page jumped. The app's inputs are 13-15px by design.
+ *
+ * Raising them to 16px on touch layouts removes the trigger. The alternative,
+ * `maximum-scale=1, user-scalable=no` on the viewport, disables pinch-zoom
+ * entirely: that fails WCAG 1.4.4 and takes away the only way to enlarge text
+ * for someone who needs it, to fix a problem that is really about one number.
+ *
+ * Deliberately unlayered so it beats Tailwind's utilities — layer order wins
+ * over specificity, so `text-[15px]` inside @layer utilities does not
+ * override this.
+ */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
