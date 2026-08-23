@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Bar,
   BarChart,
@@ -10,12 +11,13 @@ import {
   ResponsiveContainer,
   XAxis,
 } from "recharts";
-import { ChartPie } from "lucide-react";
+import { ChartPie, ChevronRight } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, Skeleton } from "@/components/shared/states";
 import {
+  cashFlowWindow,
   useCashFlowByCategory,
   useCashFlowSummary,
   useCashFlowTrends,
@@ -27,7 +29,9 @@ export function CashFlowView() {
   const summary = useCashFlowSummary(months);
   const trends = useCashFlowTrends(months);
   const [kind, setKind] = useState<"expense" | "income">("expense");
-  const byCategory = useCashFlowByCategory(kind);
+  // Same window as the charts above, so a row's transaction count matches the
+  // list it opens.
+  const byCategory = useCashFlowByCategory(kind, months);
 
   if (summary.isError) return <ErrorState onRetry={() => void summary.refetch()} />;
 
@@ -164,20 +168,30 @@ export function CashFlowView() {
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
             {(byCategory.data ?? []).map((row) => (
-              <li key={row.name} className="flex items-center gap-3 p-4">
-                <span
-                  aria-hidden
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: row.color ?? "var(--muted-foreground)" }}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px]">{row.name}</span>
-                  <span className="block text-[12px] text-muted-foreground">
-                    {row.transaction_count} transaction
-                    {row.transaction_count === 1 ? "" : "s"}
+              <li key={row.category_id ?? row.name}>
+                <Link
+                  href={categoryHref(row.category_id, months)}
+                  className="flex items-center gap-3 p-4 transition-colors hover:bg-secondary active:bg-secondary"
+                >
+                  <span
+                    aria-hidden
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: row.color ?? "var(--muted-foreground)" }}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px]">{row.name}</span>
+                    <span className="block text-[12px] text-muted-foreground">
+                      {row.transaction_count} transaction
+                      {row.transaction_count === 1 ? "" : "s"}
+                    </span>
                   </span>
-                </span>
-                <Money minorUnits={row.amount} className="text-[15px] font-semibold" />
+                  <Money minorUnits={row.amount} className="text-[15px] font-semibold" />
+                  <ChevronRight
+                    aria-hidden
+                    className="size-4 shrink-0 text-muted-foreground"
+                    strokeWidth={2}
+                  />
+                </Link>
               </li>
             ))}
           </ul>
@@ -185,6 +199,24 @@ export function CashFlowView() {
       </section>
     </div>
   );
+}
+
+/**
+ * Where a category row goes.
+ *
+ * Carries the same window the totals were computed over, so the list opens
+ * showing the transactions behind the number that was clicked rather than
+ * whatever the transactions page last defaulted to.
+ *
+ * Rows with no category id are the uncategorized bucket, which is a separate
+ * filter rather than a category to select.
+ */
+function categoryHref(categoryId: string | null, months: number): string {
+  const { from, to } = cashFlowWindow(months);
+  const params = new URLSearchParams({ from, to });
+  if (categoryId) params.set("categories", categoryId);
+  else params.set("uncategorized", "true");
+  return `/transactions?${params.toString()}`;
 }
 
 function Stat({

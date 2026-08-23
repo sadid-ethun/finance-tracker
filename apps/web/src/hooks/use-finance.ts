@@ -716,10 +716,34 @@ export function useCashFlowTrends(months = 12) {
   });
 }
 
-export function useCashFlowByCategory(kind: "income" | "expense") {
+/**
+ * The window a cash-flow view is showing, as ISO dates.
+ *
+ * Computed here rather than left to the server default so the same range can
+ * be handed to a transactions link: a category row that says "14
+ * transactions" has to open a list containing exactly those fourteen, and it
+ * cannot if the two sides pick their own windows.
+ *
+ * Matches the server: the first of the month `months - 1` ago, through the
+ * last day of the current month.
+ */
+export function cashFlowWindow(months: number): { from: string; to: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const iso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { from: iso(start), to: iso(end) };
+}
+
+export function useCashFlowByCategory(kind: "income" | "expense", months = 6) {
+  const { from, to } = cashFlowWindow(months);
   return useQuery({
-    queryKey: ["cash-flow", "by-category", kind],
-    queryFn: () => apiFetch<CategoryTotal[]>(`/cash-flow/by-category?kind=${kind}`),
+    queryKey: ["cash-flow", "by-category", kind, from, to],
+    queryFn: () =>
+      apiFetch<CategoryTotal[]>(
+        `/cash-flow/by-category?kind=${kind}&from=${from}&to=${to}`,
+      ),
     staleTime: 60_000,
   });
 }
