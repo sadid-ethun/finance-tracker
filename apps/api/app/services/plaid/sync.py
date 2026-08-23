@@ -264,16 +264,27 @@ async def _record_failure(
 
 async def sync_user(db: AsyncSession, user_id: str) -> list[SyncRun]:
     """Sync every healthy connection for a user."""
-    items = await db.scalars(
-        select(PlaidItem).where(
-            PlaidItem.user_id == user_id,
-            PlaidItem.deleted_at.is_(None),
-            PlaidItem.status != "error",
-        )
+    # Ids, then a fresh fetch per iteration — see sync_all_investments. A
+    # rollback inside one item expires every instance in the session, so
+    # iterating ORM objects here means the second item dies on an expired
+    # attribute rather than syncing.
+    item_ids = list(
+        (
+            await db.scalars(
+                select(PlaidItem.id).where(
+                    PlaidItem.user_id == user_id,
+                    PlaidItem.deleted_at.is_(None),
+                    PlaidItem.status != "error",
+                )
+            )
+        ).all()
     )
 
     runs: list[SyncRun] = []
-    for item in items:
+    for item_id in item_ids:
+        item = await db.get(PlaidItem, item_id)
+        if item is None:
+            continue
         try:
             runs.append(await sync_item_transactions(db, item))
         except client.PlaidError:

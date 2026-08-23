@@ -294,16 +294,29 @@ async def _sync_investment_transactions(
 
 async def sync_all_investments(db: AsyncSession, user_id: str) -> list[SyncRun]:
     """Refresh investments for every healthy item belonging to a user."""
-    items = await db.scalars(
-        select(PlaidItem).where(
-            PlaidItem.user_id == user_id,
-            PlaidItem.deleted_at.is_(None),
-            PlaidItem.status != "error",
-        )
+    # Ids, then a fresh fetch per iteration. A failing item rolls back, and a
+    # rollback expires every instance in the session — including the other
+    # items a loop over ORM objects would still be holding. The next iteration
+    # would then lazy-load an expired attribute and die with MissingGreenlet,
+    # so the first broken institution took all the healthy ones down with it:
+    # the exact opposite of what the `continue` below is for.
+    item_ids = list(
+        (
+            await db.scalars(
+                select(PlaidItem.id).where(
+                    PlaidItem.user_id == user_id,
+                    PlaidItem.deleted_at.is_(None),
+                    PlaidItem.status != "error",
+                )
+            )
+        ).all()
     )
 
     runs: list[SyncRun] = []
-    for item in items:
+    for item_id in item_ids:
+        item = await db.get(PlaidItem, item_id)
+        if item is None:
+            continue
         try:
             runs.append(await sync_item_investments(db, item))
         except client.PlaidError:
