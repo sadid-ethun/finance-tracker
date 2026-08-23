@@ -49,7 +49,7 @@ function createAuth() {
       // Single-user app: the owner account is seeded, and the signup route
       // stays closed so a public URL cannot be used to create accounts.
       disableSignUp: true,
-      minPasswordLength: 12,
+      minPasswordLength: 10,
     },
 
     session: {

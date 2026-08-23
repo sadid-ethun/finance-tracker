@@ -26,8 +26,8 @@ async function main() {
     process.exit(1);
   }
 
-  if (password.length < 12) {
-    console.error("OWNER_PASSWORD must be at least 12 characters.");
+  if (password.length < 10) {
+    console.error("OWNER_PASSWORD must be at least 10 characters.");
     process.exit(1);
   }
 
