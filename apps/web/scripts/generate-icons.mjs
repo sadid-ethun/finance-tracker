@@ -27,7 +27,7 @@ const APP = join(root, "src/app");
 const PNG = { compressionLevel: 9, palette: true, colours: 256 };
 
 /** Sampled from the source corner; also the manifest theme colour. */
-const BACKGROUND = { r: 8, g: 14, b: 21 };
+const BACKGROUND = { r: 2, g: 8, b: 16 };
 
 const square = (size) => sharp(SOURCE).resize(size, size, { fit: "cover" });
 
