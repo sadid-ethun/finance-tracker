@@ -45,3 +45,23 @@ def test_update_mode_requests_no_products() -> None:
 
     assert 'kwargs["access_token"]' in before_else
     assert 'kwargs["products"]' not in before_else
+
+
+def test_history_window_is_requested_at_link_time() -> None:
+    """Plaid defaults transactions.days_requested to 90 when it is not sent.
+
+    The setting existed and was wired to nothing, so every item was linked
+    with a quarter of the history the config advertised — invisible, because
+    90 days of transactions still looks like a working app.
+    """
+    source = inspect.getsource(link.create_link_token)
+
+    assert "LinkTokenTransactions(" in source
+    assert "days_requested=settings.plaid_initial_backfill_days" in source
+
+
+def test_the_window_stays_within_plaids_ceiling() -> None:
+    """730 days is Plaid's maximum; asking for more is an error, not more data."""
+    settings = Settings(environment="test")
+
+    assert 0 < settings.plaid_initial_backfill_days <= 730

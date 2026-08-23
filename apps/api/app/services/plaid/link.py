@@ -9,6 +9,7 @@ from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchan
 from plaid.model.item_remove_request import ItemRemoveRequest
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
+from plaid.model.link_token_transactions import LinkTokenTransactions
 from plaid.model.products import Products
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,6 +49,14 @@ async def create_link_token(
         kwargs["access_token"] = client.access_token_for(item)
     else:
         kwargs["products"] = [Products(p) for p in settings.plaid_products]
+        # Without this Plaid defaults to 90 days, which is not enough to draw a
+        # net-worth chart or compare a month against the same month last year.
+        # 730 is Plaid's maximum. It is fixed at link time: raising it later
+        # does not extend an item already connected, which has to be re-linked
+        # through update mode to widen its window.
+        kwargs["transactions"] = LinkTokenTransactions(
+            days_requested=settings.plaid_initial_backfill_days
+        )
         # Requested separately from `products` on purpose. Anything in
         # `products` is a hard requirement and Plaid will refuse institutions
         # that cannot satisfy it — a credit card has no investment accounts,

@@ -89,7 +89,15 @@ class Settings(BaseSettings):
     #: apply to an already-linked item, which has to be re-linked.
     plaid_additional_consented_products: list[str] = ["investments"]
     plaid_country_codes: list[str] = ["US"]
-    #: How much history to pull when an item is first connected.
+    #: How much transaction history to request when an item is first connected,
+    #: passed to Plaid as transactions.days_requested.
+    #:
+    #: 730 is Plaid's maximum and there is no way past it — the ceiling is
+    #: theirs, not ours. Plaid's own default is 90, which is too short to draw
+    #: a net-worth chart or compare a month against the same month last year.
+    #:
+    #: Applied at link time only. Raising this does not extend an item that is
+    #: already connected; that needs re-linking through Link update mode.
     plaid_initial_backfill_days: int = 730
 
     @property
