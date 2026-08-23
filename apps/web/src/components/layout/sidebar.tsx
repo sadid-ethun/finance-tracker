@@ -14,7 +14,15 @@ export function Sidebar({ userName }: { userName: string }) {
 
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-border bg-card lg:flex">
-      <div className="px-6 py-6">
+      <div className="flex items-center gap-2.5 px-6 py-6">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icon-192.png"
+          alt=""
+          width={26}
+          height={26}
+          className="rounded-[7px]"
+        />
         <span className="text-[15px] font-semibold tracking-[-0.01em]">
           Finance Tracker
         </span>
