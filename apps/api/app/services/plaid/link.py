@@ -48,6 +48,14 @@ async def create_link_token(
         kwargs["access_token"] = client.access_token_for(item)
     else:
         kwargs["products"] = [Products(p) for p in settings.plaid_products]
+        # Requested separately from `products` on purpose. Anything in
+        # `products` is a hard requirement and Plaid will refuse institutions
+        # that cannot satisfy it — a credit card has no investment accounts,
+        # so requiring investments there makes it unlinkable.
+        if settings.plaid_additional_consented_products:
+            kwargs["additional_consented_products"] = [
+                Products(p) for p in settings.plaid_additional_consented_products
+            ]
 
     if settings.plaid_webhook_url:
         kwargs["webhook"] = settings.plaid_webhook_url

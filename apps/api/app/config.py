@@ -73,12 +73,21 @@ class Settings(BaseSettings):
     # Public URL Plaid posts webhooks to. Empty locally, where there is no
     # inbound route from the internet.
     plaid_webhook_url: str = ""
-    #: Products requested when linking. `investments` must be here at link
-    #: time: Plaid grants consent per product when the user authorises, and
+    #: Products the institution MUST support. Keep this minimal: Plaid refuses
+    #: to link any institution that cannot provide every item here, so putting
+    #: `investments` in this list blocks connecting a credit card.
+    plaid_products: list[str] = ["transactions"]
+    #: Products the user consents to without requiring them.
+    #:
+    #: Plaid grants consent per product at link time, and
     #: /investments/holdings/get returns ADDITIONAL_CONSENT_REQUIRED without
-    #: it. Adding it later does not apply to already-linked items — those need
-    #: re-linking through Link update mode.
-    plaid_products: list[str] = ["transactions", "investments"]
+    #: it — but requiring it would exclude every institution that has no
+    #: brokerage. Consenting here gets holdings from the institutions that
+    #: have them and stays out of the way for the ones that do not.
+    #:
+    #: Consent is granted at link time only: adding a product here does not
+    #: apply to an already-linked item, which has to be re-linked.
+    plaid_additional_consented_products: list[str] = ["investments"]
     plaid_country_codes: list[str] = ["US"]
     #: How much history to pull when an item is first connected.
     plaid_initial_backfill_days: int = 730
