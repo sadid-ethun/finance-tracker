@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
-import { SpendThisMonth } from "@/components/budgets/spend-this-month";
+import { SpendingByCategory } from "@/components/dashboard/charts";
 import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
@@ -28,24 +28,6 @@ function monthKey(d: Date): string {
 function shiftMonth(key: string, delta: number): string {
   const [y, m] = key.split("-").map(Number);
   return monthKey(new Date(y, m - 1 + delta, 1));
-}
-
-/**
- * Month name alone, for the chart. The year is noise on a series label — both
- * lines are days of a month, and the day is already the tooltip's heading.
- */
-function shortMonthLabel(key: string): string {
-  const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short" });
-}
-
-/**
- * With the year, for the compare picker. Six months back from January reaches
- * the previous year, and two entries reading "Aug" would be indistinguishable.
- */
-function pickerMonthLabel(key: string): string {
-  const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
 function monthLabel(key: string): string {
@@ -103,6 +85,10 @@ export function BudgetView() {
       ) : (
         <>
           <BudgetBody month={month} data={budget.data} />
+          {/* Moved from Home: the question "where did it go" belongs beside
+              the limits it went past, not on a dashboard that has no budget
+              context to read it against. */}
+          <SpendingByCategory />
           <DeleteBudget month={month} label={monthLabel(month)} />
         </>
       )}
@@ -180,8 +166,6 @@ function BudgetBody({
   // Defaults to the month before, which is the comparison anyone reaches for
   // first. Six back is enough to cover a seasonal comparison without turning
   // the control into a scroll.
-  const [compareMonth, setCompareMonth] = useState(() => shiftMonth(month, -1));
-  const compareOptions = Array.from({ length: 6 }, (_, i) => shiftMonth(month, -(i + 1)));
 
   const overall = data.total_budgeted
     ? Math.round((data.total_spent / data.total_budgeted) * 100)
@@ -190,18 +174,6 @@ function BudgetBody({
 
   return (
     <>
-      <SpendThisMonth
-        month={month}
-        compareMonth={compareMonth}
-        monthLabel={shortMonthLabel}
-        pickerLabel={pickerMonthLabel}
-        onCompareChange={setCompareMonth}
-        compareOptions={compareOptions}
-      />
-
-      {/* Kept below the comparison: the headline is now "what did I spend",
-          and this is the answer to "how much is left", which is a different
-          question and a smaller one. */}
       <Card as="section" className="p-5">
         <p className="text-[13px] font-medium text-muted-foreground">
           {isOver ? "Over budget by" : "Left to spend"}

@@ -9,6 +9,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { useState } from "react";
+
 import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
@@ -95,22 +97,36 @@ function buildSeries(
   });
 }
 
-export function SpendThisMonth({
-  month,
-  compareMonth,
-  monthLabel,
-  pickerLabel,
-  onCompareChange,
-  compareOptions,
-}: {
-  month: string;
-  compareMonth: string;
-  monthLabel: (key: string) => string;
-  /** Carries the year; only the picker needs to tell 2025 from 2026. */
-  pickerLabel: (key: string) => string;
-  onCompareChange: (key: string) => void;
-  compareOptions: string[];
-}) {
+/** Month name alone. The year is noise on a series label. */
+function monthLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short" });
+}
+
+/**
+ * With the year, for the picker. Six months back from January reaches the
+ * previous year, and two entries reading "Aug" would be indistinguishable.
+ */
+function pickerLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function shiftMonth(key: string, delta: number): string {
+  const [y, m] = key.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function SpendThisMonth({ month }: { month: string }) {
+  /**
+   * Comparison state lives here rather than with the caller. The card is now
+   * on two screens, and a control that belongs to the card should not have to
+   * be rebuilt by each page that renders it.
+   */
+  const [compareMonth, setCompareMonth] = useState(() => shiftMonth(month, -1));
+  const compareOptions = Array.from({ length: 6 }, (_, i) => shiftMonth(month, -(i + 1)));
+  const onCompareChange = setCompareMonth;
   const current = useBudget(month);
   const comparison = useBudget(compareMonth);
   const currentDaily = useDailySpend(month);

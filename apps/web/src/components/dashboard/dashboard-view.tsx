@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Wallet } from "lucide-react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
-import { CashFlowChart, SpendingByCategory } from "@/components/dashboard/charts";
+import { SpendThisMonth } from "@/components/budgets/spend-this-month";
+import { CashFlowChart } from "@/components/dashboard/charts";
 import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
 import { MonthCard, StatTiles } from "@/components/dashboard/stat-tiles";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -16,6 +17,11 @@ import {
   useRecentTransactions,
 } from "@/hooks/use-finance";
 import { formatDate } from "@/lib/format";
+
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
 
 export function DashboardView() {
   const summary = useDashboardSummary();
@@ -49,7 +55,11 @@ export function DashboardView() {
       <NetWorthHero summary={summary.data} />
       <StatTiles summary={summary.data} />
       <MonthCard summary={summary.data} />
-      <SpendingByCategory />
+      {/* Spend-against-budget leads on Home: the first question on opening
+          the app is whether this month is going well, and that needs the
+          budget beside the figure. The category breakdown moved to Budget,
+          where the limits it explains actually live. */}
+      <SpendThisMonth month={currentMonth()} />
       <CashFlowChart />
       <RecentTransactions />
     </div>

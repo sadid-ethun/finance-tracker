@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Cell, Pie, PieChart } from "recharts";
+import { Area, AreaChart, Cell, Pie, PieChart, YAxis } from "recharts";
 import { RefreshCw, TrendingUp } from "lucide-react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
@@ -16,6 +16,7 @@ import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import {
   useAllocation,
   useHoldings,
+  useInvestmentPerformance,
   useInvestmentSummary,
   useSetCostBasis,
   useSyncInvestments,
@@ -32,6 +33,95 @@ const GROUP_LABELS: Record<GroupBy, string> = {
   account: "Account",
   security: "Holding",
 };
+
+const PERFORMANCE_RANGES = [
+  { days: 30, label: "1M" },
+  { days: 90, label: "3M" },
+  { days: 180, label: "6M" },
+  { days: 365, label: "1Y" },
+] as const;
+
+function PerformanceChart() {
+  const [days, setDays] = useState<number>(180);
+  const performance = useInvestmentPerformance(days);
+  const points = performance.data ?? [];
+
+  return (
+    <section>
+      <SectionLabel as="h2" className="mb-3">
+        Performance
+      </SectionLabel>
+
+      <Card as="section" className="p-4">
+        <div className="h-[160px] w-full">
+          {performance.isLoading ? (
+            <Skeleton className="size-full" />
+          ) : points.length < 2 ? (
+            <div className="flex h-full items-center justify-center rounded-card border border-dashed border-border px-4 text-center">
+              <p className="text-[13px] text-muted-foreground">
+                Not enough history yet — this fills in each weekday.
+              </p>
+            </div>
+          ) : (
+            <ChartContainer config={chartConfig} className="size-full">
+              <AreaChart data={points} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="perf-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                {/* Portfolio value rarely starts at zero, and anchoring there
+                    would flatten every real movement into a line at the top. */}
+                <YAxis hide domain={["dataMin", "dataMax"]} />
+                <ChartTooltip
+                  cursor={{ stroke: "var(--border)" }}
+                  content={
+                    <ChartTooltipContent
+                      hideIndicator
+                      labelKey="date"
+                      formatter={(value) => (
+                        <span className="tabular font-mono text-[13px]">
+                          {formatMoney(Number(value))}
+                        </span>
+                      )}
+                    />
+                  }
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="var(--color-primary)"
+                  strokeWidth={2}
+                  fill="url(#perf-fill)"
+                  dot={false}
+                  {...chartAnimation()}
+                />
+              </AreaChart>
+            </ChartContainer>
+          )}
+        </div>
+
+        <div className="mt-3 flex gap-1 rounded-[14px] bg-secondary p-1">
+          {PERFORMANCE_RANGES.map((range) => (
+            <button
+              key={range.days}
+              type="button"
+              onClick={() => setDays(range.days)}
+              aria-pressed={days === range.days}
+              className={cn(
+                "h-8 flex-1 rounded-[11px] text-[13px] font-medium transition-colors",
+                days === range.days ? "bg-card" : "text-muted-foreground",
+              )}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+      </Card>
+    </section>
+  );
+}
 
 export function InvestmentsView() {
   const summary = useInvestmentSummary();
@@ -149,6 +239,11 @@ export function InvestmentsView() {
           </p>
         ) : null}
       </section>
+
+      {/* Portfolio value over time, the investments answer to the net-worth
+          chart. Reads holding_snapshots, written nightly on weekdays — markets
+          are closed at the weekend and a flat Saturday is not information. */}
+      <PerformanceChart />
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3">
