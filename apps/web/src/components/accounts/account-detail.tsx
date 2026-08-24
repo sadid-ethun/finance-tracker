@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
@@ -53,7 +54,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
       )}
 
       <div className="mt-8 mb-3 flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold tracking-[-0.01em]">Transactions</h2>
+        <SectionLabel as="h2">Transactions</SectionLabel>
         <AddTransactionDialog
           accountId={accountId}
           trigger={

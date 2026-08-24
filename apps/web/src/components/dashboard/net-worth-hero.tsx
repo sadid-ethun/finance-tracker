@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import NumberFlow from "@number-flow/react";
+
+import { SectionLabel } from "@/components/shared/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
@@ -29,13 +31,13 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
 
   return (
     <section>
-      <p className="text-[13px] font-medium text-muted-foreground">Net worth</p>
+      <SectionLabel>Net worth</SectionLabel>
 
       {summary ? (
         <NumberFlow
           value={summary.net_worth / 100}
           format={{ style: "currency", currency: summary.currency, maximumFractionDigits: 2 }}
-          className="tabular mt-1 block text-[40px] leading-none font-semibold tracking-[-0.03em] sm:text-[48px]"
+          className="tabular mt-1 block font-serif text-[40px] leading-none font-normal tracking-[-0.02em] sm:text-[48px]"
         />
       ) : (
         <Skeleton className="mt-2 h-[44px] w-56 sm:h-[52px]" />

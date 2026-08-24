@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { RefreshCw, TrendingUp } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
@@ -144,7 +145,7 @@ export function InvestmentsView() {
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em]">Allocation</h2>
+          <SectionLabel as="h2">Allocation</SectionLabel>
           <div className="flex gap-1 rounded-[12px] bg-secondary p-1">
             {(Object.keys(GROUP_LABELS) as GroupBy[]).map((key) => (
               <button
@@ -216,7 +217,7 @@ export function InvestmentsView() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-[18px] font-semibold tracking-[-0.01em]">Holdings</h2>
+        <SectionLabel as="h2" className="mb-3">Holdings</SectionLabel>
         {holdings.isLoading ? (
           <RowSkeleton count={5} />
         ) : (

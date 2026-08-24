@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { Connections } from "@/components/settings/connections";
 import { Appearance } from "@/components/settings/appearance";
 import { DataTools } from "@/components/settings/data-tools";
@@ -68,7 +69,7 @@ function CategoryList() {
     <div className="space-y-6">
       {(["expense", "income", "transfer"] as const).map((kind) => (
         <section key={kind}>
-          <h2 className="mb-1 text-[18px] font-semibold capitalize">{kind}</h2>
+          <SectionLabel as="h2" className="mb-1">{kind}</SectionLabel>
           {kind === "transfer" ? (
             <p className="mb-3 text-[13px] text-muted-foreground">
               Excluded from income and spending totals — moving money between your
@@ -138,7 +139,7 @@ function AuditLog() {
 
   return (
     <section>
-      <h2 className="mb-1 text-[18px] font-semibold tracking-[-0.01em]">Activity</h2>
+      <SectionLabel as="h2" className="mb-1">Activity</SectionLabel>
       <p className="mb-3 text-[13px] text-muted-foreground">
         Append-only record of changes to your financial data.
       </p>

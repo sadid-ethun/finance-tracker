@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Building2, Link2, RefreshCw, Trash2 } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
 import {
@@ -27,9 +28,9 @@ export function Connections() {
     <div className="space-y-8">
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em]">
+          <SectionLabel as="h2">
             Connected banks
-          </h2>
+          </SectionLabel>
           {connections.length > 0 ? <ConnectBankButton /> : null}
         </div>
 
@@ -50,9 +51,9 @@ export function Connections() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-[18px] font-semibold tracking-[-0.01em]">
+        <SectionLabel as="h2" className="mb-3">
           Recent syncs
-        </h2>
+        </SectionLabel>
         {runs.data && runs.data.length > 0 ? (
           <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card text-[13px]">
             {runs.data.map((run) => (

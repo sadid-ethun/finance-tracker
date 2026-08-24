@@ -14,7 +14,7 @@ import { Card, Section } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
 import { useCashFlow, useSpendingByCategory } from "@/hooks/use-finance";
-import { seriesColor } from "@/lib/chart-theme";
+import { axisProps, seriesColor } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 
 function SectionCard({
@@ -132,9 +132,7 @@ export function CashFlowChart() {
               >
                 <XAxis
                   dataKey="label"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                  {...axisProps}
                 />
                 <Bar
                   dataKey="income"

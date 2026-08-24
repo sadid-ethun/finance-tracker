@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Landmark, Plus, Wallet } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
@@ -75,9 +76,9 @@ export function AccountList() {
 
       {grouped.map((group) => (
         <section key={group.type}>
-          <h2 className="mb-3 text-[18px] font-semibold tracking-[-0.01em]">
+          <SectionLabel as="h2" className="mb-3">
             {ACCOUNT_TYPE_LABELS[group.type] ?? group.type}
-          </h2>
+          </SectionLabel>
           <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
             {group.items.map((account) => (
               <AccountRow key={account.id} account={account} />

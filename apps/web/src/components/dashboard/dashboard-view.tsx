@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Wallet } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { CashFlowChart, SpendingByCategory } from "@/components/dashboard/charts";
 import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
 import { MonthCard, StatTiles } from "@/components/dashboard/stat-tiles";
@@ -61,7 +62,7 @@ function RecentTransactions() {
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold tracking-[-0.01em]">Recent</h2>
+        <SectionLabel as="h2">Recent</SectionLabel>
         <Link
           href="/transactions"
           className="text-[14px] font-medium text-primary underline-offset-4 hover:underline"

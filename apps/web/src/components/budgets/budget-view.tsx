@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
@@ -120,7 +121,7 @@ function BudgetBody({
       </section>
 
       <section>
-        <h2 className="mb-3 text-[18px] font-semibold tracking-[-0.01em]">Categories</h2>
+        <SectionLabel as="h2" className="mb-3">Categories</SectionLabel>
         <ul className="space-y-3">
           {data.categories.map((line) => (
             <BudgetRow key={line.category_id} month={month} line={line} />
@@ -130,9 +131,9 @@ function BudgetBody({
 
       {data.unbudgeted.length > 0 ? (
         <section>
-          <h2 className="mb-1 text-[18px] font-semibold tracking-[-0.01em]">
+          <SectionLabel as="h2" className="mb-1">
             Not budgeted
-          </h2>
+          </SectionLabel>
           <p className="mb-3 text-[13px] text-muted-foreground">
             Spending in categories with no limit — the usual reason a month
             doesn&apos;t add up.

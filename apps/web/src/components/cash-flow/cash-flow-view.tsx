@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { ChartPie, ChevronRight } from "lucide-react";
 
+import { SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, Skeleton } from "@/components/shared/states";
@@ -22,6 +23,7 @@ import {
   useCashFlowSummary,
   useCashFlowTrends,
 } from "@/hooks/use-finance";
+import { axisProps, gridProps } from "@/lib/chart-theme";
 import { cn } from "@/lib/utils";
 
 export function CashFlowView() {
@@ -79,7 +81,7 @@ export function CashFlowView() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-[18px] font-semibold tracking-[-0.01em]">Trend</h2>
+        <SectionLabel as="h2" className="mb-3">Trend</SectionLabel>
         <div className="rounded-card border border-border bg-card p-5">
           {trends.isLoading ? (
             <Skeleton className="h-[220px] w-full" />
@@ -96,12 +98,10 @@ export function CashFlowView() {
                   }))}
                   margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
                 >
-                  <CartesianGrid vertical={false} stroke="var(--border)" />
+                  <CartesianGrid {...gridProps} />
                   <XAxis
                     dataKey="label"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    {...axisProps}
                   />
                   <Bar
                     dataKey="income"
@@ -138,9 +138,9 @@ export function CashFlowView() {
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[18px] font-semibold tracking-[-0.01em]">
+          <SectionLabel as="h2">
             Largest categories
-          </h2>
+          </SectionLabel>
           <div className="flex gap-1 rounded-[12px] bg-secondary p-1">
             {(["expense", "income"] as const).map((k) => (
               <button

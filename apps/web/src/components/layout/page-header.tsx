@@ -10,7 +10,11 @@ export function PageHeader({
   return (
     <header className="mb-6 flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-[-0.02em] lg:text-[28px]">
+        {/* The display voice. Scaled to app sizes rather than the reference's
+          80-96px marketing hero, and tracked in rather than lightened —
+          the substitute serif ships at weight 400 where the reference
+          specifies 300. */}
+      <h1 className="font-serif text-[26px] leading-none font-normal tracking-[-0.01em] lg:text-[32px]">
           {title}
         </h1>
         {description ? (
