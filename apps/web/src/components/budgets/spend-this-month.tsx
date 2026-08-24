@@ -24,6 +24,7 @@ import {
   chartConfig,
   formatAxisMoney,
   gridProps,
+  niceTicks,
   referenceLineProps,
 } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
@@ -41,6 +42,29 @@ import { formatMoney } from "@/lib/format";
  * runs its full length while the current one stops at today — that gap is
  * what "we are only partway through" looks like.
  */
+function LegendItem({
+  colour,
+  label,
+  dashed = false,
+}: {
+  colour: string;
+  label: string;
+  dashed?: boolean;
+}) {
+  return (
+    <span className="flex items-center gap-1.5 text-muted-foreground">
+      {/* A dash for the threshold, a dot for a series: with both lines now
+          solid, the shape is what says which one is not data. */}
+      <span
+        aria-hidden
+        className={dashed ? "h-0 w-4 border-t border-dashed" : "size-2 rounded-full"}
+        style={dashed ? { borderColor: colour } : { backgroundColor: colour }}
+      />
+      {label}
+    </span>
+  );
+}
+
 type SeriesPoint = { day: number; current: number | null; previous: number | null };
 
 /**
@@ -106,6 +130,12 @@ export function SpendThisMonth({
    */
   const chartData = buildSeries(currentDaily.data ?? [], comparisonDaily.data ?? []);
 
+  // Round ticks, so a label reading "$3k" is 3,000 exactly. The budget line
+  // sitting just under it then reads as under budget, which it is.
+  const ticks = niceTicks(
+    Math.max(spent, comparedSpent, budgeted, ...chartData.map((p) => p.previous ?? 0)),
+  );
+
   return (
     <Card as="section" className="p-5">
       <SectionLabel as="h2">Spend this month</SectionLabel>
@@ -154,7 +184,8 @@ export function SpendThisMonth({
           <YAxis
             {...axisProps}
             width={44}
-            domain={[0, "dataMax"]}
+            ticks={ticks}
+            domain={[0, ticks[ticks.length - 1]]}
             tickFormatter={(value) => formatAxisMoney(Number(value))}
           />
 
@@ -177,7 +208,6 @@ export function SpendThisMonth({
             dataKey="previous"
             stroke="var(--color-comparison)"
             strokeWidth={1.5}
-            strokeDasharray="4 4"
             dot={false}
             connectNulls
             {...chartAnimation()}
@@ -218,6 +248,14 @@ export function SpendThisMonth({
           />
         </ComposedChart>
       </ChartContainer>
+
+      <div className="mt-3 flex flex-wrap justify-center gap-4 text-[12px]">
+        <LegendItem colour={chartConfig.primary.color} label={monthLabel(month)} />
+        <LegendItem colour={chartConfig.comparison.color} label={monthLabel(compareMonth)} />
+        {budgeted > 0 ? (
+          <LegendItem colour={referenceLineProps.stroke} label="Budget" dashed />
+        ) : null}
+      </div>
 
       {budgeted > 0 ? (
         <div className="mt-4 border-t border-border pt-3">

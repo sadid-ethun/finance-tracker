@@ -34,6 +34,7 @@ import {
   chartConfig,
   formatAxisMoney,
   gridProps,
+  symmetricTicks,
 } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -152,6 +153,7 @@ export function CashFlowView() {
                     {...axisProps}
                     width={44}
                     tickFormatter={(value) => formatAxisMoney(Number(value))}
+                    ticks={symmetricTicks(trends.data ?? [])}
                   />
                   {/* Solid, against the dashed grid, so the line dividing
                       income from spending is not mistaken for a rule. */}

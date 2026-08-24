@@ -56,6 +56,52 @@ export function formatAxisMoney(minorUnits: number): string {
  * these charts was to press one. Vertical lines add nothing — the x axis is
  * already labelled by month.
  */
+/**
+ * Tick values at round money intervals.
+ *
+ * Recharts picks ticks to fit the data, which lands them on values like 2,750
+ * — and a label rounded to whole thousands then reads "$3k". Anything drawn
+ * between 2,750 and 3,000, such as a $2,778 budget line, appears *above* a
+ * gridline claiming to be $3k. The maths is right and the label lies.
+ *
+ * Choosing round steps first means every label is exactly what it says.
+ */
+export function niceTicks(maxMinorUnits: number, target = 5): number[] {
+  if (!Number.isFinite(maxMinorUnits) || maxMinorUnits <= 0) return [0];
+
+  const maxMajor = maxMinorUnits / 100;
+
+  // Steps chosen in whole units, not minor ones, and limited to 1/2/5 times a
+  // power of ten. A 2.5 step is round in dollars and not in the label: 2,500
+  // renders as "$3k" under whole-thousand rounding, which is the same lie.
+  const candidates: number[] = [];
+  for (let exp = 0; exp <= 9; exp++) {
+    for (const m of [1, 2, 5]) candidates.push(m * 10 ** exp);
+  }
+
+  // Nearest to the requested number of lines, rather than the first that fits
+  // — "first that fits" collapses a $9,000 range to two gridlines.
+  let step = candidates[0];
+  let best = Infinity;
+  for (const candidate of candidates) {
+    const count = Math.ceil(maxMajor / candidate) + 1;
+    if (count < 2) continue;
+    const distance = Math.abs(count - target);
+    if (distance < best) {
+      best = distance;
+      step = candidate;
+    }
+  }
+
+  const ticks: number[] = [];
+  // Runs past the data so the top gridline is above the highest point rather
+  // than clipping it.
+  for (let value = 0; value < maxMajor + step; value += step) {
+    ticks.push(Math.round(value * 100));
+  }
+  return ticks;
+}
+
 export const gridProps = {
   vertical: false as const,
   horizontal: true as const,
@@ -133,3 +179,14 @@ export const referenceLineProps = {
   strokeDasharray: "4 4",
   strokeWidth: 1,
 };
+
+/**
+ * Round ticks mirrored across zero, for the income-above / spending-below
+ * charts. Generating each side independently would put a gridline at $8k and
+ * none at -$8k, so the two halves would not be readable against each other.
+ */
+export function symmetricTicks(rows: { income: number; spending: number }[]): number[] {
+  const peak = Math.max(0, ...rows.map((r) => Math.max(r.income, r.spending)));
+  const positive = niceTicks(peak).filter((t) => t > 0);
+  return [...positive.map((t) => -t).reverse(), 0, ...positive];
+}

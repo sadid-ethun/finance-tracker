@@ -27,6 +27,7 @@ import {
   chartConfig,
   formatAxisMoney,
   gridProps,
+  symmetricTicks,
   seriesColor,
 } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
@@ -160,6 +161,9 @@ export function CashFlowChart() {
                   {...axisProps}
                   width={40}
                   tickFormatter={(value) => formatAxisMoney(Number(value))}
+                  // Round values, so a label reading "$8k" is 8,000 exactly
+                  // rather than a 7,750 tick rounded up in the label.
+                  ticks={symmetricTicks(rows)}
                 />
                 {/* Solid, against the dashed grid, so the line dividing income
                     from spending is not mistaken for a rule. */}
