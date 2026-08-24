@@ -186,6 +186,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/budgets/{month}/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daily Spend
+         * @description Cumulative spend for each day of a month, for the spend-vs-budget chart.
+         *
+         *     Every day appears, including days with no spending — the flat stretches in
+         *     a cumulative line are information, and omitting them would imply spending
+         *     on dates where none happened.
+         *
+         *     Stops at today for the current month rather than running to the month end,
+         *     so the line does not flatten across days that have not happened yet.
+         */
+        get: operations["daily_spend_api_v1_budgets__month__daily_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/budgets/{month}/suggestions": {
         parameters: {
             query?: never;
@@ -1467,6 +1494,21 @@ export interface components {
             cost_basis?: number | null;
         };
         /**
+         * DailySpendPoint
+         * @description One day of a month. `cumulative` is spend from the 1st through this day.
+         */
+        DailySpendPoint: {
+            /** Cumulative */
+            cumulative: number;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Spent */
+            spent: number;
+        };
+        /**
          * DashboardSummary
          * @description All values in minor units. Liabilities and spending are positive.
          */
@@ -2472,6 +2514,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BudgetProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    daily_spend_api_v1_budgets__month__daily_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailySpendPoint"][];
                 };
             };
             /** @description Validation Error */

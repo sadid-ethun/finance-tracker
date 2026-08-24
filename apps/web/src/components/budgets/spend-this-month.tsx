@@ -1,26 +1,67 @@
 "use client";
 
+import { ComposedChart, Line, ReferenceLine, XAxis, YAxis } from "recharts";
+
 import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
-import { useBudget } from "@/hooks/use-finance";
-import { cn } from "@/lib/utils";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { useBudget, useDailySpend } from "@/hooks/use-finance";
+import {
+  axisProps,
+  chartAnimation,
+  chartConfig,
+  referenceLineProps,
+} from "@/lib/chart-theme";
+import { formatMoney } from "@/lib/format";
 
 /**
  * Spend this month, against budget, against another month.
  *
- * Borrows the structure of the reference's spend card: a mono section label,
- * one large figure, an explicit comparison control, and a plot with the
- * budget drawn as a reference the bars are read against.
+ * Cumulative spend by day for both months on one axis, with the budget as a
+ * dashed threshold. The shape is the point: where the solid line sits
+ * relative to the dashed one says whether this month is running ahead, and
+ * where it crosses the threshold says when the budget ran out.
  *
- * It is not the reference's chart. That one is cumulative spend by day, and
- * no endpoint in this app exposes daily granularity — `/budgets/{month}`
- * returns month totals and per-category lines, and nothing else has a daily
- * series. Drawing it would mean a new API endpoint, which this pass is not
- * allowed to add. Two months read against a shared budget scale answers the
- * same question the day-by-day line does — am I ahead of where I was, and
- * against the line — from data that already exists.
+ * Both months are plotted by day-of-month rather than by date, so a 28-day
+ * February and a 31-day January line up at the same x. The comparison month
+ * runs its full length while the current one stops at today — that gap is
+ * what "we are only partway through" looks like.
  */
+type SeriesPoint = { day: number; current: number | null; previous: number | null };
+
+/**
+ * Aligns two months on day-of-month.
+ *
+ * Both series are already cumulative from the API. The current month is
+ * shorter — it stops at today — so its later days are null rather than zero:
+ * a zero would draw the line back down to the axis and read as spending
+ * reversed, where null simply ends it.
+ */
+function buildSeries(
+  current: { date: string; cumulative: number }[],
+  previous: { date: string; cumulative: number }[],
+): SeriesPoint[] {
+  const dayOf = (iso: string) => Number(iso.slice(8, 10));
+  const currentBy = new Map(current.map((p) => [dayOf(p.date), p.cumulative]));
+  const previousBy = new Map(previous.map((p) => [dayOf(p.date), p.cumulative]));
+
+  const lastDay = Math.max(0, ...currentBy.keys(), ...previousBy.keys());
+
+  return Array.from({ length: lastDay }, (_, i) => {
+    const day = i + 1;
+    return {
+      day,
+      current: currentBy.get(day) ?? null,
+      previous: previousBy.get(day) ?? null,
+    };
+  });
+}
+
 export function SpendThisMonth({
   month,
   compareMonth,
@@ -36,18 +77,22 @@ export function SpendThisMonth({
 }) {
   const current = useBudget(month);
   const comparison = useBudget(compareMonth);
+  const currentDaily = useDailySpend(month);
+  const comparisonDaily = useDailySpend(compareMonth);
 
   const spent = current.data?.total_spent ?? 0;
   const budgeted = current.data?.total_budgeted ?? 0;
   const comparedSpent = comparison.data?.total_spent ?? 0;
   const comparisonHasData = (comparison.data?.total_spent ?? 0) > 0;
 
-  // Both bars and the budget marker share one scale, or the comparison is
-  // decorative — two bars on independent scales say nothing about each other.
-  const scale = Math.max(spent, comparedSpent, budgeted, 1);
-  const pct = (value: number) => `${Math.min((value / scale) * 100, 100)}%`;
-
   const delta = spent - comparedSpent;
+
+  /**
+   * Keyed by day-of-month so a 28-day February aligns with a 31-day January.
+   * Joining on date would put them on separate x positions and the two lines
+   * would never be comparable.
+   */
+  const chartData = buildSeries(currentDaily.data ?? [], comparisonDaily.data ?? []);
 
   return (
     <Card as="section" className="p-5">
@@ -90,22 +135,67 @@ export function SpendThisMonth({
         </label>
       </div>
 
-      <div className="mt-5 space-y-3">
-        <Bar
-          label={monthLabel(month)}
-          value={spent}
-          width={pct(spent)}
-          colour="var(--chart-1)"
-        />
-        <Bar
-          label={monthLabel(compareMonth)}
-          value={comparedSpent}
-          width={pct(comparedSpent)}
-          colour="var(--chart-6)"
-          muted
-          empty={!comparisonHasData}
-        />
-      </div>
+      <ChartContainer config={chartConfig} className="mt-5 h-[180px] w-full">
+        <ComposedChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
+          <XAxis dataKey="day" {...axisProps} interval={6} tickMargin={8} />
+          <YAxis hide domain={[0, "dataMax"]} />
+
+          {budgeted > 0 ? (
+            <ReferenceLine
+              y={budgeted}
+              {...referenceLineProps}
+              label={{
+                value: "Budget",
+                position: "insideTopLeft",
+                fill: "var(--muted-foreground)",
+                fontSize: 10,
+              }}
+            />
+          ) : null}
+
+          {/* Prior period first, so the current one draws over it. */}
+          <Line
+            type="monotone"
+            dataKey="previous"
+            stroke="var(--color-comparison)"
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            connectNulls
+            {...chartAnimation()}
+          />
+          <Line
+            type="monotone"
+            dataKey="current"
+            stroke="var(--color-primary)"
+            strokeWidth={2}
+            dot={false}
+            connectNulls
+            {...chartAnimation()}
+          />
+
+          <ChartTooltip
+            cursor={{ stroke: "var(--border)" }}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(label) => (
+                  <span className="font-mono text-[11px] tracking-[0.08em] uppercase">
+                    Day {String(label)}
+                  </span>
+                )}
+                formatter={(value, name) => (
+                  <span className="flex w-full justify-between gap-3">
+                    <span className="text-muted-foreground">
+                      {name === "current" ? monthLabel(month) : monthLabel(compareMonth)}
+                    </span>
+                    <span className="tabular font-mono">{formatMoney(Number(value))}</span>
+                  </span>
+                )}
+              />
+            }
+          />
+        </ComposedChart>
+      </ChartContainer>
 
       {budgeted > 0 ? (
         <div className="mt-4 border-t border-border pt-3">
@@ -126,37 +216,3 @@ export function SpendThisMonth({
   );
 }
 
-function Bar({
-  label,
-  value,
-  width,
-  colour,
-  muted = false,
-  empty = false,
-}: {
-  label: string;
-  value: number;
-  width: string;
-  colour: string;
-  muted?: boolean;
-  empty?: boolean;
-}) {
-  return (
-    <div>
-      <div className="flex items-baseline justify-between text-[13px]">
-        <span className={cn(muted ? "text-muted-foreground" : "")}>{label}</span>
-        {empty ? (
-          <span className="text-[12px] text-muted-foreground">No spending recorded</span>
-        ) : (
-          <Money minorUnits={value} className={cn("font-medium", muted && "text-muted-foreground")} />
-        )}
-      </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
-        <div
-          className="h-full rounded-full transition-[width] duration-300"
-          style={{ width, backgroundColor: colour }}
-        />
-      </div>
-    </div>
-  );
-}

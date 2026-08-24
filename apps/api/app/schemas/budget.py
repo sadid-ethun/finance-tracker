@@ -53,6 +53,14 @@ class BudgetProgress(BaseModel):
     unbudgeted_spent: int
 
 
+class DailySpendPoint(BaseModel):
+    """One day of a month. `cumulative` is spend from the 1st through this day."""
+
+    date: date
+    spent: int
+    cumulative: int
+
+
 class BudgetSuggestion(BaseModel):
     category_id: str
     name: str

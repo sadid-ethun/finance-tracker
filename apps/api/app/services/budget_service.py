@@ -59,6 +59,60 @@ async def _spend_by_category(db: AsyncSession, user_id: str, month: date) -> dic
     return {r.category_id: abs(int(r.total)) for r in rows}
 
 
+async def daily_spend(db: AsyncSession, user_id: str, month: date) -> list[dict[str, Any]]:
+    """Cumulative spend for each day of a month.
+
+    Uses the same predicate as every other budget figure — transfers, splits,
+    hidden rows and opt-outs excluded — so the chart and the totals beside it
+    cannot disagree.
+
+    Every day appears, including days with no spending. A cumulative line
+    drawn only from days that had transactions would step between them and
+    imply spending on dates where none happened; the flat stretches are the
+    information.
+
+    The series stops at today for the current month rather than running to the
+    month end. Extending it would draw a flat line across days that have not
+    happened yet, which reads as "spending stopped" rather than "the month is
+    not over".
+    """
+    month = _normalize(month)
+    start, end = month_bounds(month)
+
+    today = date.today()
+    if end > today >= start:
+        end = today
+
+    rows = (
+        await db.execute(
+            select(
+                Transaction.date,
+                func.sum(Transaction.amount).label("total"),
+            )
+            .where(
+                *_spendable(user_id),
+                Transaction.exclude_from_budget.is_(False),
+                Transaction.date >= start,
+                Transaction.date <= end,
+                Transaction.amount < 0,
+            )
+            .group_by(Transaction.date)
+        )
+    ).all()
+
+    by_day = {r.date: abs(int(r.total)) for r in rows}
+
+    series: list[dict[str, Any]] = []
+    running = 0
+    day = start
+    while day <= end:
+        running += by_day.get(day, 0)
+        series.append({"date": day, "spent": by_day.get(day, 0), "cumulative": running})
+        day = date.fromordinal(day.toordinal() + 1)
+
+    return series
+
+
 async def get_budget(db: AsyncSession, user_id: str, month: date) -> Budget | None:
     """Load a month's budget with its lines eagerly.
 

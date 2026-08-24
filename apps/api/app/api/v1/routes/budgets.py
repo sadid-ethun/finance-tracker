@@ -11,6 +11,7 @@ from app.schemas.budget import (
     BudgetSuggestion,
     BudgetUpsertRequest,
     CategoryAmountRequest,
+    DailySpendPoint,
 )
 from app.services import budget_service
 
@@ -104,6 +105,25 @@ async def copy_budget(
     await budget_service.copy_budget(db, user.id, source=_parse_month(source), target=target)
     data = await budget_service.budget_with_progress(db, user.id, target)
     return BudgetProgress(**data)
+
+
+@router.get("/{month}/daily", response_model=list[DailySpendPoint])
+async def daily_spend(
+    month: Annotated[str, Path(pattern=MONTH_PATTERN)],
+    user: CurrentUser,
+    db: DbSession,
+) -> list[DailySpendPoint]:
+    """Cumulative spend for each day of a month, for the spend-vs-budget chart.
+
+    Every day appears, including days with no spending — the flat stretches in
+    a cumulative line are information, and omitting them would imply spending
+    on dates where none happened.
+
+    Stops at today for the current month rather than running to the month end,
+    so the line does not flatten across days that have not happened yet.
+    """
+    rows = await budget_service.daily_spend(db, user.id, _parse_month(month))
+    return [DailySpendPoint(**r) for r in rows]
 
 
 @router.get("/{month}/suggestions", response_model=list[BudgetSuggestion])

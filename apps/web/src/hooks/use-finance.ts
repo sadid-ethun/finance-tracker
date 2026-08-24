@@ -537,6 +537,21 @@ export function useSetBudgetCategory(month: string) {
   });
 }
 
+export type DailySpendPoint = {
+  date: string;
+  spent: number;
+  /** Spend from the 1st through this day. */
+  cumulative: number;
+};
+
+export function useDailySpend(month: string) {
+  return useQuery({
+    queryKey: ["budgets", month, "daily"],
+    queryFn: () => apiFetch<DailySpendPoint[]>(`/budgets/${month}/daily`),
+    staleTime: 60_000,
+  });
+}
+
 export function useDeleteBudget(month: string) {
   const invalidate = useBudgetInvalidation();
   return useMutation({

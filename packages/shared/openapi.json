@@ -1137,6 +1137,31 @@
         "title": "CostBasisUpdate",
         "type": "object"
       },
+      "DailySpendPoint": {
+        "description": "One day of a month. `cumulative` is spend from the 1st through this day.",
+        "properties": {
+          "cumulative": {
+            "title": "Cumulative",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "spent": {
+            "title": "Spent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "spent",
+          "cumulative"
+        ],
+        "title": "DailySpendPoint",
+        "type": "object"
+      },
       "DashboardSummary": {
         "description": "All values in minor units. Liabilities and spending are positive.",
         "properties": {
@@ -3556,6 +3581,59 @@
           }
         ],
         "summary": "Copy Budget",
+        "tags": [
+          "budgets"
+        ]
+      }
+    },
+    "/api/v1/budgets/{month}/daily": {
+      "get": {
+        "description": "Cumulative spend for each day of a month, for the spend-vs-budget chart.\n\nEvery day appears, including days with no spending \u2014 the flat stretches in\na cumulative line are information, and omitting them would imply spending\non dates where none happened.\n\nStops at today for the current month rather than running to the month end,\nso the line does not flatten across days that have not happened yet.",
+        "operationId": "daily_spend_api_v1_budgets__month__daily_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DailySpendPoint"
+                  },
+                  "title": "Response Daily Spend Api V1 Budgets  Month  Daily Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Daily Spend",
         "tags": [
           "budgets"
         ]
