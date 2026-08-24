@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
 import { SpendThisMonth } from "@/components/budgets/spend-this-month";
@@ -11,6 +11,7 @@ import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import {
   useBudget,
+  useCategories,
   useCopyBudget,
   useDeleteBudget,
   useSetBudgetCategory,
@@ -216,6 +217,11 @@ function BudgetBody({
             <BudgetRow key={line.category_id} month={month} line={line} />
           ))}
         </ul>
+        <AddCategory
+          month={month}
+          budgetedIds={new Set(data.categories.map((line) => line.category_id))}
+          unbudgeted={data.unbudgeted}
+        />
       </section>
 
       {data.unbudgeted.length > 0 ? (
@@ -243,6 +249,128 @@ function BudgetBody({
         </section>
       ) : null}
     </>
+  );
+}
+
+/**
+ * Add a category to an existing budget.
+ *
+ * Without this, removing a line was one-way: the only route back was deleting
+ * the whole budget and rebuilding it.
+ *
+ * Offers expense categories only. A budget is a spending limit, and income has
+ * nothing to limit while transfers are excluded from spending totals entirely
+ * — budgeting either would create a line that can never be met or exceeded.
+ *
+ * Where the category already has spending this month, its amount pre-fills
+ * from that: the number you are reaching for is almost always "at least what
+ * I have already spent".
+ */
+function AddCategory({
+  month,
+  budgetedIds,
+  unbudgeted,
+}: {
+  month: string;
+  budgetedIds: Set<string>;
+  unbudgeted: { category_id: string; name: string; spent: number }[];
+}) {
+  const categories = useCategories();
+  const setAmount = useSetBudgetCategory(month);
+  const [open, setOpen] = useState(false);
+  const [categoryId, setCategoryId] = useState("");
+  const [value, setValue] = useState("");
+
+  const spentBy = new Map(unbudgeted.map((u) => [u.category_id, u.spent]));
+  const available = (categories.data ?? []).filter(
+    (category) => category.kind === "expense" && !budgetedIds.has(category.id),
+  );
+
+  function pick(id: string) {
+    setCategoryId(id);
+    const spent = spentBy.get(id);
+    setValue(spent && spent > 0 ? (spent / 100).toFixed(2) : "");
+  }
+
+  async function save() {
+    const major = Number.parseFloat(value);
+    if (!categoryId || Number.isNaN(major) || major <= 0) return;
+    await setAmount.mutateAsync({ categoryId, amount: Math.round(major * 100) });
+    setOpen(false);
+    setCategoryId("");
+    setValue("");
+  }
+
+  if (available.length === 0) return null;
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-card border border-dashed border-border py-3 text-[14px] font-medium text-muted-foreground transition-colors active:bg-secondary md:hover:text-foreground"
+      >
+        <Plus className="size-4" strokeWidth={2} />
+        Add a category
+      </button>
+    );
+  }
+
+  return (
+    <Card as="section" className="mt-3 p-4">
+      <label className="block">
+        <span className="mb-1.5 block text-[13px] font-medium">Category</span>
+        <select
+          value={categoryId}
+          onChange={(event) => pick(event.target.value)}
+          autoFocus
+          className="h-10 w-full rounded-[10px] border border-input bg-background px-2 text-[14px] outline-none focus:border-ring"
+        >
+          <option value="">Choose a category…</option>
+          {available.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="mt-3 block">
+        <span className="mb-1.5 block text-[13px] font-medium">Monthly limit</span>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="0.00"
+          className="tabular h-10 w-full rounded-[10px] border border-input bg-background px-2 text-right text-[14px] outline-none focus:border-ring"
+        />
+        {spentBy.get(categoryId) ? (
+          <span className="mt-1 block text-[12px] text-muted-foreground">
+            Already spent <Money minorUnits={spentBy.get(categoryId) ?? 0} /> this month
+          </span>
+        ) : null}
+      </label>
+
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="h-10 flex-1 rounded-[14px] border border-border text-[14px] font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={!categoryId || setAmount.isPending}
+          className="h-10 flex-1 rounded-[14px] bg-primary text-[14px] font-semibold text-primary-foreground disabled:opacity-50"
+        >
+          {setAmount.isPending ? "Adding…" : "Add"}
+        </button>
+      </div>
+    </Card>
   );
 }
 
