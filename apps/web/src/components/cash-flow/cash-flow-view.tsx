@@ -2,20 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  ComposedChart,
-  ResponsiveContainer,
-  XAxis,
-} from "recharts";
+import { Bar, ComposedChart, Line, ReferenceLine, XAxis } from "recharts";
 import { ChartPie, ChevronRight } from "lucide-react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { ErrorState, Skeleton } from "@/components/shared/states";
 import {
   cashFlowWindow,
@@ -23,7 +20,8 @@ import {
   useCashFlowSummary,
   useCashFlowTrends,
 } from "@/hooks/use-finance";
-import { axisProps, gridProps } from "@/lib/chart-theme";
+import { axisProps, chartAnimation, chartConfig } from "@/lib/chart-theme";
+import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function CashFlowView() {
@@ -87,7 +85,7 @@ export function CashFlowView() {
             <Skeleton className="h-[220px] w-full" />
           ) : (
             <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%" debounce={80}>
+              <ChartContainer config={chartConfig} className="size-full">
                 <ComposedChart
                   data={(trends.data ?? []).map((t) => ({
                     ...t,
@@ -98,34 +96,57 @@ export function CashFlowView() {
                   }))}
                   margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
                 >
-                  <CartesianGrid {...gridProps} />
-                  <XAxis
-                    dataKey="label"
-                    {...axisProps}
+                  <XAxis dataKey="label" {...axisProps} />
+                  {/* The grid is gone: the only line worth drawing here is the
+                      one separating income from spending. */}
+                  <ReferenceLine y={0} stroke="var(--border)" />
+                  <ChartTooltip
+                    cursor={{ fill: "var(--secondary)", opacity: 0.4 }}
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => (
+                          <span className="flex w-full justify-between gap-3">
+                            <span className="text-muted-foreground">
+                              {name === "income"
+                                ? "Income"
+                                : name === "net"
+                                  ? "Net"
+                                  : "Spending"}
+                            </span>
+                            <span className="tabular font-mono">
+                              {formatMoney(Math.abs(Number(value)))}
+                            </span>
+                          </span>
+                        )}
+                      />
+                    }
                   />
                   <Bar
                     dataKey="income"
-                    fill="var(--positive)"
+                    fill="var(--color-income)"
                     radius={[4, 4, 0, 0]}
-                    isAnimationActive={false}
+                    maxBarSize={18}
+                    {...chartAnimation()}
                   />
                   <Bar
                     dataKey="spendingDown"
-                    fill="var(--negative)"
+                    fill="var(--color-spending)"
                     radius={[0, 0, 4, 4]}
-                    isAnimationActive={false}
+                    maxBarSize={18}
+                    {...chartAnimation()}
                   />
-                  {/* Rolling average smooths months distorted by one large charge. */}
+                  {/* Net over the bars, in the data accent, so the trend reads
+                      across months the bars only describe individually. */}
                   <Line
                     type="monotone"
                     dataKey="net"
-                    stroke="var(--primary)"
+                    stroke="var(--color-primary)"
                     strokeWidth={2}
                     dot={false}
-                    isAnimationActive={false}
+                    {...chartAnimation()}
                   />
                 </ComposedChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </div>
           )}
           <div className="mt-3 flex flex-wrap justify-center gap-4 border-t border-border pt-3 text-[12px]">
@@ -259,5 +280,3 @@ function Legend({ color, label }: { color: string; label: string }) {
     </span>
   );
 }
-
-export { BarChart };

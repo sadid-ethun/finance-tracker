@@ -38,28 +38,6 @@ export const axisProps = {
   tick: { fontSize: 11, fill: "var(--muted-foreground)" },
 };
 
-/** Horizontal rules only: vertical gridlines add noise and no information. */
-export const gridProps = {
-  vertical: false as const,
-  stroke: "var(--border)",
-};
-
-/**
- * Tooltips are a floating surface, so they step up rather than down — the
- * pressed/raised token, not the card, or they vanish against the card they
- * are overlapping.
- */
-export const tooltipStyle = {
-  contentStyle: {
-    background: "var(--secondary)",
-    border: "1px solid var(--border)",
-    borderRadius: "12px",
-    fontSize: "13px",
-    color: "var(--foreground)",
-  },
-  labelStyle: { color: "var(--muted-foreground)" },
-  cursor: { fill: "var(--secondary)", opacity: 0.4 },
-};
 
 
 // ---------------------------------------------------------------- shadcn/ui

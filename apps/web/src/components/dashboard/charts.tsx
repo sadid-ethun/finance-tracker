@@ -1,20 +1,17 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  XAxis,
-} from "recharts";
+import { Bar, BarChart, Cell, Pie, PieChart, ReferenceLine, XAxis } from "recharts";
 
 import { Card, Section } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { Skeleton } from "@/components/shared/states";
 import { useCashFlow, useSpendingByCategory } from "@/hooks/use-finance";
-import { axisProps, seriesColor } from "@/lib/chart-theme";
+import { axisProps, chartAnimation, chartConfig, seriesColor } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 
 function SectionCard({
@@ -49,8 +46,21 @@ export function SpendingByCategory() {
       ) : (
         <div className="flex flex-col items-center gap-5 sm:flex-row">
           <div className="relative size-[168px] shrink-0">
-            <ResponsiveContainer width="100%" height="100%" debounce={80}>
+            <ChartContainer config={chartConfig} className="size-full">
               <PieChart>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      nameKey="name"
+                      formatter={(value, name) => (
+                        <span className="flex w-full justify-between gap-3">
+                          <span className="text-muted-foreground">{name}</span>
+                          <span className="tabular font-mono">{formatMoney(Number(value))}</span>
+                        </span>
+                      )}
+                    />
+                  }
+                />
                 <Pie
                   data={rows}
                   dataKey="amount"
@@ -59,17 +69,14 @@ export function SpendingByCategory() {
                   outerRadius={82}
                   paddingAngle={2}
                   stroke="none"
-                  isAnimationActive={false}
+                  {...chartAnimation()}
                 >
                   {rows.map((row, i) => (
-                    <Cell
-                      key={row.name}
-                      fill={row.color ?? seriesColor(i)}
-                    />
+                    <Cell key={row.name} fill={row.color ?? seriesColor(i)} />
                   ))}
                 </Pie>
               </PieChart>
-            </ResponsiveContainer>
+            </ChartContainer>
             {/* Total in the middle: the donut's hole should answer "how much". */}
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[11px] text-muted-foreground">Total</span>
@@ -117,7 +124,7 @@ export function CashFlowChart() {
       ) : (
         <>
           <div className="h-[180px] w-full">
-            <ResponsiveContainer width="100%" height="100%" debounce={80}>
+            <ChartContainer config={chartConfig} className="size-full">
               <BarChart
                 data={rows.map((r) => ({
                   ...r,
@@ -130,24 +137,43 @@ export function CashFlowChart() {
                 margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
                 barGap={2}
               >
-                <XAxis
-                  dataKey="label"
-                  {...axisProps}
+                <XAxis dataKey="label" {...axisProps} />
+                {/* The only rule on this chart: income above, spending below.
+                    A grid would add lines that carry no information. */}
+                <ReferenceLine y={0} stroke="var(--border)" />
+                <ChartTooltip
+                  cursor={{ fill: "var(--secondary)", opacity: 0.4 }}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value, name) => (
+                        <span className="flex w-full justify-between gap-3">
+                          <span className="text-muted-foreground">
+                            {name === "income" ? "Income" : "Spending"}
+                          </span>
+                          <span className="tabular font-mono">
+                            {formatMoney(Math.abs(Number(value)))}
+                          </span>
+                        </span>
+                      )}
+                    />
+                  }
                 />
                 <Bar
                   dataKey="income"
-                  fill="var(--positive)"
+                  fill="var(--color-income)"
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive={false}
+                  maxBarSize={18}
+                  {...chartAnimation()}
                 />
                 <Bar
                   dataKey="spendingDown"
-                  fill="var(--negative)"
+                  fill="var(--color-spending)"
                   radius={[0, 0, 4, 4]}
-                  isAnimationActive={false}
+                  maxBarSize={18}
+                  {...chartAnimation()}
                 />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
 
           <div className="mt-3 flex justify-center gap-5 border-t border-border pt-3 text-[12px]">

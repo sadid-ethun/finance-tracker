@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { Cell, Pie, PieChart } from "recharts";
 import { RefreshCw, TrendingUp } from "lucide-react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import {
   useAllocation,
@@ -16,6 +21,8 @@ import {
   useSyncInvestments,
   type HoldingRow,
 } from "@/hooks/use-finance";
+import { chartAnimation, chartConfig } from "@/lib/chart-theme";
+import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type GroupBy = "asset_class" | "account" | "security";
@@ -174,8 +181,23 @@ export function InvestmentsView() {
           ) : (
             <div className="flex flex-col items-center gap-5 sm:flex-row">
               <div className="size-[160px] shrink-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={80}>
+                <ChartContainer config={chartConfig} className="size-full">
                   <PieChart>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          nameKey="name"
+                          formatter={(value, name) => (
+                            <span className="flex w-full justify-between gap-3">
+                              <span className="text-muted-foreground">{name}</span>
+                              <span className="tabular font-mono">
+                                {formatMoney(Number(value))}
+                              </span>
+                            </span>
+                          )}
+                        />
+                      }
+                    />
                     <Pie
                       data={allocation.data}
                       dataKey="value"
@@ -184,14 +206,14 @@ export function InvestmentsView() {
                       outerRadius={78}
                       paddingAngle={2}
                       stroke="none"
-                      isAnimationActive={false}
+                      {...chartAnimation()}
                     >
                       {(allocation.data ?? []).map((slice) => (
                         <Cell key={slice.name} fill={slice.color} />
                       ))}
                     </Pie>
                   </PieChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </div>
               <ul className="w-full flex-1 space-y-2">
                 {(allocation.data ?? []).slice(0, 6).map((slice) => (
