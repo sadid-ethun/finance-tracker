@@ -84,9 +84,6 @@ export function BudgetView() {
         />
       ) : (
         <>
-          {/* Leads the page: "where did it go" is the question this screen
-              exists to answer, and the limits below are the response to it. */}
-          <SpendingByCategory />
           <BudgetBody month={month} data={budget.data} />
           <DeleteBudget month={month} label={monthLabel(month)} />
         </>
@@ -193,6 +190,11 @@ function BudgetBody({
           </div>
         </div>
       </Card>
+
+      {/* Directly under the headline: the figure above says how far over, and
+          this is the breakdown of what took it there. The per-category limits
+          below are what you would change in response. */}
+      <SpendingByCategory />
 
       <section>
         <SectionLabel as="h2" className="mb-3">Categories</SectionLabel>
