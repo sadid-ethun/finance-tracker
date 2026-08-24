@@ -48,30 +48,34 @@
   --background: #0f1011;          /* Obsidian canvas */
   --foreground: #f5f5f7;          /* Cloud — headings are never pure white */
   /* Graphite #2e2e2e from the reference reads as too strong a step on a
-     screen full of cards. A quieter surface at 1.13:1 costs nothing but
-     separation, and the hairline border still defines the edge: every text
-     contrast improves as the card darkens. */
-  --card: #1c1d1f;
+     screen full of cards. A quieter surface costs nothing but separation, and
+     every text contrast improves as the card darkens.
+
+     At 1.06:1 the surface step is almost gone and the hairline border is
+     doing most of the work of defining a card — which is the intent. Below
+     roughly #131415 the border is doing all of it, and the card stops
+     reading as a surface at all. */
+  --card: #161719;
   --card-foreground: #f5f5f7;
-  --popover: #1c1d1f;
+  --popover: #161719;
   --popover-foreground: #f5f5f7;
 
   /* White-on-black is the only primary action, at 21:1. */
   --primary: #ffffff;
   --primary-foreground: #000000;
-  --primary-soft: #292a2d;
+  --primary-soft: #242527;
 
-  /* Steel #3f4041 is 1.62:1 above the new card — too loud for a pressed
-     state now that the card itself is quieter. */
-  --secondary: #292a2d;
+  /* Kept proportional to the card: a pressed state has to be noticed without
+     out-shouting the surface it sits on. */
+  --secondary: #242527;
   --secondary-foreground: #f5f5f7;
-  --muted: #292a2d;
+  --muted: #242527;
   /* Ash, not Fog. Fog measures 2.54:1 on the card surface and fails as text
      at any size; it is kept below for disabled controls only. */
   --muted-foreground: #9f9fa0;
   --fog: #6a6b6b;
 
-  --accent: #292a2d;
+  --accent: #242527;
   --accent-foreground: #f5f5f7;
 
   /* Gain and loss have no values in the reference — a marketing palette has
@@ -88,7 +92,7 @@
   --ring: #ffffff;
 
   /* Category identity and data series. Deep Iris from the reference palette
-     is excluded: 2.28:1 on the card is still unusable. Iris Gleam now measures
+     is excluded: 2.42:1 on the card is still unusable. Iris Gleam now measures
      5.11:1 here rather than 4.11:1 on Graphite, so it is no longer restricted
      to strokes and dots — the darker surface bought it back as a text
      colour. */
