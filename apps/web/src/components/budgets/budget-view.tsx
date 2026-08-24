@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
+import { SpendThisMonth } from "@/components/budgets/spend-this-month";
 import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
@@ -24,6 +25,12 @@ function monthKey(d: Date): string {
 function shiftMonth(key: string, delta: number): string {
   const [y, m] = key.split("-").map(Number);
   return monthKey(new Date(y, m - 1 + delta, 1));
+}
+
+/** Bar rows and the compare control need something narrower than "September 2026". */
+function shortMonthLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
 
 function monthLabel(key: string): string {
@@ -92,6 +99,12 @@ function BudgetBody({
   month: string;
   data: NonNullable<ReturnType<typeof useBudget>["data"]>;
 }) {
+  // Defaults to the month before, which is the comparison anyone reaches for
+  // first. Six back is enough to cover a seasonal comparison without turning
+  // the control into a scroll.
+  const [compareMonth, setCompareMonth] = useState(() => shiftMonth(month, -1));
+  const compareOptions = Array.from({ length: 6 }, (_, i) => shiftMonth(month, -(i + 1)));
+
   const overall = data.total_budgeted
     ? Math.round((data.total_spent / data.total_budgeted) * 100)
     : 0;
@@ -99,13 +112,24 @@ function BudgetBody({
 
   return (
     <>
+      <SpendThisMonth
+        month={month}
+        compareMonth={compareMonth}
+        monthLabel={shortMonthLabel}
+        onCompareChange={setCompareMonth}
+        compareOptions={compareOptions}
+      />
+
+      {/* Kept below the comparison: the headline is now "what did I spend",
+          and this is the answer to "how much is left", which is a different
+          question and a smaller one. */}
       <Card as="section" className="p-5">
         <p className="text-[13px] font-medium text-muted-foreground">
           {isOver ? "Over budget by" : "Left to spend"}
         </p>
         <Money
           minorUnits={Math.abs(data.total_remaining)}
-          className="mt-1 block text-[36px] leading-none font-semibold tracking-[-0.03em]"
+          className="mt-1 block text-[28px] leading-none font-semibold tracking-[-0.02em]"
         />
         <div className="mt-4">
           <ProgressBar percent={overall} over={isOver} />
