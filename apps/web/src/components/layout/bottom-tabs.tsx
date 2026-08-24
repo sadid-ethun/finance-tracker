@@ -65,7 +65,7 @@ export function BottomTabs() {
 
       {moreOpen ? (
         <div className={cn(
-            "fixed inset-x-0 z-50 mx-3 overflow-hidden rounded-card border border-border lg:hidden",
+            "fixed inset-x-4 z-50 overflow-hidden rounded-card border border-border lg:hidden",
             "bg-card",
             // Reads the same geometry as the bar, so the two cannot drift.
             "bottom-[var(--tabbar-clearance)]",
@@ -90,12 +90,17 @@ export function BottomTabs() {
       <nav
         aria-label="Primary"
         className={cn(
-          "fixed inset-x-3 z-50 overflow-hidden rounded-[26px] lg:hidden",
+          // inset-x-4 matches the page's px-4, so the bar lines up with the
+          // cards above it rather than sitting a few pixels wider.
+          "fixed inset-x-4 z-50 overflow-hidden rounded-[28px] lg:hidden",
           "bottom-[var(--tabbar-inset)]",
-          // Glass: heavy blur with saturation, so colour from the page below
-          // bleeds through rather than the grey a plain blur produces. Held at
-          // 85% — legibly opaque, still clearly sitting on top of something.
-          "bg-card/85 backdrop-blur-2xl backdrop-saturate-150",
+          // Glass: 75% with a heavy blur and saturation, which keeps the
+          // colour bleeding through from turning to grey mud. Inactive labels
+          // use --on-glass rather than the usual muted tone — at this opacity
+          // Ash reads 3.60:1 against the brightest chart colour the bar can
+          // pass over, and Silver 5.81:1. Raising the opacity instead would
+          // have bought the same contrast by giving up the glass.
+          "bg-card/75 backdrop-blur-3xl backdrop-saturate-[1.8]",
           // A hairline of light along the top edge is what separates glass
           // from a flat translucent panel. An explicit colour rather than
           // Tailwind's shadow-colour variable, which composes unreliably with
@@ -115,28 +120,31 @@ export function BottomTabs() {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex h-full flex-col items-center justify-center gap-1",
-                    active ? "text-primary" : "text-muted-foreground",
+                    "relative flex h-full flex-col items-center justify-center gap-0.5",
+                    selected === item.href ? "text-foreground" : "text-on-glass",
                   )}
                 >
                   {selected === item.href ? (
                     <motion.span
                       layoutId="tab-indicator"
-                      // Inset from the top: on a rounded floating bar an
-                      // edge-flush pill crosses the corner radius.
-                      className="absolute top-1.5 h-[3px] w-8 rounded-full bg-primary"
+                      // A capsule behind the tab rather than a rule above it.
+                      // On glass a bright bar reads as a separate element
+                      // sitting on the surface; a tint reads as part of it.
+                      className="absolute inset-x-1 inset-y-2 rounded-[18px] bg-white/10"
                       // Eased, not sprung. The reference is explicit: no
                       // bouncy springs, no overshoots (DESIGN_SYSTEM.md).
                       transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                     />
                   ) : null}
-                  <item.icon className="size-[22px]" strokeWidth={2} />
+                  {/* Above the capsule: it is absolutely positioned, so the
+                      content needs its own stacking context to sit on top. */}
+                  <item.icon className="relative size-[22px]" strokeWidth={2} />
                   {/* Sans, not mono. The reference assigns nav to the UI
                       voice and reserves mono for labels and data readouts;
                       uppercase mono is also simply too wide here — five tabs
                       at 375px give each label 75px, and "TRANSACTIONS" needs
                       86px at the tracking this had. */}
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                  <span className="relative text-[10px] font-medium">{item.label}</span>
                 </Link>
               </li>
             );
@@ -148,8 +156,8 @@ export function BottomTabs() {
               onClick={() => setMoreOpen(!moreOpen)}
               aria-expanded={moreOpen}
               className={cn(
-                "relative flex h-full w-full flex-col items-center justify-center gap-1",
-                moreActive || moreOpen ? "text-primary" : "text-muted-foreground",
+                "relative flex h-full w-full flex-col items-center justify-center gap-0.5",
+                moreActive || moreOpen ? "text-foreground" : "text-on-glass",
               )}
             >
               {/* Follows the open panel too, not just the route: while the
@@ -160,12 +168,12 @@ export function BottomTabs() {
               {selected === "more" ? (
                 <motion.span
                   layoutId="tab-indicator"
-                  className="absolute top-0 h-[3px] w-8 rounded-full bg-primary"
+                  className="absolute inset-x-1 inset-y-2 rounded-[18px] bg-white/10"
                   transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                 />
               ) : null}
-              <MoreHorizontal className="size-[22px]" strokeWidth={2} />
-              <span className="text-[10px] font-medium">More</span>
+              <MoreHorizontal className="relative size-[22px]" strokeWidth={2} />
+              <span className="relative text-[10px] font-medium">More</span>
             </button>
           </li>
         </ul>

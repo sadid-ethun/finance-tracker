@@ -70,6 +70,11 @@
      at any size; it is kept below for disabled controls only. */
   --muted-foreground: #9f9fa0;
   --fog: #6a6b6b;
+  /* Silver, from the reference palette. Brighter than Ash, for text sitting on
+     the translucent tab bar: at 75% opacity Ash reads 3.60:1 against the
+     brightest chart colour the bar can pass over, and Silver 5.81:1. The
+     alternative was making the bar more opaque, which is the wrong lever. */
+  --on-glass: #cacaca;
 
   --accent: #292a2d;
   --accent-foreground: #f5f5f7;
@@ -124,6 +129,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-fog: var(--fog);
+  --color-on-glass: var(--on-glass);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -278,10 +284,12 @@
  * once already — a hardcoded offset in the panel outlived a change to the
  * bar's height and left it floating in mid-air. */
 :root {
-  --tabbar-height: 3.5rem;
+  --tabbar-height: 4rem;
   --tabbar-gap: 0.5rem;
-  /* Floats clear of the home indicator rather than padding itself to fill the
-     safe area, which is what a bar flush to the edge has to do. */
-  --tabbar-inset: max(0.5rem, env(safe-area-inset-bottom));
+  /* Sits lower than the full safe-area inset, which on a notched iPhone is
+     34px and leaves the bar hovering well clear of the home indicator it only
+     needs to miss. Trimmed by 16px with a floor, so a device without a safe
+     area still gets a visible gap rather than snapping flush. */
+  --tabbar-inset: max(0.5rem, calc(env(safe-area-inset-bottom) - 1rem));
   --tabbar-clearance: calc(var(--tabbar-inset) + var(--tabbar-height) + var(--tabbar-gap));
 }
