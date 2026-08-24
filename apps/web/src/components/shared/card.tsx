@@ -3,6 +3,14 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
+ * The surface recipe, for the few places that cannot be a `Card` element —
+ * an animated `motion.div`, for instance. Everything else should use the
+ * component; this exists so those exceptions still read from one definition
+ * rather than restating it.
+ */
+export const CARD_SURFACE = "rounded-card border border-border bg-card";
+
+/**
  * The card surface.
  *
  * One recipe, in one place. The surface step against the canvas is only
@@ -16,13 +24,21 @@ export function Card({
   children,
   className,
   interactive = false,
+  as: Tag = "div",
 }: {
   children: ReactNode;
   className?: string;
   interactive?: boolean;
+  /**
+   * A card is a surface, not a semantic. Roughly a third of these wrap a
+   * list, and forcing them through a div would leave the `li` children
+   * without their `ul` — valid-looking markup that a screen reader no longer
+   * announces as a list.
+   */
+  as?: "div" | "section" | "ul" | "li" | "p" | "article";
 }) {
   return (
-    <div
+    <Tag
       className={cn(
         "rounded-card border border-border bg-card",
         // Touch has no hover, so a pressed state is the only feedback a phone
@@ -32,7 +48,7 @@ export function Card({
       )}
     >
       {children}
-    </div>
+    </Tag>
   );
 }
 

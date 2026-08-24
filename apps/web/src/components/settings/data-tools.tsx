@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, Upload } from "lucide-react";
 
+import { Card } from "@/components/shared/card";
 import { useAccounts } from "@/hooks/use-finance";
 
 /**
@@ -111,7 +112,7 @@ export function DataTools() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-card border border-border bg-card p-5">
+      <Card as="section" className="p-5">
         <h2 className="text-[16px] font-semibold">Export</h2>
         <p className="mt-0.5 text-[13px] text-muted-foreground">
           CSV writes dollars for spreadsheets. JSON preserves exact values for backup.
@@ -135,9 +136,9 @@ export function DataTools() {
             {downloadError}
           </p>
         ) : null}
-      </section>
+      </Card>
 
-      <section className="rounded-card border border-border bg-card p-5">
+      <Card as="section" className="p-5">
         <h2 className="text-[16px] font-semibold">Import</h2>
         <p className="mt-0.5 text-[13px] text-muted-foreground">
           Upload a CSV from your bank, then confirm which column is which.
@@ -247,7 +248,7 @@ export function DataTools() {
             ) : null}
           </div>
         ) : null}
-      </section>
+      </Card>
     </div>
   );
 }

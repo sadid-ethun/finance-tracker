@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { RefreshCw, TrendingUp } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
@@ -89,7 +89,7 @@ export function InvestmentsView() {
 
         {summary.data ? (
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-card border border-border bg-card p-4">
+            <Card className="p-4">
               <p className="text-[13px] text-muted-foreground">Unrealized gain</p>
               <Money
                 minorUnits={summary.data.total_gain}
@@ -103,8 +103,8 @@ export function InvestmentsView() {
                   {summary.data.total_gain_percent}%
                 </p>
               ) : null}
-            </div>
-            <div className="rounded-card border border-border bg-card p-4">
+            </Card>
+            <Card className="p-4">
               <p className="text-[13px] text-muted-foreground">Cost basis</p>
               <Money
                 minorUnits={summary.data.total_cost_basis}
@@ -115,7 +115,7 @@ export function InvestmentsView() {
                 {summary.data.holdings_count} position
                 {summary.data.holdings_count === 1 ? "" : "s"}
               </p>
-            </div>
+            </Card>
           </div>
         ) : null}
 
@@ -164,7 +164,7 @@ export function InvestmentsView() {
           </div>
         </div>
 
-        <div className="rounded-card border border-border bg-card p-5">
+        <Card className="p-5">
           {allocation.isLoading ? (
             <Skeleton className="h-[180px] w-full" />
           ) : (allocation.data ?? []).length === 0 ? (
@@ -213,7 +213,7 @@ export function InvestmentsView() {
               </ul>
             </div>
           )}
-        </div>
+        </Card>
       </section>
 
       <section>
@@ -221,11 +221,11 @@ export function InvestmentsView() {
         {holdings.isLoading ? (
           <RowSkeleton count={5} />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+          <Card as="ul" className="divide-y divide-border overflow-hidden">
             {(holdings.data ?? []).map((h) => (
               <HoldingRowItem key={h.id} holding={h} />
             ))}
-          </ul>
+          </Card>
         )}
       </section>
     </div>

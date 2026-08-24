@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowLeftRight, Receipt, Scissors } from "lucide-react";
 
+import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
@@ -57,7 +58,7 @@ export function TransactionList({
 
   return (
     <div className="space-y-4">
-      <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+      <Card as="ul" className="divide-y divide-border overflow-hidden">
         {rows.map((transaction) => {
           const category = transaction.category_id
             ? categoryById.get(transaction.category_id)
@@ -75,7 +76,7 @@ export function TransactionList({
             />
           );
         })}
-      </ul>
+      </Card>
 
       {query.hasNextPage ? (
         <button

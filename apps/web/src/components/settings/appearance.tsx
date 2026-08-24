@@ -3,6 +3,7 @@
 import { useTheme } from "next-themes";
 import { Monitor, Moon, Sun } from "lucide-react";
 
+import { Card } from "@/components/shared/card";
 import { cn } from "@/lib/utils";
 
 const OPTIONS = [
@@ -15,7 +16,7 @@ export function Appearance() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <section className="rounded-card border border-border bg-card p-5">
+    <Card as="section" className="p-5">
       <h2 className="text-[16px] font-semibold">Appearance</h2>
       <p className="mt-0.5 text-[13px] text-muted-foreground">
         System follows your device setting.
@@ -37,6 +38,6 @@ export function Appearance() {
           </button>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
@@ -99,7 +99,7 @@ function BudgetBody({
 
   return (
     <>
-      <section className="rounded-card border border-border bg-card p-5">
+      <Card as="section" className="p-5">
         <p className="text-[13px] font-medium text-muted-foreground">
           {isOver ? "Over budget by" : "Left to spend"}
         </p>
@@ -118,7 +118,7 @@ function BudgetBody({
             </span>
           </div>
         </div>
-      </section>
+      </Card>
 
       <section>
         <SectionLabel as="h2" className="mb-3">Categories</SectionLabel>
@@ -138,7 +138,7 @@ function BudgetBody({
             Spending in categories with no limit — the usual reason a month
             doesn&apos;t add up.
           </p>
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+          <Card as="ul" className="divide-y divide-border overflow-hidden">
             {data.unbudgeted.map((row) => (
               <li key={row.category_id} className="flex items-center gap-3 p-4">
                 <span
@@ -150,7 +150,7 @@ function BudgetBody({
                 <Money minorUnits={row.spent} className="text-[15px] font-semibold" />
               </li>
             ))}
-          </ul>
+          </Card>
         </section>
       ) : null}
     </>
@@ -174,7 +174,7 @@ function BudgetRow({ month, line }: { month: string; line: BudgetLine }) {
   }
 
   return (
-    <li className="rounded-card border border-border bg-card p-4">
+    <Card as="li" className="p-4">
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden
@@ -228,7 +228,7 @@ function BudgetRow({ month, line }: { month: string; line: BudgetLine }) {
           </span>
         </div>
       </div>
-    </li>
+    </Card>
   );
 }
 

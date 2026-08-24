@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { Connections } from "@/components/settings/connections";
 import { Appearance } from "@/components/settings/appearance";
 import { DataTools } from "@/components/settings/data-tools";
@@ -76,7 +76,7 @@ function CategoryList() {
               own accounts is neither.
             </p>
           ) : null}
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+          <Card as="ul" className="divide-y divide-border overflow-hidden">
             {byKind[kind].map((c) => (
               <li key={c.id} className="flex items-center gap-3 p-3.5">
                 <span
@@ -88,7 +88,7 @@ function CategoryList() {
                 <span className="text-[12px] text-muted-foreground">{c.slug}</span>
               </li>
             ))}
-          </ul>
+          </Card>
         </section>
       ))}
     </div>
@@ -103,15 +103,15 @@ function RuleList() {
 
   if ((rules.data ?? []).length === 0) {
     return (
-      <p className="rounded-card border border-border bg-card p-5 text-[14px] text-muted-foreground">
+      <Card as="p" className="p-5 text-[14px] text-muted-foreground">
         No rules yet. Select transactions on the Transactions page and tick
         &ldquo;Remember this&rdquo; to create one.
-      </p>
+      </Card>
     );
   }
 
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+    <Card as="ul" className="divide-y divide-border overflow-hidden">
       {(rules.data ?? []).map((rule) => (
         <li key={rule.id} className="flex items-center gap-3 p-4">
           <span className="min-w-0 flex-1">
@@ -130,7 +130,7 @@ function RuleList() {
           </button>
         </li>
       ))}
-    </ul>
+    </Card>
   );
 }
 
@@ -146,11 +146,11 @@ function AuditLog() {
       {log.isLoading ? (
         <RowSkeleton count={3} />
       ) : (log.data ?? []).length === 0 ? (
-        <p className="rounded-card border border-border bg-card p-5 text-[14px] text-muted-foreground">
+        <Card as="p" className="p-5 text-[14px] text-muted-foreground">
           Nothing recorded yet.
-        </p>
+        </Card>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card text-[13px]">
+        <Card as="ul" className="divide-y divide-border overflow-hidden text-[13px]">
           {(log.data ?? []).map((entry) => (
             <li key={entry.id} className="flex items-center justify-between gap-3 p-3.5">
               <span className="truncate font-medium">{entry.action}</span>
@@ -159,7 +159,7 @@ function AuditLog() {
               </span>
             </li>
           ))}
-        </ul>
+        </Card>
       )}
     </section>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
+import { Card } from "@/components/shared/card";
 import { useAccounts, useCategories } from "@/hooks/use-finance";
 import { useTransactionFilters } from "@/hooks/use-transaction-filters";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ export function TransactionFilters() {
       </div>
 
       {open ? (
-        <div className="space-y-4 rounded-card border border-border bg-card p-4">
+        <Card className="space-y-4 p-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="mb-1.5 block text-[13px] font-medium">From</span>
@@ -134,7 +135,7 @@ export function TransactionFilters() {
               <X className="size-3.5" /> Clear all filters
             </button>
           ) : null}
-        </div>
+        </Card>
       ) : null}
     </div>
   );

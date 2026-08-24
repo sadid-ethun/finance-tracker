@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PiggyBank } from "lucide-react";
 
+import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
@@ -94,7 +95,7 @@ export function BudgetSetup({
         </p>
       ) : null}
 
-      <section className="rounded-card border border-border bg-card p-5">
+      <Card as="section" className="p-5">
         <h2 className="text-[18px] font-semibold">Suggested limits</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
           Based on your average spend over the last 3 months. Adjust anything,
@@ -165,7 +166,7 @@ export function BudgetSetup({
             </div>
           </>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

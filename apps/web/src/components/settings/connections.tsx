@@ -2,7 +2,7 @@
 
 import { AlertTriangle, Building2, Link2, RefreshCw, Trash2 } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
 import {
@@ -42,11 +42,11 @@ export function Connections() {
             action={<ConnectBankButton />}
           />
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+          <Card as="ul" className="divide-y divide-border overflow-hidden">
             {connections.map((item) => (
               <ConnectionRow key={item.id} item={item} />
             ))}
-          </ul>
+          </Card>
         )}
       </section>
 
@@ -55,7 +55,7 @@ export function Connections() {
           Recent syncs
         </SectionLabel>
         {runs.data && runs.data.length > 0 ? (
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card text-[13px]">
+          <Card as="ul" className="divide-y divide-border overflow-hidden text-[13px]">
             {runs.data.map((run) => (
               <li key={run.id} className="flex items-center justify-between gap-3 p-3.5">
                 <span className="min-w-0">
@@ -83,11 +83,11 @@ export function Connections() {
                 </span>
               </li>
             ))}
-          </ul>
+          </Card>
         ) : (
-          <p className="rounded-card border border-border bg-card p-5 text-[14px] text-muted-foreground">
+          <Card as="p" className="p-5 text-[14px] text-muted-foreground">
             No syncs yet.
-          </p>
+          </Card>
         )}
       </section>
     </div>

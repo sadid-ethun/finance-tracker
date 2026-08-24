@@ -2,9 +2,11 @@
 
 import { motion } from "motion/react";
 
+import { CARD_SURFACE, Card } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
 import type { DashboardSummary } from "@/hooks/use-finance";
+import { cn } from "@/lib/utils";
 
 /** Cards stagger in by 40ms — motion confirms, it does not decorate. */
 const stagger = {
@@ -48,7 +50,7 @@ export function StatTiles({ summary }: { summary: DashboardSummary | undefined }
             variants={stagger}
             initial="hidden"
             animate="show"
-            className="rounded-card border border-border bg-card p-5"
+            className={cn(CARD_SURFACE, "p-5")}
           >
             <p className="text-[13px] text-muted-foreground">{tile.label}</p>
             <Money
@@ -68,7 +70,7 @@ export function StatTiles({ summary }: { summary: DashboardSummary | undefined }
             variants={stagger}
             initial="hidden"
             animate="show"
-            className="rounded-card border border-border bg-card p-4"
+            className={cn(CARD_SURFACE, "p-4")}
           >
             <p className="text-[13px] text-muted-foreground">{tile.label}</p>
             <Money
@@ -94,7 +96,7 @@ export function MonthCard({ summary }: { summary: DashboardSummary | undefined }
   const spendDelta = delta(summary.monthly_spending, summary.previous_month_spending);
 
   return (
-    <section className="rounded-card border border-border bg-card p-5">
+    <Card as="section" className="p-5">
       <p className="text-[13px] font-medium text-muted-foreground">This month</p>
       <div className="mt-3 grid grid-cols-2 divide-x divide-border">
         <div className="pr-4">
@@ -126,6 +128,6 @@ export function MonthCard({ summary }: { summary: DashboardSummary | undefined }
           ) : null}
         </div>
       </div>
-    </section>
+    </Card>
   );
 }

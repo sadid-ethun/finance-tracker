@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { ChartPie, ChevronRight } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { ErrorState, Skeleton } from "@/components/shared/states";
@@ -82,7 +82,7 @@ export function CashFlowView() {
 
       <section>
         <SectionLabel as="h2" className="mb-3">Trend</SectionLabel>
-        <div className="rounded-card border border-border bg-card p-5">
+        <Card className="p-5">
           {trends.isLoading ? (
             <Skeleton className="h-[220px] w-full" />
           ) : (
@@ -133,7 +133,7 @@ export function CashFlowView() {
             <Legend color="var(--negative)" label="Spending" />
             <Legend color="var(--primary)" label="Net" />
           </div>
-        </div>
+        </Card>
       </section>
 
       <section>
@@ -162,11 +162,11 @@ export function CashFlowView() {
         {byCategory.isLoading ? (
           <Skeleton className="h-[200px] rounded-card" />
         ) : (byCategory.data ?? []).length === 0 ? (
-          <p className="rounded-card border border-border bg-card p-5 text-[14px] text-muted-foreground">
+          <Card as="p" className="p-5 text-[14px] text-muted-foreground">
             No {kind} recorded in this window.
-          </p>
+          </Card>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+          <Card as="ul" className="divide-y divide-border overflow-hidden">
             {(byCategory.data ?? []).map((row) => (
               <li key={row.category_id ?? row.name}>
                 <Link
@@ -194,7 +194,7 @@ export function CashFlowView() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </Card>
         )}
       </section>
     </div>

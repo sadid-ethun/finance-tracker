@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Landmark, Plus, Wallet } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
@@ -44,7 +44,7 @@ export function AccountList() {
   return (
     <div className="space-y-8">
       {summary.data ? (
-        <section className="rounded-card border border-border bg-card p-5 md:p-6">
+        <Card as="section" className="p-5 md:p-6">
           <p className="text-[13px] font-medium text-muted-foreground">Net worth</p>
           <Money
             minorUnits={summary.data.net_worth}
@@ -67,7 +67,7 @@ export function AccountList() {
               />
             </div>
           </div>
-        </section>
+        </Card>
       ) : null}
 
       <div className="flex justify-end">
@@ -79,11 +79,11 @@ export function AccountList() {
           <SectionLabel as="h2" className="mb-3">
             {ACCOUNT_TYPE_LABELS[group.type] ?? group.type}
           </SectionLabel>
-          <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+          <Card as="ul" className="divide-y divide-border overflow-hidden">
             {group.items.map((account) => (
               <AccountRow key={account.id} account={account} />
             ))}
-          </ul>
+          </Card>
         </section>
       ))}
     </div>

@@ -28,7 +28,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function RowSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="divide-y divide-border rounded-card bg-card">
+    <div className="divide-y divide-border rounded-card border border-border bg-card">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 p-4">
           <Skeleton className="size-9 rounded-full" />
@@ -52,7 +52,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-card bg-card px-6 py-12 text-center">
+    <div className="flex flex-col items-center rounded-card border border-border bg-card px-6 py-12 text-center">
       <AlertCircle className="size-5 text-negative" strokeWidth={2} />
       <p className="mt-3 text-[15px] font-medium">{message}</p>
       {onRetry ? (

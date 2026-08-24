@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 
+import { Card } from "@/components/shared/card";
 import { twoFactor, useSession } from "@/lib/auth-client";
 
 /**
@@ -112,7 +113,7 @@ export function TwoFactorSetup() {
   }
 
   return (
-    <section className="rounded-card border border-border bg-card p-5">
+    <Card as="section" className="p-5">
       <div className="flex items-start gap-3">
         <span
           className="flex size-9 shrink-0 items-center justify-center rounded-full"
@@ -265,6 +266,6 @@ export function TwoFactorSetup() {
           </form>
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }

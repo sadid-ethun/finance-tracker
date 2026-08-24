@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Wallet } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { CashFlowChart, SpendingByCategory } from "@/components/dashboard/charts";
 import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
 import { MonthCard, StatTiles } from "@/components/dashboard/stat-tiles";
@@ -74,11 +74,11 @@ function RecentTransactions() {
       {query.isLoading ? (
         <RowSkeleton count={5} />
       ) : (query.data ?? []).length === 0 ? (
-        <p className="rounded-card border border-border bg-card p-5 text-[14px] text-muted-foreground">
+        <Card as="p" className="p-5 text-[14px] text-muted-foreground">
           No transactions yet.
-        </p>
+        </Card>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+        <Card as="ul" className="divide-y divide-border overflow-hidden">
           {(query.data ?? []).map((t) => {
             const label = t.merchant_name || t.name;
             return (
@@ -104,7 +104,7 @@ function RecentTransactions() {
               </li>
             );
           })}
-        </ul>
+        </Card>
       )}
     </section>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, Plus } from "lucide-react";
 
-import { SectionLabel } from "@/components/shared/card";
+import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
@@ -34,7 +34,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
           <Skeleton className="h-10 w-56" />
         </div>
       ) : (
-        <section className="rounded-card border border-border bg-card p-5 md:p-6">
+        <Card as="section" className="p-5 md:p-6">
           <p className="text-[13px] text-muted-foreground">
             {ACCOUNT_TYPE_LABELS[account.data.type] ?? account.data.type}
             {account.data.mask ? ` ···· ${account.data.mask}` : ""}
@@ -50,7 +50,7 @@ export function AccountDetail({ accountId }: { accountId: string }) {
           <p className="mt-1.5 text-[13px] text-muted-foreground">
             {isLiability(account.data.type) ? "Amount owed" : "Current balance"}
           </p>
-        </section>
+        </Card>
       )}
 
       <div className="mt-8 mb-3 flex items-center justify-between">

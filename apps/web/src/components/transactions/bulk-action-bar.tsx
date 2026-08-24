@@ -53,7 +53,7 @@ export function BulkActionBar({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-40 mx-3 rounded-card border border-border bg-card p-4 shadow-lg lg:bottom-6 lg:mx-auto lg:max-w-2xl">
+    <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-40 mx-3 rounded-card border border-border bg-card p-4 lg:bottom-6 lg:mx-auto lg:max-w-2xl">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[15px] font-semibold">
           {selected.length} selected
