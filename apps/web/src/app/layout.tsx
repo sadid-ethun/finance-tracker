@@ -1,10 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { DM_Serif_Display, Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 
+/**
+ * Three voices, per DESIGN_SYSTEM.md: a serif for display figures, a
+ * neo-grotesque for UI, a monospace for uppercase labels and data.
+ */
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Substitute for Lyon Display, which is not freely licensed. Only weight 400
+// exists; the reference's whisper-weight 300 is approximated with negative
+// tracking at display sizes rather than a lighter cut.
+const serif = DM_Serif_Display({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
+const mono = Roboto_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -38,10 +59,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafaf8" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d0f12" },
-  ],
+  // The app is dark regardless of system preference, so the browser chrome
+  // is a single value — a light variant here would flash white on launch.
+  themeColor: "#0f1011",
 };
 
 export default function RootLayout({
@@ -52,7 +72,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} ${serif.variable} ${mono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col font-sans">{children}</body>

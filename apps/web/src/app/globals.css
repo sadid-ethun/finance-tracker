@@ -43,35 +43,53 @@
 }
 
 .dark {
-  --background: #0d0f12;
-  --foreground: #f5f5f3;
-  --card: #16191e;
-  --card-foreground: #f5f5f3;
-  --popover: #16191e;
-  --popover-foreground: #f5f5f3;
-  --primary: #4ade80;
-  --primary-foreground: #0d0f12;
-  --primary-soft: #16291d;
-  --secondary: #1c2027;
-  --secondary-foreground: #f5f5f3;
-  --muted: #1c2027;
-  --muted-foreground: #9ba1ac;
-  --accent: #16291d;
-  --accent-foreground: #4ade80;
-  --positive: #4ade80;
-  --negative: #f87171;
-  --destructive: #f87171;
-  --destructive-foreground: #0d0f12;
-  --border: #242830;
-  --input: #242830;
-  --ring: #4ade80;
+  /* Dark palette — see DESIGN_SYSTEM.md at the repo root for the measured
+     contrast behind each value. Surfaces step by colour, never shadow. */
+  --background: #0f1011;          /* Obsidian canvas */
+  --foreground: #f5f5f7;          /* Cloud — headings are never pure white */
+  --card: #2e2e2e;                /* Graphite — 1.40:1 against the canvas */
+  --card-foreground: #f5f5f7;
+  --popover: #2e2e2e;
+  --popover-foreground: #f5f5f7;
 
-  --chart-1: #4ade80;
-  --chart-2: #6ee7b7;
-  --chart-3: #99d4b4;
-  --chart-4: #d6bd8c;
-  --chart-5: #b3a3d1;
-  --chart-6: #7c9fc0;
+  /* White-on-black is the only primary action, at 21:1. */
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --primary-soft: #3f4041;
+
+  --secondary: #3f4041;           /* Steel — pressed and raised */
+  --secondary-foreground: #f5f5f7;
+  --muted: #3f4041;
+  /* Ash, not Fog. Fog measures 2.54:1 on the card surface and fails as text
+     at any size; it is kept below for disabled controls only. */
+  --muted-foreground: #9f9fa0;
+  --fog: #6a6b6b;
+
+  --accent: #3f4041;
+  --accent-foreground: #f5f5f7;
+
+  /* Gain and loss have no values in the reference — a marketing palette has
+     no need for them. Tuned for this canvas; both pass AA at body size on
+     both surfaces. Never the sole carrier of meaning: a sign and an icon
+     accompany them (PLAN.md section 21). */
+  --positive: #57d9a3;
+  --negative: #ff8fa3;
+  --destructive: #ff8fa3;
+  --destructive-foreground: #0f1011;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #ffffff;
+
+  /* Category identity and data series. Deep Iris from the reference palette
+     is excluded: 1.83:1 on card is unusable. Iris Gleam at 4.11:1 is safe as
+     a stroke or dot but must never carry text. */
+  --chart-1: #00b3dd;             /* Cyan Signal */
+  --chart-2: #847dff;             /* Iris Gleam */
+  --chart-3: #dd90d8;             /* Orchid Bloom */
+  --chart-4: #90b8f0;             /* Periwinkle */
+  --chart-5: #d1c9ff;             /* Pale Iris */
+  --chart-6: #cacaca;             /* Silver */
 }
 
 @theme inline {
@@ -97,6 +115,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-fog: var(--fog);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -106,6 +125,11 @@
   --color-chart-6: var(--chart-6);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Display figures — see DESIGN_SYSTEM.md. Scaled to app sizes (28-40px),
+     not the reference's 80-96px marketing hero. */
+  --font-serif: var(--font-serif), ui-serif, Georgia, serif;
+  /* Uppercase tracked labels and data readouts. */
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --radius-card: var(--radius);
 }

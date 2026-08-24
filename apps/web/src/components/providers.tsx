@@ -17,7 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {/* Transaction filters live in the URL, so they stay shareable and
           back-button correct (PLAN.md section 14). */}
       {/* attribute="class" matches the `.dark` selector in globals.css. */}
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
         <NuqsAdapter>{children}</NuqsAdapter>
       </ThemeProvider>
     </QueryClientProvider>
