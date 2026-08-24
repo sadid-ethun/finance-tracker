@@ -2853,7 +2853,7 @@ export interface operations {
     net_worth_api_v1_dashboard_net_worth_get: {
         parameters: {
             query?: {
-                range?: "1m" | "3m" | "6m" | "1y" | "all";
+                range?: "1m" | "3m" | "6m" | "ytd" | "1y" | "all";
             };
             header?: never;
             path?: never;

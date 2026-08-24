@@ -42,7 +42,9 @@ export function seriesColor(index: number): string {
 export function formatAxisMoney(minorUnits: number): string {
   const major = Math.abs(minorUnits) / 100;
   const sign = minorUnits < 0 ? "-" : "";
-  if (major >= 1000) return `${sign}$${(major / 1000).toFixed(major >= 10000 ? 0 : 1)}k`;
+  // Whole units throughout. A decimal on an axis label implies a precision the
+  // gridline does not have, and "$8k" reads faster than "$8.0k".
+  if (major >= 1000) return `${sign}$${Math.round(major / 1000)}k`;
   return `${sign}$${Math.round(major)}`;
 }
 
@@ -59,6 +61,9 @@ export const gridProps = {
   horizontal: true as const,
   stroke: "var(--border)",
   strokeDasharray: "3 3",
+  // Without this the grid picks its own line positions and can miss one that
+  // the axis has labelled — a labelled value with no rule to read it against.
+  syncWithTicks: true as const,
 };
 
 export const axisProps = {

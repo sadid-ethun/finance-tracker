@@ -110,3 +110,43 @@ def test_window_of_n_months_yields_exactly_n_buckets() -> None:
                 count += 1
                 cursor = shift_months(cursor, 1)
             assert count == months, f"{months} from {anchor} gave {count}"
+
+
+def test_ytd_resolves_to_january_first_not_a_fixed_window() -> None:
+    """YTD is not a number of days.
+
+    Treating it as one — 365, or days-so-far frozen at request time — drifts:
+    on 2 January it would reach back into the previous year, which is the one
+    thing "year to date" must not do.
+    """
+    from datetime import date
+
+    from app.services.dashboard_service import _range_start
+
+    start = _range_start("ytd")
+
+    assert start == date(date.today().year, 1, 1)
+
+
+def test_ytd_never_reaches_into_last_year() -> None:
+    from datetime import date
+
+    from app.services.dashboard_service import _range_start
+
+    assert (_range_start("ytd") or date.min).year == date.today().year
+
+
+def test_all_still_means_everything() -> None:
+    from app.services.dashboard_service import _range_start
+
+    assert _range_start("all") is None
+
+
+def test_an_unknown_range_falls_back_rather_than_failing() -> None:
+    """A stale client asking for a range the server dropped gets six months,
+    not a 500."""
+    from datetime import date, timedelta
+
+    from app.services.dashboard_service import _range_start
+
+    assert _range_start("nonsense") == date.today() - timedelta(days=182)

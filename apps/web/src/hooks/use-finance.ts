@@ -410,7 +410,7 @@ export type CashFlowPoint = {
   net: number;
 };
 
-export type NetWorthRange = "1m" | "3m" | "6m" | "1y" | "all";
+export type NetWorthRange = "1m" | "3m" | "6m" | "ytd" | "1y" | "all";
 
 export function useDashboardSummary() {
   return useQuery({

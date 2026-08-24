@@ -77,7 +77,7 @@ export function InvestmentsView() {
               <Money
                 minorUnits={summary.data.total_value}
                 currency={summary.data.currency}
-                className="mt-1 block text-[36px] leading-none font-semibold tracking-[-0.03em]"
+                className="mt-1 block font-serif text-[36px] leading-none font-normal tracking-[-0.02em]"
               />
             ) : (
               <Skeleton className="mt-2 h-9 w-48" />

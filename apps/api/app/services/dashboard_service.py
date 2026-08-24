@@ -28,6 +28,10 @@ from app.models.transaction import Transaction
 from app.services.account_service import summarize_balances
 
 #: Chart ranges the UI offers, in days. None means "everything".
+#:
+#: "ytd" is absent because it is not a fixed number of days — it is the
+#: distance to January 1st, which changes daily. Resolved in
+#: `_range_start` instead.
 RANGE_DAYS: dict[str, int | None] = {
     "1m": 30,
     "3m": 90,
@@ -35,6 +39,15 @@ RANGE_DAYS: dict[str, int | None] = {
     "1y": 365,
     "all": None,
 }
+
+
+def _range_start(range_key: str) -> date | None:
+    """The earliest date a range covers, or None for everything."""
+    if range_key == "ytd":
+        return date(date.today().year, 1, 1)
+
+    days = RANGE_DAYS.get(range_key, 182)
+    return None if days is None else date.today() - timedelta(days=days)
 
 
 def _transfer_category_ids(user_id: str) -> Select[tuple[Any]]:
@@ -214,9 +227,9 @@ async def net_worth_series(
     """Historical net worth from daily snapshots."""
     stmt = select(NetWorthSnapshot).where(NetWorthSnapshot.user_id == user_id)
 
-    days = RANGE_DAYS.get(range_key, 182)
-    if days is not None:
-        stmt = stmt.where(NetWorthSnapshot.date >= date.today() - timedelta(days=days))
+    start = _range_start(range_key)
+    if start is not None:
+        stmt = stmt.where(NetWorthSnapshot.date >= start)
 
     snapshots: Sequence[NetWorthSnapshot] = (
         await db.scalars(stmt.order_by(NetWorthSnapshot.date))

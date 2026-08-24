@@ -39,7 +39,7 @@ async def summary(
 async def net_worth(
     user: CurrentUser,
     db: DbSession,
-    range: Annotated[Literal["1m", "3m", "6m", "1y", "all"], Query()] = "6m",
+    range: Annotated[Literal["1m", "3m", "6m", "ytd", "1y", "all"], Query()] = "6m",
 ) -> list[NetWorthPoint]:
     points = await dashboard_service.net_worth_series(db, user.id, range_key=range)
     return [NetWorthPoint(**p) for p in points]

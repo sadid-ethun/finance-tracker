@@ -178,9 +178,13 @@ export function SpendThisMonth({
             cursor={{ stroke: "var(--border)" }}
             content={
               <ChartTooltipContent
-                labelFormatter={(label) => (
+                // Read the day off the datum rather than the `label` argument.
+                // ChartTooltipContent resolves that through the config, which
+                // has no entry for the x key, so it arrived undefined and the
+                // header read "Day undefined".
+                labelFormatter={(_label, payload) => (
                   <span className="font-mono text-[11px] tracking-[0.08em] uppercase">
-                    Day {String(label)}
+                    Day {String(payload?.[0]?.payload?.day ?? "")}
                   </span>
                 )}
                 formatter={(value, name) => (

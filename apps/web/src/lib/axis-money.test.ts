@@ -12,18 +12,18 @@ describe("formatAxisMoney", () => {
     expect(formatAxisMoney(58640)).toBe("$586");
   });
 
-  it("abbreviates thousands with one decimal", () => {
-    expect(formatAxisMoney(244491)).toBe("$2.4k");
-  });
-
-  it("drops the decimal past ten thousand, where it stops being useful", () => {
+  it("abbreviates thousands without decimals", () => {
+    // A decimal implies a precision the gridline does not have, and "$8k"
+    // reads faster than "$8.0k".
+    expect(formatAxisMoney(244491)).toBe("$2k");
+    expect(formatAxisMoney(800000)).toBe("$8k");
     expect(formatAxisMoney(1370053)).toBe("$14k");
     expect(formatAxisMoney(3157112)).toBe("$32k");
   });
 
   it("keeps the sign outside the currency symbol", () => {
-    // "$-2.4k" reads as a currency called "-2.4k".
-    expect(formatAxisMoney(-241482)).toBe("-$2.4k");
+    // "$-2k" reads as a currency called "-2k".
+    expect(formatAxisMoney(-241482)).toBe("-$2k");
   });
 
   it("never returns an empty label", () => {

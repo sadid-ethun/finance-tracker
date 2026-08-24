@@ -23,7 +23,7 @@ import { chartAnimation, chartConfig } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const RANGES: NetWorthRange[] = ["1m", "3m", "6m", "1y", "all"];
+const RANGES: NetWorthRange[] = ["1m", "3m", "6m", "ytd", "1y", "all"];
 
 /**
  * The headline. No card — it sits directly on the canvas so the number is the

@@ -38,8 +38,44 @@ import {
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+type RangeKey = "6m" | "12m" | "ytd" | "24m";
+
+const RANGES: { key: RangeKey; label: string }[] = [
+  { key: "6m", label: "6 months" },
+  { key: "12m", label: "12 months" },
+  { key: "ytd", label: "YTD" },
+  { key: "24m", label: "24 months" },
+];
+
+/**
+ * YTD as a month count: January through the current month inclusive.
+ *
+ * No API change needed — the cash-flow endpoints already take a number of
+ * months, and "this year so far" is one of them. Recomputed per render rather
+ * than held in a constant, so a session open across midnight on 1 January
+ * does not keep reporting the old year.
+ */
+function monthsFor(range: RangeKey): number {
+  switch (range) {
+    case "6m":
+      return 6;
+    case "12m":
+      return 12;
+    case "24m":
+      return 24;
+    case "ytd":
+      return new Date().getMonth() + 1;
+  }
+}
+
 export function CashFlowView() {
-  const [months, setMonths] = useState(12);
+  /**
+   * Selected by key, not by month count. YTD resolves to a number of months
+   * that can equal one of the fixed options — in June it is 6 — and keying on
+   * the number would light both buttons.
+   */
+  const [range, setRange] = useState<RangeKey>("12m");
+  const months = monthsFor(range);
   const summary = useCashFlowSummary(months);
   const trends = useCashFlowTrends(months);
   const [kind, setKind] = useState<"expense" | "income">("expense");
@@ -65,18 +101,18 @@ export function CashFlowView() {
   return (
     <div className="space-y-8">
       <div className="flex gap-1 rounded-[14px] bg-secondary p-1">
-        {[6, 12, 24].map((n) => (
+        {RANGES.map((option) => (
           <button
-            key={n}
+            key={option.key}
             type="button"
-            onClick={() => setMonths(n)}
-            aria-pressed={months === n}
+            onClick={() => setRange(option.key)}
+            aria-pressed={range === option.key}
             className={cn(
               "h-8 flex-1 rounded-[11px] text-[13px] font-medium",
-              months === n ? "bg-card shadow-sm" : "text-muted-foreground",
+              range === option.key ? "bg-card" : "text-muted-foreground",
             )}
           >
-            {n} months
+            {option.label}
           </button>
         ))}
       </div>
