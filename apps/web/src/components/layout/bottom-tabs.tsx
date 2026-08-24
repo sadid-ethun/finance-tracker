@@ -30,6 +30,20 @@ export function BottomTabs() {
 
   const moreActive = MORE_ITEMS.some((item) => isActive(pathname, item.href));
 
+  /**
+   * Exactly one holder of the shared layout id, decided in one place.
+   *
+   * Two elements carrying the same layoutId at once leaves Framer to pick a
+   * source between them, and the marker animates in from wherever that
+   * happens to resolve — the "slides up from the bottom of the screen"
+   * symptom. Opening the panel from any main tab did this: the tab kept its
+   * indicator while More gained one.
+   */
+  const selected: string | null =
+    moreOpen || moreActive
+      ? "more"
+      : (MOBILE_TABS.find((item) => isActive(pathname, item.href))?.href ?? null);
+
   return (
     <>
       {moreOpen ? (
@@ -90,7 +104,7 @@ export function BottomTabs() {
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  {active ? (
+                  {selected === item.href ? (
                     <motion.span
                       layoutId="tab-indicator"
                       className="absolute top-0 h-[3px] w-8 rounded-full bg-primary"
@@ -126,7 +140,7 @@ export function BottomTabs() {
                   nothing has been navigated to yet. Same easing as the tabs —
                   a second copy of this with a different transition is what
                   made the indicator behave inconsistently. */}
-              {moreActive || moreOpen ? (
+              {selected === "more" ? (
                 <motion.span
                   layoutId="tab-indicator"
                   className="absolute top-0 h-[3px] w-8 rounded-full bg-primary"

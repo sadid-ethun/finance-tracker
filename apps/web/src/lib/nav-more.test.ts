@@ -57,3 +57,46 @@ describe("More tab indicator", () => {
     }
   });
 });
+
+/**
+ * Exactly one element may carry the shared layoutId. Two at once leaves
+ * Framer to pick a source between them and the marker animates in from
+ * wherever that resolves, rather than sliding from the previous tab.
+ */
+describe("indicator ownership", () => {
+  const selectedFor = (pathname: string, moreOpen: boolean): string | null =>
+    moreOpen || MORE_ITEMS.some((i) => isActive(pathname, i.href))
+      ? "more"
+      : (MOBILE_TABS.find((i) => isActive(pathname, i.href))?.href ?? null);
+
+  const holders = (pathname: string, moreOpen: boolean) => {
+    const selected = selectedFor(pathname, moreOpen);
+    return (
+      MOBILE_TABS.filter((t) => selected === t.href).length + (selected === "more" ? 1 : 0)
+    );
+  };
+
+  it("has exactly one holder on every route, panel closed", () => {
+    for (const item of [...MOBILE_TABS, ...MORE_ITEMS]) {
+      expect(holders(item.href, false)).toBe(1);
+    }
+  });
+
+  it("has exactly one holder with the panel open", () => {
+    // The regression: opening the panel from a main tab left that tab holding
+    // the id while More took a second copy.
+    for (const item of [...MOBILE_TABS, ...MORE_ITEMS]) {
+      expect(holders(item.href, true)).toBe(1);
+    }
+  });
+
+  it("hands the indicator to More while its panel is open", () => {
+    expect(selectedFor("/", true)).toBe("more");
+    expect(selectedFor("/transactions", true)).toBe("more");
+  });
+
+  it("returns it to the route's tab once the panel closes", () => {
+    expect(selectedFor("/", false)).toBe("/");
+    expect(selectedFor("/transactions", false)).toBe("/transactions");
+  });
+});
