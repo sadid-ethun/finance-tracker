@@ -10,19 +10,12 @@ import {
   XAxis,
 } from "recharts";
 
+import { Card, Section } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
 import { useCashFlow, useSpendingByCategory } from "@/hooks/use-finance";
+import { seriesColor } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
-
-const CHART_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-  "var(--chart-6)",
-];
 
 function SectionCard({
   title,
@@ -34,13 +27,9 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold tracking-[-0.01em]">{title}</h2>
-        {action}
-      </div>
-      <div className="rounded-card border border-border bg-card p-5">{children}</div>
-    </section>
+    <Section label={title} action={action}>
+      <Card className="p-5">{children}</Card>
+    </Section>
   );
 }
 
@@ -75,7 +64,7 @@ export function SpendingByCategory() {
                   {rows.map((row, i) => (
                     <Cell
                       key={row.name}
-                      fill={row.color ?? CHART_COLORS[i % CHART_COLORS.length]}
+                      fill={row.color ?? seriesColor(i)}
                     />
                   ))}
                 </Pie>
@@ -95,7 +84,7 @@ export function SpendingByCategory() {
                   aria-hidden
                   className="size-2.5 shrink-0 rounded-full"
                   style={{
-                    backgroundColor: row.color ?? CHART_COLORS[i % CHART_COLORS.length],
+                    backgroundColor: row.color ?? seriesColor(i),
                   }}
                 />
                 <span className="min-w-0 flex-1 truncate text-[14px]">{row.name}</span>

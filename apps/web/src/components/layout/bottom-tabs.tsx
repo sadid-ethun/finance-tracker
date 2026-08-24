@@ -69,11 +69,17 @@ export function BottomTabs() {
                     <motion.span
                       layoutId="tab-indicator"
                       className="absolute top-0 h-[3px] w-8 rounded-full bg-primary"
-                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                      // Eased, not sprung. The reference is explicit: no
+                      // bouncy springs, no overshoots (DESIGN_SYSTEM.md).
+                      transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                     />
                   ) : null}
                   <item.icon className="size-[22px]" strokeWidth={2} />
-                  <span className="text-[11px] font-medium">{item.label}</span>
+                  {/* Uppercase tracked mono: the tab bar is instrumentation,
+                      and this is the type system's anchor voice. */}
+                  <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             );

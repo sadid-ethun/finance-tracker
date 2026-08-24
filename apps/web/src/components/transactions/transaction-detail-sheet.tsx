@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link2Off, Scissors, Trash2 } from "lucide-react";
 
 import { Money } from "@/components/shared/money";
+import { Sheet } from "@/components/shared/sheet";
 import {
   useCategories,
   useDeleteTransaction,
@@ -40,17 +41,14 @@ export function TransactionDetailSheet({
   const [splitting, setSplitting] = useState(false);
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-50 bg-black/30"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-label="Transaction details"
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-card border border-border bg-card p-5 sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:rounded-none sm:border-l"
-      >
+    <Sheet
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+      title="Transaction details"
+    >
+      <>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="truncate text-[18px] font-semibold">
@@ -162,18 +160,18 @@ export function TransactionDetailSheet({
             />
           </div>
         </div>
-      </div>
 
-      {splitting ? (
-        <SplitDialog
-          transaction={transaction}
-          onClose={() => {
-            setSplitting(false);
-            onClose();
-          }}
-        />
-      ) : null}
-    </>
+        {splitting ? (
+          <SplitDialog
+            transaction={transaction}
+            onClose={() => {
+              setSplitting(false);
+              onClose();
+            }}
+          />
+        ) : null}
+      </>
+    </Sheet>
   );
 }
 
