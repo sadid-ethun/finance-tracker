@@ -30,7 +30,13 @@ export function BottomTabs() {
       ) : null}
 
       {moreOpen ? (
-        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+64px)] z-50 mx-3 overflow-hidden rounded-card border border-border bg-card shadow-lg lg:hidden">
+        <div className={cn(
+            "fixed inset-x-0 z-50 mx-3 overflow-hidden rounded-card border border-border bg-card lg:hidden",
+            // Sits exactly on top of the bar. The offset is the bar's own
+            // height plus its trimmed inset — a hardcoded number here drifts
+            // the moment the bar's height changes, which is what happened.
+            "bottom-[calc(3.5rem+max(0.25rem,calc(env(safe-area-inset-bottom)-0.75rem)))]",
+          )}>
           {MORE_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -50,9 +56,16 @@ export function BottomTabs() {
 
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/92 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/92 backdrop-blur lg:hidden",
+          // The full safe-area inset is ~34px on a notched iPhone, which
+          // leaves the labels floating well above the home indicator. Trim
+          // 12px and keep a floor, so content still clears the indicator
+          // without the bar looking bottom-heavy.
+          "pb-[max(0.25rem,calc(env(safe-area-inset-bottom)-0.75rem))]",
+        )}
       >
-        <ul className="flex h-16 items-stretch">
+        <ul className="flex h-14 items-stretch">
           {MOBILE_TABS.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -75,11 +88,12 @@ export function BottomTabs() {
                     />
                   ) : null}
                   <item.icon className="size-[22px]" strokeWidth={2} />
-                  {/* Uppercase tracked mono: the tab bar is instrumentation,
-                      and this is the type system's anchor voice. */}
-                  <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
-                    {item.label}
-                  </span>
+                  {/* Sans, not mono. The reference assigns nav to the UI
+                      voice and reserves mono for labels and data readouts;
+                      uppercase mono is also simply too wide here — five tabs
+                      at 375px give each label 75px, and "TRANSACTIONS" needs
+                      86px at the tracking this had. */}
+                  <span className="text-[10px] font-medium">{item.label}</span>
                 </Link>
               </li>
             );
@@ -103,7 +117,7 @@ export function BottomTabs() {
                 />
               ) : null}
               <MoreHorizontal className="size-[22px]" strokeWidth={2} />
-              <span className="text-[11px] font-medium">More</span>
+              <span className="text-[10px] font-medium">More</span>
             </button>
           </li>
         </ul>
