@@ -167,14 +167,6 @@ export function SpendThisMonth({ month }: { month: string }) {
               className="mt-1 block font-serif text-[32px] leading-none font-normal tracking-[-0.02em]"
             />
           )}
-          <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
-            <span
-              aria-hidden
-              className="size-2 rounded-full"
-              style={{ backgroundColor: "var(--chart-1)" }}
-            />
-            {monthLabel(month)}
-          </p>
         </div>
 
         <label className="shrink-0 text-right">
@@ -205,18 +197,9 @@ export function SpendThisMonth({ month }: { month: string }) {
             tickFormatter={(value) => formatAxisMoney(Number(value))}
           />
 
-          {budgeted > 0 ? (
-            <ReferenceLine
-              y={budgeted}
-              {...referenceLineProps}
-              label={{
-                value: "Budget",
-                position: "insideTopLeft",
-                fill: "var(--muted-foreground)",
-                fontSize: 10,
-              }}
-            />
-          ) : null}
+          {/* Unlabelled: the legend below names it, and a second label on the
+              line itself sat over the data it was meant to explain. */}
+          {budgeted > 0 ? <ReferenceLine y={budgeted} {...referenceLineProps} /> : null}
 
           {/* Prior period first, so the current one draws over it. */}
           <Line

@@ -58,6 +58,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Pinch-zoom off, by request. This is the WCAG 1.4.4 trade-off: it removes
+  // the only way to enlarge text for someone who needs it. The 16px input
+  // rule in globals.css stays regardless — it is what stops iOS zooming on
+  // focus, and that is a separate problem from this one.
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   // The app is dark regardless of system preference, so the browser chrome
   // is a single value — a light variant here would flash white on launch.

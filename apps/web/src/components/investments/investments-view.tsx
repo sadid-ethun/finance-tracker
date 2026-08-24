@@ -64,11 +64,22 @@ function PerformanceChart() {
             </div>
           ) : (
             <ChartContainer config={chartConfig} className="size-full">
-              <AreaChart data={points} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+              <AreaChart
+                data={points}
+                margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
+              >
                 <defs>
                   <linearGradient id="perf-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                    <stop
+                      offset="0%"
+                      stopColor="var(--color-primary)"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="var(--color-primary)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 {/* Portfolio value rarely starts at zero, and anchoring there
@@ -147,7 +158,9 @@ export function InvestmentsView() {
             disabled={sync.isPending}
             className="inline-flex h-10 items-center gap-1.5 rounded-[14px] border border-border px-4 text-[14px] font-medium disabled:opacity-60"
           >
-            <RefreshCw className={cn("size-4", sync.isPending && "animate-spin")} />
+            <RefreshCw
+              className={cn("size-4", sync.isPending && "animate-spin")}
+            />
             {sync.isPending ? "Syncing…" : "Sync investments"}
           </button>
         }
@@ -180,14 +193,18 @@ export function InvestmentsView() {
             aria-label="Sync investments"
             className="rounded-[12px] border border-border p-2 text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
-            <RefreshCw className={cn("size-4", sync.isPending && "animate-spin")} />
+            <RefreshCw
+              className={cn("size-4", sync.isPending && "animate-spin")}
+            />
           </button>
         </div>
 
         {summary.data ? (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Card className="p-4">
-              <p className="text-[13px] text-muted-foreground">Unrealized gain</p>
+              <p className="text-[13px] text-muted-foreground">
+                Unrealized gain
+              </p>
               <Money
                 minorUnits={summary.data.total_gain}
                 colored
@@ -208,8 +225,9 @@ export function InvestmentsView() {
                 className="mt-0.5 block text-[18px] font-semibold"
               />
               <p className="mt-0.5 text-[12px] text-muted-foreground">
-                {summary.data.holdings_count - summary.data.positions_without_cost_basis} of{" "}
-                {summary.data.holdings_count} position
+                {summary.data.holdings_count -
+                  summary.data.positions_without_cost_basis}{" "}
+                of {summary.data.holdings_count} position
                 {summary.data.holdings_count === 1 ? "" : "s"}
               </p>
             </Card>
@@ -219,23 +237,7 @@ export function InvestmentsView() {
         {summary.data && summary.data.positions_without_cost_basis > 0 ? (
           <p className="mt-3 text-[12px] text-muted-foreground">
             Unrealized only: what your current positions are worth versus what
-            they cost. It excludes gains you have already realised by selling,
-            dividends, interest, and account bonuses — so it will not match an
-            all-time return figure from your broker. Measured against{" "}
-            <Money
-              minorUnits={summary.data.invested_value}
-              currency={summary.data.currency}
-              className="font-medium"
-            />{" "}
-            of holdings. The other {summary.data.positions_without_cost_basis} position
-            {summary.data.positions_without_cost_basis === 1 ? "" : "s"} —{" "}
-            <Money
-              minorUnits={summary.data.total_value - summary.data.invested_value}
-              currency={summary.data.currency}
-              className="font-medium"
-            />
-            , typically cash and margin — {summary.data.positions_without_cost_basis === 1 ? "has" : "have"} no
-            cost basis from your institution, so {summary.data.positions_without_cost_basis === 1 ? "it is" : "they are"} excluded.
+            they cost.
           </p>
         ) : null}
       </section>
@@ -257,7 +259,9 @@ export function InvestmentsView() {
                 aria-pressed={groupBy === key}
                 className={cn(
                   "h-7 rounded-[9px] px-2.5 text-[12px] font-medium",
-                  groupBy === key ? "bg-card shadow-sm" : "text-muted-foreground",
+                  groupBy === key
+                    ? "bg-card shadow-sm"
+                    : "text-muted-foreground",
                 )}
               >
                 {GROUP_LABELS[key]}
@@ -284,7 +288,9 @@ export function InvestmentsView() {
                           nameKey="name"
                           formatter={(value, name) => (
                             <span className="flex w-full justify-between gap-3">
-                              <span className="text-muted-foreground">{name}</span>
+                              <span className="text-muted-foreground">
+                                {name}
+                              </span>
                               <span className="tabular font-mono">
                                 {formatMoney(Number(value))}
                               </span>
@@ -321,7 +327,10 @@ export function InvestmentsView() {
                     <span className="min-w-0 flex-1 truncate text-[14px]">
                       {slice.name}
                     </span>
-                    <Money minorUnits={slice.value} className="text-[14px] font-medium" />
+                    <Money
+                      minorUnits={slice.value}
+                      className="text-[14px] font-medium"
+                    />
                     <span className="tabular w-12 text-right text-[12px] text-muted-foreground">
                       {slice.percent}%
                     </span>
@@ -334,7 +343,9 @@ export function InvestmentsView() {
       </section>
 
       <section>
-        <SectionLabel as="h2" className="mb-3">Holdings</SectionLabel>
+        <SectionLabel as="h2" className="mb-3">
+          Holdings
+        </SectionLabel>
         {holdings.isLoading ? (
           <RowSkeleton count={5} />
         ) : (
@@ -379,7 +390,9 @@ function HoldingRowItem({ holding }: { holding: HoldingRow }) {
               {holding.ticker}
             </span>
           ) : null}
-          <span className="truncate text-[15px] font-medium">{holding.name}</span>
+          <span className="truncate text-[15px] font-medium">
+            {holding.name}
+          </span>
         </span>
         <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
           {/* Quantity arrives as a string so fractional shares keep precision. */}
@@ -404,7 +417,9 @@ function HoldingRowItem({ holding }: { holding: HoldingRow }) {
             className="block text-[12px]"
           />
         ) : (
-          <span className="block text-[12px] text-muted-foreground">no basis</span>
+          <span className="block text-[12px] text-muted-foreground">
+            no basis
+          </span>
         )}
 
         {editing ? (

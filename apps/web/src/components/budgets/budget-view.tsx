@@ -84,11 +84,10 @@ export function BudgetView() {
         />
       ) : (
         <>
-          <BudgetBody month={month} data={budget.data} />
-          {/* Moved from Home: the question "where did it go" belongs beside
-              the limits it went past, not on a dashboard that has no budget
-              context to read it against. */}
+          {/* Leads the page: "where did it go" is the question this screen
+              exists to answer, and the limits below are the response to it. */}
           <SpendingByCategory />
+          <BudgetBody month={month} data={budget.data} />
           <DeleteBudget month={month} label={monthLabel(month)} />
         </>
       )}
