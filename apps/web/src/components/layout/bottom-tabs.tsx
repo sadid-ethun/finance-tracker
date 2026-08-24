@@ -67,10 +67,8 @@ export function BottomTabs() {
         <div className={cn(
             "fixed inset-x-0 z-50 mx-3 overflow-hidden rounded-card border border-border lg:hidden",
             "bg-card",
-            // Clears the bar rather than sitting flush on it. The offset is
-            // the bar's height plus its trimmed inset plus the gap, derived
-            // from the same expression so the two cannot drift.
-            "bottom-[calc(3.5rem+0.5rem+max(0.25rem,calc(env(safe-area-inset-bottom)-0.75rem)))]",
+            // Reads the same geometry as the bar, so the two cannot drift.
+            "bottom-[var(--tabbar-clearance)]",
           )}>
           {MORE_ITEMS.map((item) => (
             <Link
@@ -92,15 +90,23 @@ export function BottomTabs() {
       <nav
         aria-label="Primary"
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/92 backdrop-blur lg:hidden",
-          // The full safe-area inset is ~34px on a notched iPhone, which
-          // leaves the labels floating well above the home indicator. Trim
-          // 12px and keep a floor, so content still clears the indicator
-          // without the bar looking bottom-heavy.
-          "pb-[max(0.25rem,calc(env(safe-area-inset-bottom)-0.75rem))]",
+          "fixed inset-x-3 z-50 overflow-hidden rounded-[26px] lg:hidden",
+          "bottom-[var(--tabbar-inset)]",
+          // Glass: heavy blur with saturation, so colour from the page below
+          // bleeds through rather than the grey a plain blur produces. Held at
+          // 85% — legibly opaque, still clearly sitting on top of something.
+          "bg-card/85 backdrop-blur-2xl backdrop-saturate-150",
+          // A hairline of light along the top edge is what separates glass
+          // from a flat translucent panel. An explicit colour rather than
+          // Tailwind's shadow-colour variable, which composes unreliably with
+          // an arbitrary inset shadow.
+          //
+          // Not a drop shadow: the flat-elevation rule is about casting
+          // shadow onto the page, and this is a lit edge on the surface.
+          "border border-white/12 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)]",
         )}
       >
-        <ul className="flex h-14 items-stretch">
+        <ul className="flex h-[var(--tabbar-height)] items-stretch">
           {MOBILE_TABS.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -116,7 +122,9 @@ export function BottomTabs() {
                   {selected === item.href ? (
                     <motion.span
                       layoutId="tab-indicator"
-                      className="absolute top-0 h-[3px] w-8 rounded-full bg-primary"
+                      // Inset from the top: on a rounded floating bar an
+                      // edge-flush pill crosses the corner radius.
+                      className="absolute top-1.5 h-[3px] w-8 rounded-full bg-primary"
                       // Eased, not sprung. The reference is explicit: no
                       // bouncy springs, no overshoots (DESIGN_SYSTEM.md).
                       transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}

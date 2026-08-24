@@ -33,8 +33,9 @@ export default async function AppLayout({
         <Sidebar userName={session.user.name || session.user.email} />
 
         <div className="flex flex-1 flex-col lg:pl-60">
-          {/* Bottom tab bar is 64px plus the iOS home indicator. */}
-          <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+80px)] lg:px-8 lg:pb-10">
+          {/* Clears the floating tab bar, reading its geometry rather than
+              restating it — see --tabbar-clearance in globals.css. */}
+          <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(var(--tabbar-clearance)+1rem)] lg:px-8 lg:pb-10">
             {children}
           </main>
         </div>

@@ -270,3 +270,18 @@
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
 }
+
+/* Tab bar geometry, in one place.
+ *
+ * Three things depend on it: the bar, the More panel that sits above it, and
+ * the page padding that keeps content clear of it. They have drifted apart
+ * once already — a hardcoded offset in the panel outlived a change to the
+ * bar's height and left it floating in mid-air. */
+:root {
+  --tabbar-height: 3.5rem;
+  --tabbar-gap: 0.5rem;
+  /* Floats clear of the home indicator rather than padding itself to fill the
+     safe area, which is what a bar flush to the edge has to do. */
+  --tabbar-inset: max(0.5rem, env(safe-area-inset-bottom));
+  --tabbar-clearance: calc(var(--tabbar-inset) + var(--tabbar-height) + var(--tabbar-gap));
+}
