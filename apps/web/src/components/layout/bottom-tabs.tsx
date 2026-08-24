@@ -16,17 +16,26 @@ import { cn } from "@/lib/utils";
 export function BottomTabs() {
   const pathname = usePathname();
   /**
-   * The panel is open only while the route it was opened on is still the
-   * current one, so navigating anywhere closes it — including via the back
-   * button, and including the four main tabs, which never knew the panel
-   * existed.
+   * Open state, tied to the route it was opened on.
    *
-   * Derived rather than stored: a boolean plus an effect that resets it would
-   * mean setState inside an effect, which cascades a render.
+   * Comparing a stored pathname against the current one was not enough: the
+   * stored value was never cleared, so navigating away and back re-satisfied
+   * the comparison and the panel reopened on arrival — from a tab tap that
+   * had nothing to do with it.
+   *
+   * The route is carried alongside the flag and reset when it changes. That
+   * reset happens during render, which React re-runs immediately without
+   * committing the discarded pass; an effect would cascade a render, which
+   * the compiler lint rejects.
    */
-  const [openedAt, setOpenedAt] = useState<string | null>(null);
-  const moreOpen = openedAt === pathname;
-  const setMoreOpen = (open: boolean) => setOpenedAt(open ? pathname : null);
+  const [panel, setPanel] = useState({ path: pathname, open: false });
+  if (panel.path !== pathname) {
+    setPanel({ path: pathname, open: false });
+  }
+  // Guarded: on the render that triggers the reset above, `panel` still holds
+  // the previous route's state.
+  const moreOpen = panel.open && panel.path === pathname;
+  const setMoreOpen = (open: boolean) => setPanel({ path: pathname, open });
 
   const moreActive = MORE_ITEMS.some((item) => isActive(pathname, item.href));
 
