@@ -9,7 +9,6 @@ import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
 import { MonthCard, StatTiles } from "@/components/dashboard/stat-tiles";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
-import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
 import {
   useAccounts,
@@ -46,16 +45,14 @@ export function DashboardView() {
   }
 
   return (
-    <PullToRefresh>
-      <div className="space-y-8">
-        <NetWorthHero summary={summary.data} />
-        <StatTiles summary={summary.data} />
-        <MonthCard summary={summary.data} />
-        <SpendingByCategory />
-        <CashFlowChart />
-        <RecentTransactions />
-      </div>
-    </PullToRefresh>
+    <div className="space-y-8">
+      <NetWorthHero summary={summary.data} />
+      <StatTiles summary={summary.data} />
+      <MonthCard summary={summary.data} />
+      <SpendingByCategory />
+      <CashFlowChart />
+      <RecentTransactions />
+    </div>
   );
 }
 
