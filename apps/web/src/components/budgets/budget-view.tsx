@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
 import { SpendThisMonth } from "@/components/budgets/spend-this-month";
@@ -11,6 +12,7 @@ import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import {
   useBudget,
   useCopyBudget,
+  useDeleteBudget,
   useSetBudgetCategory,
   type BudgetLine,
 } from "@/hooks/use-finance";
@@ -86,9 +88,72 @@ export function BudgetView() {
           copyFailed={copy.isError}
         />
       ) : (
-        <BudgetBody month={month} data={budget.data} />
+        <>
+          <BudgetBody month={month} data={budget.data} />
+          <DeleteBudget month={month} label={monthLabel(month)} />
+        </>
       )}
     </div>
+  );
+}
+
+/**
+ * Delete the month's budget.
+ *
+ * Two-step rather than a modal: the destructive action is not reachable in one
+ * tap, and the confirm sits where the trigger was, so nothing moves under the
+ * finger between the two.
+ *
+ * Says what survives. "Delete" next to a screen full of spending figures
+ * invites the reading that the spending goes too, and it does not — this
+ * removes limits, not transactions.
+ */
+function DeleteBudget({ month, label }: { month: string; label: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const remove = useDeleteBudget(month);
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="mx-auto block text-[13px] text-muted-foreground underline-offset-4 hover:underline"
+      >
+        Delete this budget
+      </button>
+    );
+  }
+
+  return (
+    <Card as="section" className="p-4">
+      <p className="text-[14px]">
+        Delete the budget for {label}? Your transactions and spending history
+        are not affected — only the limits.
+      </p>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          className="h-10 flex-1 rounded-[14px] border border-border text-[14px] font-medium"
+        >
+          Keep it
+        </button>
+        <button
+          type="button"
+          onClick={() => remove.mutate()}
+          disabled={remove.isPending}
+          className="h-10 flex-1 rounded-[14px] text-[14px] font-semibold disabled:opacity-60"
+          style={{ backgroundColor: "var(--negative)", color: "var(--background)" }}
+        >
+          {remove.isPending ? "Deleting…" : "Delete"}
+        </button>
+      </div>
+      {remove.isError ? (
+        <p role="alert" className="mt-2 text-[13px] text-negative">
+          Could not delete the budget. Try again.
+        </p>
+      ) : null}
+    </Card>
   );
 }
 
@@ -186,6 +251,16 @@ function BudgetRow({ month, line }: { month: string; line: BudgetLine }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState((line.budgeted / 100).toFixed(2));
 
+  /**
+   * Removing a line is setting it to zero — the API reads that as "stop
+   * budgeting this" and drops the row, rather than storing a limit of
+   * nothing. Spending in the category then reports as unbudgeted instead of
+   * as permanently overspent.
+   */
+  async function remove() {
+    await setAmount.mutateAsync({ categoryId: line.category_id, amount: 0 });
+  }
+
   async function save() {
     const major = Number.parseFloat(value);
     if (!Number.isNaN(major)) {
@@ -223,13 +298,24 @@ function BudgetRow({ month, line }: { month: string; line: BudgetLine }) {
             className="tabular h-9 w-28 rounded-[10px] border border-input bg-background px-2 text-right text-[14px] outline-none focus:border-ring"
           />
         ) : (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="tabular text-[14px] font-medium text-muted-foreground hover:text-foreground"
-          >
-            <Money minorUnits={line.budgeted} /> budget
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="tabular text-[14px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              <Money minorUnits={line.budgeted} /> budget
+            </button>
+            <button
+              type="button"
+              onClick={() => void remove()}
+              disabled={setAmount.isPending}
+              aria-label={`Stop budgeting ${line.name}`}
+              className="shrink-0 rounded-[8px] p-1 text-muted-foreground transition-colors active:bg-secondary disabled:opacity-50 md:hover:text-foreground"
+            >
+              <X className="size-4" strokeWidth={2} />
+            </button>
+          </>
         )}
       </div>
 

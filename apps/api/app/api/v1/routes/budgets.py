@@ -2,7 +2,7 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Path, Query, status
 
 from app.core.errors import ValidationError
 from app.deps import CurrentUser, DbSession
@@ -61,6 +61,20 @@ async def upsert_budget(
     )
     data = await budget_service.budget_with_progress(db, user.id, parsed)
     return BudgetProgress(**data)
+
+
+@router.delete("/{month}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_budget(
+    month: Annotated[str, Path(pattern=MONTH_PATTERN)],
+    user: CurrentUser,
+    db: DbSession,
+) -> None:
+    """Remove a month's budget. Spending history is untouched.
+
+    Idempotent: a month with no budget returns 204 rather than 404, so
+    retrying a request whose response was lost still succeeds.
+    """
+    await budget_service.delete_budget(db, user.id, _parse_month(month))
 
 
 @router.patch("/{month}/categories/{category_id}", response_model=BudgetProgress)

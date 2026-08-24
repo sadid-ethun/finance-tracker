@@ -8,6 +8,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
 import { useBudgetSuggestions, useUpsertBudget } from "@/hooks/use-finance";
+import { cn } from "@/lib/utils";
+
+import { Switch } from "@/components/shared/switch";
 
 /**
  * First-run budget builder.
@@ -33,6 +36,21 @@ export function BudgetSetup({
   // suggestion. Syncing fetched data into state via an effect would mean two
   // sources of truth and a render where they disagree.
   const [edits, setEdits] = useState<Record<string, string>>({});
+  /**
+   * Categories switched off. Excluded is not the same as zero: an excluded
+   * category has no budget line at all and its spending reports as
+   * unbudgeted, where a zero line is a limit of nothing that reads as
+   * overspent the moment anything lands in it.
+   */
+  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+
+  const toggle = (categoryId: string) =>
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
 
   const valueFor = (categoryId: string, suggested: number): string =>
     edits[categoryId] ?? (suggested / 100).toFixed(2);
@@ -70,6 +88,7 @@ export function BudgetSetup({
 
   async function save() {
     const categories = rows
+      .filter((row) => !excluded.has(row.category_id))
       .map((row) => ({
         category_id: row.category_id,
         amount: Math.round(
@@ -83,6 +102,7 @@ export function BudgetSetup({
   }
 
   const total = rows.reduce((sum, row) => {
+    if (excluded.has(row.category_id)) return sum;
     const v = Number.parseFloat(valueFor(row.category_id, row.suggested));
     return sum + (Number.isNaN(v) ? 0 : Math.round(v * 100));
   }, 0);
@@ -98,8 +118,8 @@ export function BudgetSetup({
       <Card as="section" className="p-5">
         <h2 className="text-[18px] font-semibold">Suggested limits</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Based on your average spend over the last 3 months. Adjust anything,
-          set a category to 0 to skip it.
+          Based on your average spend over the last 3 months. Adjust the
+          limits, and switch off anything you would rather not budget.
         </p>
 
         {suggestions.isLoading ? (
@@ -118,16 +138,29 @@ export function BudgetSetup({
             <ul className="mt-4 space-y-2">
               {rows.map((row) => (
                 <li key={row.category_id} className="flex items-center gap-2.5">
+                  <Switch
+                    checked={!excluded.has(row.category_id)}
+                    onChange={() => toggle(row.category_id)}
+                    label={`Budget ${row.name}`}
+                  />
                   <span
                     aria-hidden
                     className="size-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: row.color ?? "var(--muted-foreground)" }}
                   />
-                  <span className="min-w-0 flex-1 truncate text-[15px]">{row.name}</span>
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-[15px]",
+                      excluded.has(row.category_id) && "text-muted-foreground line-through",
+                    )}
+                  >
+                    {row.name}
+                  </span>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
+                    disabled={excluded.has(row.category_id)}
                     value={valueFor(row.category_id, row.suggested)}
                     onChange={(e) =>
                       setEdits((prev) => ({
@@ -136,7 +169,7 @@ export function BudgetSetup({
                       }))
                     }
                     aria-label={`${row.name} limit`}
-                    className="tabular h-10 w-28 rounded-[10px] border border-input bg-background px-2 text-right text-[14px] outline-none focus:border-ring"
+                    className="tabular h-10 w-28 rounded-[10px] border border-input bg-background px-2 text-right text-[14px] outline-none focus:border-ring disabled:opacity-40"
                   />
                 </li>
               ))}

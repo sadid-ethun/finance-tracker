@@ -3288,6 +3288,46 @@
       }
     },
     "/api/v1/budgets/{month}": {
+      "delete": {
+        "description": "Remove a month's budget. Spending history is untouched.\n\nIdempotent: a month with no budget returns 204 rather than 404, so\nretrying a request whose response was lost still succeeds.",
+        "operationId": "delete_budget_api_v1_budgets__month__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}$",
+              "title": "Month",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Budget",
+        "tags": [
+          "budgets"
+        ]
+      },
       "get": {
         "description": "A month's budget with progress computed from live transactions.\n\nReturns an empty shell rather than 404 when no budget exists, so the client\nrenders its empty state without special-casing an error.",
         "operationId": "get_budget_api_v1_budgets__month__get",

@@ -256,6 +256,27 @@ async def set_category_amount(
     return budget
 
 
+async def delete_budget(db: AsyncSession, user_id: str, month: date) -> None:
+    """Remove a month's budget entirely.
+
+    Deleting is not the same as zeroing every category. A month with no budget
+    reports `exists: false` and the screen offers to build one; a month with
+    every line at zero is a budget of nothing, which reads as "you have
+    overspent everything" against any real transaction.
+
+    Idempotent — deleting a month that has no budget is a no-op rather than a
+    404, so a double tap on a slow connection cannot fail the second time.
+    """
+    month = _normalize(month)
+
+    budget = await get_budget(db, user_id, month)
+    if budget is None:
+        return
+
+    await db.delete(budget)
+    await db.commit()
+
+
 async def copy_budget(db: AsyncSession, user_id: str, *, source: date, target: date) -> Budget:
     """Copy one month's limits onto another. Overwrites the target."""
     source, target = _normalize(source), _normalize(target)

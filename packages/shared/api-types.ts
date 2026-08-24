@@ -133,7 +133,14 @@ export interface paths {
          */
         put: operations["upsert_budget_api_v1_budgets__month__put"];
         post?: never;
-        delete?: never;
+        /**
+         * Delete Budget
+         * @description Remove a month's budget. Spending history is untouched.
+         *
+         *     Idempotent: a month with no budget returns 204 rather than 404, so
+         *     retrying a request whose response was lost still succeeds.
+         */
+        delete: operations["delete_budget_api_v1_budgets__month__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2368,6 +2375,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["BudgetProgress"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_budget_api_v1_budgets__month__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

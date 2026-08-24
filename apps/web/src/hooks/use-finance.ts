@@ -537,6 +537,15 @@ export function useSetBudgetCategory(month: string) {
   });
 }
 
+export function useDeleteBudget(month: string) {
+  const invalidate = useBudgetInvalidation();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<void>(`/budgets/${month}`, { method: "DELETE" }),
+    onSuccess: invalidate,
+  });
+}
+
 export function useUpsertBudget(month: string) {
   const invalidate = useBudgetInvalidation();
   return useMutation({
