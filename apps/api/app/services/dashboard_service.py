@@ -321,15 +321,34 @@ def _snapshot_fields(balances: dict[str, int]) -> dict[str, int]:
     }
 
 
-async def backfill_net_worth(db: AsyncSession, user_id: str, *, days: int = 90) -> int:
+#: Ceiling on reconstruction. Plaid serves at most 730 days of transactions,
+#: so reaching further back can only produce a flat line across a period the
+#: data cannot describe.
+MAX_BACKFILL_DAYS = 730
+
+
+async def backfill_net_worth(db: AsyncSession, user_id: str, *, days: int | None = None) -> int:
     """Reconstruct history by walking transactions backwards from today.
 
     Approximate by construction: it assumes current balances minus subsequent
     activity, so it cannot know about balance changes that produced no
-    transaction. The UI labels reconstructed points accordingly. Without it the
-    net-worth chart is a single dot until the nightly job has run for a month.
+    transaction — a market move on an investment leaves no row and is
+    therefore invisible. Without it the net-worth chart is a single dot until
+    the nightly job has run for a month.
+
+    The window follows the data rather than a constant. Reaching back further
+    than the oldest transaction writes identical points across a period
+    nothing is known about, which draws a confident flat line asserting the
+    net worth did not move — a claim the data cannot support. With no
+    transactions at all it writes nothing, for the same reason.
     """
     today = date.today()
+
+    if days is None:
+        oldest = await db.scalar(select(func.min(Transaction.date)).where(*_spendable(user_id)))
+        if oldest is None:
+            return 0
+        days = min((today - oldest).days + 1, MAX_BACKFILL_DAYS)
     balances = await summarize_balances(db, user_id)
     running = balances["net_worth"]
 

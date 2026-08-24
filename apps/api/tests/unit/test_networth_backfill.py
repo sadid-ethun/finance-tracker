@@ -71,3 +71,36 @@ def test_assets_minus_liabilities_always_equals_net_worth(running: int) -> None:
     fields = snapshot_fields(running, liabilities=455_065)
 
     assert fields["assets"] - fields["liabilities"] == fields["net_worth"]
+
+
+def window_for(oldest: date | None, today: date, cap: int = 730) -> int:
+    """Mirrors the window calculation in backfill_net_worth."""
+    if oldest is None:
+        return 0
+    return min((today - oldest).days + 1, cap)
+
+
+def test_the_window_reaches_the_oldest_transaction() -> None:
+    today = date(2026, 8, 24)
+
+    assert window_for(date(2026, 8, 20), today) == 5
+
+
+def test_it_covers_the_full_history_a_relinked_account_provides() -> None:
+    """A fixed 90 ignored the other 640 days Plaid serves after a re-link."""
+    today = date(2026, 8, 24)
+
+    assert window_for(today - timedelta(days=700), today) == 701
+
+
+def test_it_stops_at_plaids_ceiling() -> None:
+    today = date(2026, 8, 24)
+
+    assert window_for(today - timedelta(days=5000), today) == 730
+
+
+def test_no_transactions_writes_nothing() -> None:
+    """Reaching back over a period with no data writes identical points, which
+    draws a confident flat line asserting the net worth did not move — a claim
+    the data cannot support."""
+    assert window_for(None, date(2026, 8, 24)) == 0

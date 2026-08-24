@@ -83,5 +83,8 @@ async def take_snapshot(user: CurrentUser, db: DbSession) -> dict[str, int]:
     produces a chart point immediately instead of after midnight.
     """
     await dashboard_service.write_net_worth_snapshot(db, user.id)
-    backfilled = await dashboard_service.backfill_net_worth(db, user.id, days=90)
+    # No window: the service reaches back as far as transactions go, capped at
+    # Plaid's 730-day ceiling. A fixed 90 here ignored the other 640 days of
+    # history a re-linked account provides.
+    backfilled = await dashboard_service.backfill_net_worth(db, user.id)
     return {"backfilled": backfilled}
