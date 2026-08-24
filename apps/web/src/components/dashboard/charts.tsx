@@ -1,6 +1,16 @@
 "use client";
 
-import { Bar, BarChart, Cell, Pie, PieChart, ReferenceLine, XAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { Card, Section } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
@@ -11,7 +21,14 @@ import {
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/shared/states";
 import { useCashFlow, useSpendingByCategory } from "@/hooks/use-finance";
-import { axisProps, chartAnimation, chartConfig, seriesColor } from "@/lib/chart-theme";
+import {
+  axisProps,
+  chartAnimation,
+  chartConfig,
+  formatAxisMoney,
+  gridProps,
+  seriesColor,
+} from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 
 function SectionCard({
@@ -137,10 +154,16 @@ export function CashFlowChart() {
                 margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
                 barGap={2}
               >
+                <CartesianGrid {...gridProps} />
                 <XAxis dataKey="label" {...axisProps} />
-                {/* The only rule on this chart: income above, spending below.
-                    A grid would add lines that carry no information. */}
-                <ReferenceLine y={0} stroke="var(--border)" />
+                <YAxis
+                  {...axisProps}
+                  width={40}
+                  tickFormatter={(value) => formatAxisMoney(Number(value))}
+                />
+                {/* Solid, against the dashed grid, so the line dividing income
+                    from spending is not mistaken for a rule. */}
+                <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
                 <ChartTooltip
                   cursor={{ fill: "var(--secondary)", opacity: 0.4 }}
                   content={
@@ -168,7 +191,9 @@ export function CashFlowChart() {
                 <Bar
                   dataKey="spendingDown"
                   fill="var(--color-spending)"
-                  radius={[0, 0, 4, 4]}
+                  // Recharts mirrors the radius array for a negative value, so
+                  // this is the same order as the upward bar.
+                  radius={[4, 4, 0, 0]}
                   maxBarSize={18}
                   {...chartAnimation()}
                 />
@@ -181,7 +206,7 @@ export function CashFlowChart() {
               <span
                 aria-hidden
                 className="size-2 rounded-full"
-                style={{ backgroundColor: "var(--positive)" }}
+                style={{ backgroundColor: chartConfig.income.color }}
               />
               Income
             </span>
@@ -189,7 +214,7 @@ export function CashFlowChart() {
               <span
                 aria-hidden
                 className="size-2 rounded-full"
-                style={{ backgroundColor: "var(--negative)" }}
+                style={{ backgroundColor: chartConfig.spending.color }}
               />
               Spending
             </span>

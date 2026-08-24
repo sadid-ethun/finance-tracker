@@ -32,6 +32,35 @@ export function seriesColor(index: number): string {
  * about restraint, and on a dark canvas a drawn axis competes with the data
  * rather than framing it.
  */
+/**
+ * Axis tick labels for money.
+ *
+ * Compact, because a full "$2,414.82" on a y-axis at 375px either truncates or
+ * eats a third of the plot. Whole units only — an axis marks the scale, and
+ * the exact figure belongs in the tooltip.
+ */
+export function formatAxisMoney(minorUnits: number): string {
+  const major = Math.abs(minorUnits) / 100;
+  const sign = minorUnits < 0 ? "-" : "";
+  if (major >= 1000) return `${sign}$${(major / 1000).toFixed(major >= 10000 ? 0 : 1)}k`;
+  return `${sign}$${Math.round(major)}`;
+}
+
+/**
+ * Horizontal rules only.
+ *
+ * Reinstated deliberately: reading a bar's value by eye needs something to
+ * read it against, and without gridlines the only way to get a number off
+ * these charts was to press one. Vertical lines add nothing — the x axis is
+ * already labelled by month.
+ */
+export const gridProps = {
+  vertical: false as const,
+  horizontal: true as const,
+  stroke: "var(--border)",
+  strokeDasharray: "3 3",
+};
+
 export const axisProps = {
   axisLine: false as const,
   tickLine: false as const,

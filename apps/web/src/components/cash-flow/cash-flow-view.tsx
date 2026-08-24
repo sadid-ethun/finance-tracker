@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bar, ComposedChart, Line, ReferenceLine, XAxis } from "recharts";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ChartPie, ChevronRight } from "lucide-react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
@@ -20,7 +28,13 @@ import {
   useCashFlowSummary,
   useCashFlowTrends,
 } from "@/hooks/use-finance";
-import { axisProps, chartAnimation, chartConfig } from "@/lib/chart-theme";
+import {
+  axisProps,
+  chartAnimation,
+  chartConfig,
+  formatAxisMoney,
+  gridProps,
+} from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -96,10 +110,16 @@ export function CashFlowView() {
                   }))}
                   margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
                 >
+                  <CartesianGrid {...gridProps} />
                   <XAxis dataKey="label" {...axisProps} />
-                  {/* The grid is gone: the only line worth drawing here is the
-                      one separating income from spending. */}
-                  <ReferenceLine y={0} stroke="var(--border)" />
+                  <YAxis
+                    {...axisProps}
+                    width={44}
+                    tickFormatter={(value) => formatAxisMoney(Number(value))}
+                  />
+                  {/* Solid, against the dashed grid, so the line dividing
+                      income from spending is not mistaken for a rule. */}
+                  <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
                   <ChartTooltip
                     cursor={{ fill: "var(--secondary)", opacity: 0.4 }}
                     content={
@@ -131,7 +151,10 @@ export function CashFlowView() {
                   <Bar
                     dataKey="spendingDown"
                     fill="var(--color-spending)"
-                    radius={[0, 0, 4, 4]}
+                    // Same order as the upward bar: Recharts mirrors the
+                    // radius for a negative value, so [0,0,4,4] rounds the
+                    // baseline end and squares the tip — backwards.
+                    radius={[4, 4, 0, 0]}
                     maxBarSize={18}
                     {...chartAnimation()}
                   />
@@ -150,9 +173,10 @@ export function CashFlowView() {
             </div>
           )}
           <div className="mt-3 flex flex-wrap justify-center gap-4 border-t border-border pt-3 text-[12px]">
-            <Legend color="var(--positive)" label="Income" />
-            <Legend color="var(--negative)" label="Spending" />
-            <Legend color="var(--primary)" label="Net" />
+            <Legend color={chartConfig.income.color} label="Income" />
+            <Legend color={chartConfig.spending.color} label="Spending" />
+            {/* --primary is the white CTA fill; the line is the data accent. */}
+            <Legend color={chartConfig.primary.color} label="Net" />
           </div>
         </Card>
       </section>
