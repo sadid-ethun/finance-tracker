@@ -30,10 +30,22 @@ function shiftMonth(key: string, delta: number): string {
   return monthKey(new Date(y, m - 1 + delta, 1));
 }
 
-/** Bar rows and the compare control need something narrower than "September 2026". */
+/**
+ * Month name alone, for the chart. The year is noise on a series label — both
+ * lines are days of a month, and the day is already the tooltip's heading.
+ */
 function shortMonthLabel(key: string): string {
   const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short" });
+}
+
+/**
+ * With the year, for the compare picker. Six months back from January reaches
+ * the previous year, and two entries reading "Aug" would be indistinguishable.
+ */
+function pickerMonthLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
 function monthLabel(key: string): string {
@@ -182,6 +194,7 @@ function BudgetBody({
         month={month}
         compareMonth={compareMonth}
         monthLabel={shortMonthLabel}
+        pickerLabel={pickerMonthLabel}
         onCompareChange={setCompareMonth}
         compareOptions={compareOptions}
       />

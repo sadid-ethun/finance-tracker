@@ -1,6 +1,13 @@
 "use client";
 
-import { ComposedChart, Line, ReferenceLine, XAxis, YAxis } from "recharts";
+import {
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
@@ -15,6 +22,8 @@ import {
   axisProps,
   chartAnimation,
   chartConfig,
+  formatAxisMoney,
+  gridProps,
   referenceLineProps,
 } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
@@ -66,12 +75,15 @@ export function SpendThisMonth({
   month,
   compareMonth,
   monthLabel,
+  pickerLabel,
   onCompareChange,
   compareOptions,
 }: {
   month: string;
   compareMonth: string;
   monthLabel: (key: string) => string;
+  /** Carries the year; only the picker needs to tell 2025 from 2026. */
+  pickerLabel: (key: string) => string;
   onCompareChange: (key: string) => void;
   compareOptions: string[];
 }) {
@@ -128,7 +140,7 @@ export function SpendThisMonth({
           >
             {compareOptions.map((key) => (
               <option key={key} value={key}>
-                {monthLabel(key)}
+                {pickerLabel(key)}
               </option>
             ))}
           </select>
@@ -137,8 +149,14 @@ export function SpendThisMonth({
 
       <ChartContainer config={chartConfig} className="mt-5 h-[180px] w-full">
         <ComposedChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
+          <CartesianGrid {...gridProps} />
           <XAxis dataKey="day" {...axisProps} interval={6} tickMargin={8} />
-          <YAxis hide domain={[0, "dataMax"]} />
+          <YAxis
+            {...axisProps}
+            width={44}
+            domain={[0, "dataMax"]}
+            tickFormatter={(value) => formatAxisMoney(Number(value))}
+          />
 
           {budgeted > 0 ? (
             <ReferenceLine
