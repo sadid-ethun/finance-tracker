@@ -354,12 +354,22 @@ async def backfill_net_worth(db: AsyncSession, user_id: str, *, days: int = 90) 
             )
         )
         if exists is None:
+            # Liabilities are held at today's figure and assets derived from
+            # them, so `assets - liabilities == net_worth` holds on every row.
+            # Deriving assets from the running total instead broke that
+            # invariant: a day at 1,700,000 net worth was written with assets
+            # 1,700,000 and liabilities 455,065, which subtract to 1,244,935.
+            #
+            # Splitting the movement across the two properly would mean
+            # walking each account separately; this at least cannot be
+            # internally contradictory.
+            liabilities = balances["liabilities"]
             db.add(
                 NetWorthSnapshot(
                     user_id=user_id,
                     date=on,
-                    assets=max(running, 0),
-                    liabilities=max(-running, 0) if running < 0 else balances["liabilities"],
+                    assets=running + liabilities,
+                    liabilities=liabilities,
                     net_worth=running,
                     cash=balances["cash"],
                     investments=balances["investments"],

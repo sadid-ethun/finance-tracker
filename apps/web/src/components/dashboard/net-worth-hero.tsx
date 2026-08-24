@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/chart";
 import {
   useNetWorthSeries,
+  useTakeSnapshot,
   type DashboardSummary,
   type NetWorthRange,
 } from "@/hooks/use-finance";
@@ -62,6 +63,48 @@ function RefreshButton() {
     >
       <RefreshCw className={cn("size-4", refreshing && "motion-safe:animate-spin")} />
     </button>
+  );
+}
+
+/**
+ * The chart needs two daily snapshots to draw a line, and the nightly job
+ * only ever writes today — so a new install shows an empty frame for days
+ * with no way to do anything about it.
+ *
+ * The backfill reconstructs history by walking transactions backwards from
+ * current balances. It has existed, with a route and a hook, since the
+ * dashboard was built; nothing ever called it. This is the trigger.
+ *
+ * It is approximate and says so: it can only see movements that produced a
+ * transaction, so market moves on investments and any balance change without
+ * one are invisible. It is the difference between a chart and a dot.
+ */
+function BuildHistory() {
+  const snapshot = useTakeSnapshot();
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 rounded-card border border-dashed border-border px-4 text-center">
+      <p className="text-[13px] text-muted-foreground">
+        {snapshot.isSuccess
+          ? "History rebuilt — the chart fills in further each night."
+          : "Not enough history yet to draw a chart."}
+      </p>
+      {!snapshot.isSuccess ? (
+        <button
+          type="button"
+          onClick={() => snapshot.mutate()}
+          disabled={snapshot.isPending}
+          className="rounded-[12px] border border-border px-3 py-1.5 text-[13px] font-medium transition-colors active:bg-secondary disabled:opacity-60 md:hover:bg-secondary"
+        >
+          {snapshot.isPending ? "Rebuilding…" : "Rebuild from my transactions"}
+        </button>
+      ) : null}
+      {snapshot.isError ? (
+        <p role="alert" className="text-[12px] text-negative">
+          Could not rebuild. Try again.
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -113,11 +156,7 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
         {series.isLoading ? (
           <Skeleton className="h-full w-full" />
         ) : points.length < 2 ? (
-          <div className="flex h-full items-center justify-center rounded-card border border-dashed border-border">
-            <p className="px-4 text-center text-[13px] text-muted-foreground">
-              Building your history — your chart fills in as we gather data.
-            </p>
-          </div>
+          <BuildHistory />
         ) : (
           <ChartContainer config={chartConfig} className="size-full">
             <AreaChart data={points} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
