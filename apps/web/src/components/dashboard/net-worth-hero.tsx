@@ -5,15 +5,21 @@ import NumberFlow from "@number-flow/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { SectionLabel } from "@/components/shared/card";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
+import { Area, AreaChart, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
 
 import { Skeleton } from "@/components/shared/states";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import {
   useNetWorthSeries,
   type DashboardSummary,
   type NetWorthRange,
 } from "@/hooks/use-finance";
+import { chartAnimation, chartConfig } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -113,43 +119,44 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
             </p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%" debounce={80}>
+          <ChartContainer config={chartConfig} className="size-full">
             <AreaChart data={points} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
               <defs>
+                {/* Fades to transparent rather than to the canvas colour, so
+                    the fill sits correctly on any surface it is placed on. */}
                 <linearGradient id="nw-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.28} />
-                  <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               {/* Domain follows the data: net worth rarely starts at zero, and
                   anchoring to zero would flatten every real movement. */}
               <YAxis hide domain={["dataMin", "dataMax"]} />
-              <Tooltip
+              <ChartTooltip
                 cursor={{ stroke: "var(--border)" }}
-                content={({ active, payload }) =>
-                  active && payload?.length ? (
-                    <div className="rounded-[12px] border border-border bg-card px-3 py-2 shadow-sm">
-                      <p className="text-[11px] text-muted-foreground">
-                        {payload[0].payload.date}
-                      </p>
-                      <p className="tabular text-[14px] font-semibold">
-                        {formatMoney(Number(payload[0].value))}
-                      </p>
-                    </div>
-                  ) : null
+                content={
+                  <ChartTooltipContent
+                    hideIndicator
+                    labelKey="date"
+                    formatter={(value) => (
+                      <span className="tabular font-mono text-[13px]">
+                        {formatMoney(Number(value))}
+                      </span>
+                    )}
+                  />
                 }
               />
               <Area
                 type="monotone"
                 dataKey="net_worth"
-                stroke="var(--primary)"
+                stroke="var(--color-primary)"
                 strokeWidth={2}
                 fill="url(#nw-fill)"
-                isAnimationActive={false}
                 dot={false}
+                {...chartAnimation()}
               />
             </AreaChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
 
