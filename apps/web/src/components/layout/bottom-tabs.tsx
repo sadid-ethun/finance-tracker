@@ -15,7 +15,18 @@ import { cn } from "@/lib/utils";
  */
 export function BottomTabs() {
   const pathname = usePathname();
-  const [moreOpen, setMoreOpen] = useState(false);
+  /**
+   * The panel is open only while the route it was opened on is still the
+   * current one, so navigating anywhere closes it — including via the back
+   * button, and including the four main tabs, which never knew the panel
+   * existed.
+   *
+   * Derived rather than stored: a boolean plus an effect that resets it would
+   * mean setState inside an effect, which cascades a render.
+   */
+  const [openedAt, setOpenedAt] = useState<string | null>(null);
+  const moreOpen = openedAt === pathname;
+  const setMoreOpen = (open: boolean) => setOpenedAt(open ? pathname : null);
 
   const moreActive = MORE_ITEMS.some((item) => isActive(pathname, item.href));
 
@@ -23,7 +34,7 @@ export function BottomTabs() {
     <>
       {moreOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/20 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setMoreOpen(false)}
           aria-hidden
         />
@@ -31,11 +42,16 @@ export function BottomTabs() {
 
       {moreOpen ? (
         <div className={cn(
-            "fixed inset-x-0 z-50 mx-3 overflow-hidden rounded-card border border-border bg-card lg:hidden",
-            // Sits exactly on top of the bar. The offset is the bar's own
-            // height plus its trimmed inset — a hardcoded number here drifts
-            // the moment the bar's height changes, which is what happened.
-            "bottom-[calc(3.5rem+max(0.25rem,calc(env(safe-area-inset-bottom)-0.75rem)))]",
+            "fixed inset-x-0 z-50 mx-3 overflow-hidden rounded-card border border-border lg:hidden",
+            // Darker than the cards it floats over, not lighter. Elevation is
+            // a colour step in this system and there is no headroom above the
+            // card without going pale, so an overlay reads as "in front" by
+            // receding instead — the blur and border carry the separation.
+            "bg-background/95 backdrop-blur-xl",
+            // Clears the bar rather than sitting flush on it. The offset is
+            // the bar's height plus its trimmed inset plus the gap, derived
+            // from the same expression so the two cannot drift.
+            "bottom-[calc(3.5rem+0.5rem+max(0.25rem,calc(env(safe-area-inset-bottom)-0.75rem)))]",
           )}>
           {MORE_ITEMS.map((item) => (
             <Link
@@ -102,18 +118,23 @@ export function BottomTabs() {
           <li className="flex-1">
             <button
               type="button"
-              onClick={() => setMoreOpen((open) => !open)}
+              onClick={() => setMoreOpen(!moreOpen)}
               aria-expanded={moreOpen}
               className={cn(
                 "relative flex h-full w-full flex-col items-center justify-center gap-1",
                 moreActive || moreOpen ? "text-primary" : "text-muted-foreground",
               )}
             >
-              {moreActive ? (
+              {/* Follows the open panel too, not just the route: while the
+                  panel is showing, More is the selected tab even though
+                  nothing has been navigated to yet. Same easing as the tabs —
+                  a second copy of this with a different transition is what
+                  made the indicator behave inconsistently. */}
+              {moreActive || moreOpen ? (
                 <motion.span
                   layoutId="tab-indicator"
                   className="absolute top-0 h-[3px] w-8 rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                 />
               ) : null}
               <MoreHorizontal className="size-[22px]" strokeWidth={2} />
