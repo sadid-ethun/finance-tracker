@@ -34,7 +34,7 @@ export function BottomTabs() {
     <>
       {moreOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] lg:hidden"
           onClick={() => setMoreOpen(false)}
           aria-hidden
         />
@@ -43,11 +43,7 @@ export function BottomTabs() {
       {moreOpen ? (
         <div className={cn(
             "fixed inset-x-0 z-50 mx-3 overflow-hidden rounded-card border border-border lg:hidden",
-            // Darker than the cards it floats over, not lighter. Elevation is
-            // a colour step in this system and there is no headroom above the
-            // card without going pale, so an overlay reads as "in front" by
-            // receding instead — the blur and border carry the separation.
-            "bg-background/95 backdrop-blur-xl",
+            "bg-card",
             // Clears the bar rather than sitting flush on it. The offset is
             // the bar's height plus its trimmed inset plus the gap, derived
             // from the same expression so the two cannot drift.
