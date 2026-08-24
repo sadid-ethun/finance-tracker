@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { BottomTabs } from "@/components/layout/bottom-tabs";
+import { RouteProgress } from "@/components/layout/route-progress";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
 import { auth } from "@/lib/auth";
@@ -29,6 +30,9 @@ export default async function AppLayout({
 
   return (
     <Providers>
+      {/* Inside Providers so it can read the router, outside the main column
+          so it spans the viewport rather than the content width. */}
+      <RouteProgress />
       <div className="flex min-h-full flex-col">
         <Sidebar userName={session.user.name || session.user.email} />
 
