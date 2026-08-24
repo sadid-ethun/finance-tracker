@@ -64,21 +64,27 @@ Elevation is expressed as colour steps, never shadow — the reference and
 | Level | Token | Value | Use |
 |---|---|---|---|
 | 0 | `--background` | `#0f1011` | Page canvas |
-| 1 | `--card` | `#2e2e2e` | Cards, data modules, list surfaces |
-| 2 | `--secondary` | `#3f4041` | Pressed and raised states |
+| 1 | `--card` | `#1c1d1f` | Cards, data modules, list surfaces |
+| 2 | `--secondary` | `#292a2d` | Pressed and raised states |
 | — | `--border` | `rgba(255,255,255,0.10)` | Hairlines |
 
-Card-on-canvas separation is **1.40:1**. Two alternative ladders were measured
-— canvas-at-Abyss variants gave 1.04–1.16:1, visibly flatter — so the
-reference's own pairing is kept.
+Card-on-canvas separation is **1.13:1**, card-to-pressed **1.18:1**.
+
+The reference's Graphite `#2e2e2e` sits at 1.40:1 and reads as too strong a
+step on a screen that is mostly cards — a marketing page shows one or two, a
+dashboard shows a dozen. A quieter surface costs only separation, and the
+hairline border still defines the edge at 1.35:1 against the card.
+
+Darkening is close to free: every text contrast *improves* as the card drops,
+because the only thing traded away is the step the eye was objecting to.
 
 ## Text
 
 | Token | Value | On canvas | On card |
 |---|---|---|---|
-| `--foreground` | Cloud `#f5f5f7` | 17.49:1 | 12.47:1 |
-| `--muted-foreground` | Ash `#9f9fa0` | 7.20:1 | 5.14:1 |
-| `--fog` (disabled only) | `#6a6b6b` | 3.56:1 | 2.54:1 |
+| `--foreground` | Cloud `#f5f5f7` | 17.49:1 | 15.49:1 |
+| `--muted-foreground` | Ash `#9f9fa0` | 7.20:1 | 6.38:1 |
+| `--fog` (disabled only) | `#6a6b6b` | 3.56:1 | 3.16:1 |
 
 Body text is never pure white — Cloud for headings, Ash for descriptions.
 
@@ -98,23 +104,29 @@ Reserved for category identity and data series. Never a border, never a button.
 
 | Token | Value | On card |
 |---|---|---|
-| `--chart-1` | Cyan Signal `#00b3dd` | 5.49:1 |
-| `--chart-2` | Iris Gleam `#847dff` | 4.11:1 |
-| `--chart-3` | Orchid Bloom `#dd90d8` | 5.86:1 |
-| `--chart-4` | Periwinkle `#90b8f0` | 6.66:1 |
-| `--chart-5` | Pale Iris `#d1c9ff` | 8.74:1 |
-| `--chart-6` | Silver `#cacaca` | 8.29:1 |
+| `--chart-1` | Cyan Signal `#00b3dd` | 6.82:1 |
+| `--chart-2` | Iris Gleam `#847dff` | 5.11:1 |
+| `--chart-3` | Orchid Bloom `#dd90d8` | 7.28:1 |
+| `--chart-4` | Periwinkle `#90b8f0` | 8.28:1 |
+| `--chart-5` | Pale Iris `#d1c9ff` | 10.86:1 |
+| `--chart-6` | Silver `#cacaca` | 10.30:1 |
 
-Deep Iris `#4b49aa` is in the reference palette but measures **1.83:1** on
-card — unusable as a series colour, and excluded.
+Deep Iris `#4b49aa` is in the reference palette but measures **2.28:1** on
+card — still unusable as a series colour even on the darker surface, and
+excluded.
 
-Iris Gleam at 4.11:1 is large-text-only. It is safe as a chart stroke or a
-category dot (non-text), and must not be used for a label.
+Iris Gleam measured 4.11:1 on the reference's Graphite, which limited it to
+strokes and dots. On the darker card it reaches 5.11:1 and is usable as a
+text colour — the surface change bought it back.
 
 > The reference says to reserve chromatic colour for full-bleed tiles and
-> never as inline accents. The brief overrides this: transaction rows keep
-> category colour-coding. The coding is carried by icon and dot fills, not by
-> text, which keeps it inside the contrast rule above.
+> never as inline accents, and not to use it on text under 18px. The brief
+> overrides the first: transaction rows keep category colour-coding.
+>
+> The second is now satisfied on measurement rather than by exception — every
+> series colour clears 5:1 on the darker card, so a category label may carry
+> its colour. The reference's rule was calibrated against its own lighter
+> Graphite surface.
 
 ## Type
 

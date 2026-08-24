@@ -4,14 +4,31 @@ import { AlertCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/** Skeletons preserve layout; spinners cause the shift that feels cheap. */
+/**
+ * Skeletons preserve layout; spinners cause the shift that feels cheap.
+ *
+ * The sweep is a gradient pass rather than a pulse. A pulse tuned for a white
+ * card reads as a dark rectangle blinking on a dark surface — there is very
+ * little luminance range below the card colour to pulse *into*, so the
+ * animation has to add light rather than remove it. The highlight is white at
+ * 6%, which is visible on Graphite without glowing.
+ */
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-md bg-muted", className)} />;
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[8px] bg-muted",
+        "after:absolute after:inset-0 after:animate-shimmer",
+        "after:bg-gradient-to-r after:from-transparent after:via-white/[0.06] after:to-transparent",
+        className,
+      )}
+    />
+  );
 }
 
 export function RowSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="divide-y divide-border rounded-card border border-border bg-card">
+    <div className="divide-y divide-border rounded-card bg-card">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 p-4">
           <Skeleton className="size-9 rounded-full" />
@@ -35,7 +52,7 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-card border border-border bg-card px-6 py-12 text-center">
+    <div className="flex flex-col items-center rounded-card bg-card px-6 py-12 text-center">
       <AlertCircle className="size-5 text-negative" strokeWidth={2} />
       <p className="mt-3 text-[15px] font-medium">{message}</p>
       {onRetry ? (

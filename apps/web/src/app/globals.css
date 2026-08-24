@@ -47,25 +47,31 @@
      contrast behind each value. Surfaces step by colour, never shadow. */
   --background: #0f1011;          /* Obsidian canvas */
   --foreground: #f5f5f7;          /* Cloud — headings are never pure white */
-  --card: #2e2e2e;                /* Graphite — 1.40:1 against the canvas */
+  /* Graphite #2e2e2e from the reference reads as too strong a step on a
+     screen full of cards. A quieter surface at 1.13:1 costs nothing but
+     separation, and the hairline border still defines the edge: every text
+     contrast improves as the card darkens. */
+  --card: #1c1d1f;
   --card-foreground: #f5f5f7;
-  --popover: #2e2e2e;
+  --popover: #1c1d1f;
   --popover-foreground: #f5f5f7;
 
   /* White-on-black is the only primary action, at 21:1. */
   --primary: #ffffff;
   --primary-foreground: #000000;
-  --primary-soft: #3f4041;
+  --primary-soft: #292a2d;
 
-  --secondary: #3f4041;           /* Steel — pressed and raised */
+  /* Steel #3f4041 is 1.62:1 above the new card — too loud for a pressed
+     state now that the card itself is quieter. */
+  --secondary: #292a2d;
   --secondary-foreground: #f5f5f7;
-  --muted: #3f4041;
+  --muted: #292a2d;
   /* Ash, not Fog. Fog measures 2.54:1 on the card surface and fails as text
      at any size; it is kept below for disabled controls only. */
   --muted-foreground: #9f9fa0;
   --fog: #6a6b6b;
 
-  --accent: #3f4041;
+  --accent: #292a2d;
   --accent-foreground: #f5f5f7;
 
   /* Gain and loss have no values in the reference — a marketing palette has
@@ -82,8 +88,10 @@
   --ring: #ffffff;
 
   /* Category identity and data series. Deep Iris from the reference palette
-     is excluded: 1.83:1 on card is unusable. Iris Gleam at 4.11:1 is safe as
-     a stroke or dot but must never carry text. */
+     is excluded: 2.28:1 on the card is still unusable. Iris Gleam now measures
+     5.11:1 here rather than 4.11:1 on Graphite, so it is no longer restricted
+     to strokes and dots — the darker surface bought it back as a text
+     colour. */
   --chart-1: #00b3dd;             /* Cyan Signal */
   --chart-2: #847dff;             /* Iris Gleam */
   --chart-3: #dd90d8;             /* Orchid Bloom */
@@ -218,4 +226,47 @@
   textarea {
     font-size: 16px;
   }
+}
+
+/* Skeleton sweep. Translates a highlight across the element rather than
+   pulsing opacity: on a dark surface there is little luminance range below
+   the card colour to pulse into, so the animation has to add light. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@utility animate-shimmer {
+  transform: translateX(-100%);
+  animation: shimmer 1.6s infinite;
+}
+
+/*
+ * Section label — the anchor of the type system.
+ *
+ * Uppercase tracked monospace at 11px is the one place the style reference
+ * and the product screenshots agree exactly ("NET WORTH", "SPEND THIS
+ * MONTH"). Used for every section heading, so the voice is consistent even
+ * where the surrounding layout differs.
+ */
+@utility section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/*
+ * Display figure — net worth, balances, any number that is the point of its
+ * screen. Serif at app scale, with the negative tracking that approximates
+ * the reference's weight-300 cut (the free substitute only ships at 400).
+ */
+@utility display-figure {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
