@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import NumberFlow from "@number-flow/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { SectionLabel } from "@/components/shared/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
 
 import { Skeleton } from "@/components/shared/states";
 import {
@@ -22,6 +23,42 @@ const RANGES: NetWorthRange[] = ["1m", "3m", "6m", "1y", "all"];
  * The headline. No card — it sits directly on the canvas so the number is the
  * largest thing on the page (PLAN.md section 21).
  */
+/**
+ * Refresh, in the same place and shape as the Investments header.
+ *
+ * Refetches every active query rather than the summary alone: the dashboard
+ * is several independent cards, and updating one leaves the rest stale behind
+ * a control that reads as "refresh this page".
+ *
+ * This is a client refetch, not a bank sync — the data it re-reads is
+ * whatever the last sync wrote.
+ */
+function RefreshButton() {
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function refresh() {
+    setRefreshing(true);
+    try {
+      await queryClient.refetchQueries({ type: "active" });
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void refresh()}
+      disabled={refreshing}
+      aria-label="Refresh"
+      className="rounded-[12px] border border-border p-2 text-muted-foreground transition-colors active:bg-secondary disabled:opacity-50 md:hover:text-foreground"
+    >
+      <RefreshCw className={cn("size-4", refreshing && "motion-safe:animate-spin")} />
+    </button>
+  );
+}
+
 export function NetWorthHero({ summary }: { summary: DashboardSummary | undefined }) {
   const [range, setRange] = useState<NetWorthRange>("6m");
   const series = useNetWorthSeries(range);
@@ -31,7 +68,10 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
 
   return (
     <section>
-      <SectionLabel>Net worth</SectionLabel>
+      <div className="flex items-start justify-between gap-3">
+        <SectionLabel className="pt-2">Net worth</SectionLabel>
+        <RefreshButton />
+      </div>
 
       {summary ? (
         <NumberFlow
