@@ -1,11 +1,11 @@
-import { AccountList } from "@/components/accounts/account-list";
+import { AccountsView } from "@/components/accounts/accounts-view";
 import { PageHeader } from "@/components/layout/page-header";
 
 export default function AccountsPage() {
   return (
     <>
-      <PageHeader title="Accounts" description="Balances across everything you track." />
-      <AccountList />
+      <PageHeader title="Accounts" description="What you own, and what you owe." />
+      <AccountsView />
     </>
   );
 }

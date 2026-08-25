@@ -2,7 +2,7 @@
   "name": "Finance Tracker",
   "short_name": "Finance",
   "description": "Your accounts, transactions, budgets, and investments in one place.",
-  "start_url": "/",
+  "start_url": "/transactions",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

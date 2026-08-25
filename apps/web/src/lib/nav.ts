@@ -2,7 +2,6 @@ import {
   ArrowLeftRight,
   ChartPie,
   CreditCard,
-  Home,
   PiggyBank,
   Settings,
   TrendingUp,
@@ -17,7 +16,6 @@ export type NavItem = {
 
 /** Every destination, in sidebar order. */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Home", icon: Home },
   { href: "/transactions", label: "Spending", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budget", icon: PiggyBank },
   { href: "/cash-flow", label: "Cash Flow", icon: ChartPie },
@@ -34,9 +32,12 @@ export const NAV_ITEMS: NavItem[] = [
  * component of it — summary before detail.
  *
  * Five is the whole set: there is no More panel, so every destination reachable
- * on a phone is one tap away. Two destinations are deliberately not tabs:
- * Settings lives behind the gear in PageHeader, and Home is being dissolved
- * into Accounts and Spending (IA_PLAN.md phase 2), after which `/` redirects.
+ * on a phone is one tap away. Settings is the one destination that is not a
+ * tab, reached from the gear in PageHeader instead.
+ *
+ * Home is gone entirely — dissolved into Accounts and Spending — so `/` is now
+ * a redirect rather than a destination and does not appear here or in
+ * NAV_ITEMS.
  */
 export const MOBILE_TAB_HREFS = [
   "/transactions",
@@ -59,7 +60,7 @@ export const MOBILE_TABS = MOBILE_TAB_HREFS.map(
  * both lists would simply vanish on mobile. Naming them makes that a
  * deliberate choice rather than an accident of set arithmetic.
  */
-export const NON_TAB_HREFS = ["/", "/settings"];
+export const NON_TAB_HREFS = ["/settings"];
 
 if (process.env.NODE_ENV !== "production") {
   const covered = new Set([...MOBILE_TAB_HREFS, ...NON_TAB_HREFS]);

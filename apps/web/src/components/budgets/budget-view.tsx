@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { ChevronLeft, ChevronRight, PiggyBank } from "lucide-react";
 
-import { SpendingByCategory } from "@/components/dashboard/charts";
 import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
@@ -191,11 +190,10 @@ function BudgetBody({
         </div>
       </Card>
 
-      {/* Directly under the headline: the figure above says how far over, and
-          this is the breakdown of what took it there. The per-category limits
-          below are what you would change in response. */}
-      <SpendingByCategory />
-
+      {/* The category breakdown that used to sit here moved to Spending, where
+          the transactions explaining each slice are on the same screen. What
+          stays is the limits themselves, which is what you would change in
+          response to it (IA_PLAN.md). */}
       <section>
         <SectionLabel as="h2" className="mb-3">Categories</SectionLabel>
         <ul className="space-y-3">

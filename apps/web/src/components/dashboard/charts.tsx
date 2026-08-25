@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ReferenceLine,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Cell, Pie, PieChart } from "recharts";
 
 import { Card, Section } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
@@ -20,16 +10,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/shared/states";
-import { useCashFlow, useSpendingByCategory } from "@/hooks/use-finance";
-import {
-  axisProps,
-  chartAnimation,
-  chartConfig,
-  formatAxisMoney,
-  gridProps,
-  symmetricTicks,
-  seriesColor,
-} from "@/lib/chart-theme";
+import { useSpendingByCategory } from "@/hooks/use-finance";
+import { chartAnimation, chartConfig, seriesColor } from "@/lib/chart-theme";
 import { formatMoney } from "@/lib/format";
 
 function SectionCard({
@@ -121,109 +103,6 @@ export function SpendingByCategory() {
             ))}
           </ul>
         </div>
-      )}
-    </SectionCard>
-  );
-}
-
-export function CashFlowChart() {
-  const query = useCashFlow(6);
-  const rows = query.data ?? [];
-  const hasData = rows.some((r) => r.income > 0 || r.spending > 0);
-
-  return (
-    <SectionCard title="Cash flow">
-      {query.isLoading ? (
-        <Skeleton className="h-[200px] w-full" />
-      ) : !hasData ? (
-        <p className="py-8 text-center text-[14px] text-muted-foreground">
-          Not enough history yet.
-        </p>
-      ) : (
-        <>
-          <div className="h-[180px] w-full">
-            <ChartContainer config={chartConfig} className="size-full">
-              <BarChart
-                data={rows.map((r) => ({
-                  ...r,
-                  // Expenses render downward from a shared baseline.
-                  spendingDown: -r.spending,
-                  label: new Date(`${r.month}T00:00:00`).toLocaleDateString("en-US", {
-                    month: "short",
-                  }),
-                }))}
-                margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
-                barGap={2}
-              >
-                <CartesianGrid {...gridProps} />
-                <XAxis dataKey="label" {...axisProps} />
-                <YAxis
-                  {...axisProps}
-                  width={40}
-                  tickFormatter={(value) => formatAxisMoney(Number(value))}
-                  // Round values, so a label reading "$8k" is 8,000 exactly
-                  // rather than a 7,750 tick rounded up in the label.
-                  ticks={symmetricTicks(rows)}
-                />
-                {/* Solid, against the dashed grid, so the line dividing income
-                    from spending is not mistaken for a rule. */}
-                <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
-                <ChartTooltip
-                  cursor={{ fill: "var(--secondary)", opacity: 0.4 }}
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value, name) => (
-                        <span className="flex w-full justify-between gap-3">
-                          <span className="text-muted-foreground">
-                            {name === "income" ? "Income" : "Spending"}
-                          </span>
-                          <span className="tabular font-mono">
-                            {formatMoney(Math.abs(Number(value)))}
-                          </span>
-                        </span>
-                      )}
-                    />
-                  }
-                />
-                <Bar
-                  dataKey="income"
-                  fill="var(--color-income)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={18}
-                  {...chartAnimation()}
-                />
-                <Bar
-                  dataKey="spendingDown"
-                  fill="var(--color-spending)"
-                  // Recharts mirrors the radius array for a negative value, so
-                  // this is the same order as the upward bar.
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={18}
-                  {...chartAnimation()}
-                />
-              </BarChart>
-            </ChartContainer>
-          </div>
-
-          <div className="mt-3 flex justify-center gap-5 border-t border-border pt-3 text-[12px]">
-            <span className="flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="size-2 rounded-full"
-                style={{ backgroundColor: chartConfig.income.color }}
-              />
-              Income
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="size-2 rounded-full"
-                style={{ backgroundColor: chartConfig.spending.color }}
-              />
-              Spending
-            </span>
-          </div>
-        </>
       )}
     </SectionCard>
   );

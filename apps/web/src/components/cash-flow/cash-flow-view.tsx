@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { ChartPie, ChevronRight } from "lucide-react";
 
+import { MonthCard } from "@/components/dashboard/stat-tiles";
 import { Card, SectionLabel } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Money } from "@/components/shared/money";
@@ -27,6 +28,7 @@ import {
   useCashFlowByCategory,
   useCashFlowSummary,
   useCashFlowTrends,
+  useDashboardSummary,
 } from "@/hooks/use-finance";
 import {
   axisProps,
@@ -78,6 +80,7 @@ export function CashFlowView() {
   const [range, setRange] = useState<RangeKey>("12m");
   const months = monthsFor(range);
   const summary = useCashFlowSummary(months);
+  const dashboard = useDashboardSummary();
   const trends = useCashFlowTrends(months);
   const [kind, setKind] = useState<"expense" | "income">("expense");
   // Same window as the charts above, so a row's transaction count matches the
@@ -101,6 +104,13 @@ export function CashFlowView() {
 
   return (
     <div className="space-y-8">
+      {/* Above the range switcher, deliberately: this card is always the
+          current month, and sitting it under a control it does not obey would
+          read as though the control changed it. Money in against money out is
+          this tab's subject, so the card lives here rather than on Spending —
+          which owns the outgoing side alone (IA_PLAN.md). */}
+      <MonthCard summary={dashboard.data} />
+
       <div className="flex gap-1 rounded-[14px] bg-secondary p-1">
         {RANGES.map((option) => (
           <button

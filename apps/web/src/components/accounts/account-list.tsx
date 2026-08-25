@@ -7,7 +7,7 @@ import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState, RowSkeleton } from "@/components/shared/states";
-import { useAccounts, useBalanceSummary, type Account } from "@/hooks/use-finance";
+import { useAccounts, type Account } from "@/hooks/use-finance";
 import { ACCOUNT_TYPE_LABELS, isLiability } from "@/lib/format";
 
 import { AddAccountDialog } from "./add-account-dialog";
@@ -16,7 +16,6 @@ const GROUP_ORDER = ["depository", "investment", "credit", "loan", "other"];
 
 export function AccountList() {
   const accounts = useAccounts();
-  const summary = useBalanceSummary();
 
   if (accounts.isLoading) return <RowSkeleton />;
   if (accounts.isError) {
@@ -41,35 +40,12 @@ export function AccountList() {
     items: rows.filter((a) => a.type === type),
   })).filter((g) => g.items.length > 0);
 
+  // The net-worth card that used to sit here moved up into NetWorthHero, which
+  // shows the same figure larger, with a chart and a range switcher behind it.
+  // Its assets/liabilities pair is now the top row of StatTiles. Both live in
+  // AccountsView; this component is the account list again (IA_PLAN.md).
   return (
     <div className="space-y-8">
-      {summary.data ? (
-        <Card as="section" className="p-5 md:p-6">
-          <p className="text-[13px] font-medium text-muted-foreground">Net worth</p>
-          <Money
-            minorUnits={summary.data.net_worth}
-            currency={summary.data.currency}
-            className="mt-1 block text-[40px] leading-none font-semibold tracking-[-0.03em]"
-          />
-          <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
-            <div>
-              <p className="text-[13px] text-muted-foreground">Assets</p>
-              <Money
-                minorUnits={summary.data.assets}
-                className="mt-0.5 block text-[18px] font-semibold"
-              />
-            </div>
-            <div>
-              <p className="text-[13px] text-muted-foreground">Liabilities</p>
-              <Money
-                minorUnits={summary.data.liabilities}
-                className="mt-0.5 block text-[18px] font-semibold"
-              />
-            </div>
-          </div>
-        </Card>
-      ) : null}
-
       <div className="flex justify-end">
         <AddAccountDialog trigger={<><Plus className="size-4" /> Add account</>} />
       </div>

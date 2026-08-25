@@ -46,10 +46,15 @@ home-screen bookmark, and the URLs stay readable.
 
 Gains the two charts that answer the questions its list raises.
 
-- `SpendThisMonth` — cumulative spend against the budget line *(from `/`)*
+- `SpendThisMonth` — cumulative spend against the budget line *(from `/`)*.
+  Carries the month's spend total, budget, and delta against the comparison
+  month, so no separate summary card is needed here.
 - `SpendingByCategory` — current-month breakdown *(from `/budgets`)*
-- `MonthCard` — this month's total *(from `/`)*
 - Existing filters, search, add, and the full `TransactionList`
+
+Both charts sit in `SpendingCharts`, a client component: the current month has
+to be computed in the reader's timezone, and a server component would use the
+container's UTC and flip the label early at each month end.
 
 The recent-five list on the old dashboard disappears into the full list.
 
@@ -135,8 +140,9 @@ Five tabs, one capsule indicator, no local state.
 
 **`page-header.tsx`** — a settings gear, top right, on every screen. Put it in
 `PageHeader` itself rather than passing it per page, so it cannot drift. The
-existing `action` prop stays for page-specific extras but is currently used by
-no page.
+existing `action` prop stays for page-specific extras — and it *is* used:
+Spending passes `AddTransactionButton`, so that header carries the Add pill
+and the gear side by side.
 
 **Refresh** — the icon in `NetWorthHero` and the page-level sync on
 `investments-view` give way to pull-to-refresh. Restore
@@ -154,9 +160,11 @@ across five columns, about 68px each, against a longest label of "Cash Flow"
 at `text-[10px] font-medium` — roughly 50px. It already fits, because it
 already does.
 
-**Gear plus page actions.** Only relevant if a screen keeps a header action.
-At present none do, so the collision is hypothetical — but worth not
-reintroducing one.
+**Gear plus page actions — real, not hypothetical.** I wrote earlier that no
+page passed `action`; Spending does, and has all along. Its header now holds
+the title, the Add pill, and the gear. Nothing overflows at 375px, but it is
+the one header worth looking at on a narrow screen, and it is the busiest
+tab.
 
 **No visible refresh affordance on desktop**, where there is no gesture.
 Browser reload covers it. If that grates, a "Refresh data" item on the
@@ -187,11 +195,28 @@ manifest for `start_url`.
    So Home keeps its route and its sidebar entry through phase 1; it simply
    stops being a mobile tab. That is why `NON_TAB_HREFS` lists `/` alongside
    `/settings`.
-2. **Dissolve the dashboard.** `NetWorthHero` and `StatTiles` to Accounts;
-   `SpendThisMonth` and `MonthCard` to Spending; `SpendingByCategory` from
-   Budget to Spending; delete `dashboard-view.tsx`. Then, and only then, the
-   `/` redirect, `start_url`, and dropping Home from `NAV_ITEMS` and
-   `NON_TAB_HREFS`. The risky step.
+2. **Dissolve the dashboard.** *(Done.)* `NetWorthHero` and `StatTiles` to
+   Accounts; `SpendThisMonth` and `SpendingByCategory` to Spending;
+   `MonthCard` to Cash Flow, not Spending; `CashFlowChart` deleted rather than
+   moved; `dashboard-view.tsx` deleted. Then the `/` redirect, `start_url`,
+   and dropping Home from `NAV_ITEMS` and `NON_TAB_HREFS`.
+
+   Three things the code disagreed with the plan about, all found by reading
+   it rather than by the checks:
+
+   * **`CashFlowChart` was a lesser copy of Cash Flow's `Trend`** — same six
+     months, same `spendingDown` mirroring, same `symmetricTicks`, same zero
+     `ReferenceLine`. Trend is a `ComposedChart` with a net line over the
+     bars; this was a plain `BarChart`. Deleted, not moved.
+   * **`AccountList` already rendered its own net-worth card** with an
+     assets/liabilities pair. Dropping `NetWorthHero` and `StatTiles` above it
+     unchanged would have put net worth on that page twice and
+     assets/liabilities twice. Its card is gone; the hero and the tiles are
+     the single copy.
+   * **`MonthCard` carries income**, so it does not belong on Spending, and
+     `SpendThisMonth` already shows the month's spend total against budget —
+     so Spending loses nothing. It went to Cash Flow, above the range switcher
+     since it is always the current month.
 3. **Move connections, trim Cash Flow.** `Connections` from Settings to
    Accounts; the Cash Flow breakdown to income-only. Both are self-contained
    and independent of each other.
