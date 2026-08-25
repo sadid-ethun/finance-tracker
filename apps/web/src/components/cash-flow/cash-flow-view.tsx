@@ -82,10 +82,13 @@ export function CashFlowView() {
   const summary = useCashFlowSummary(months);
   const dashboard = useDashboardSummary();
   const trends = useCashFlowTrends(months);
-  const [kind, setKind] = useState<"expense" | "income">("expense");
+  // Income only. The spending side of this breakdown duplicated the one on
+  // Spending, which owns money going out; income appears nowhere else in the
+  // app, so this is the half worth keeping (IA_PLAN.md).
+  //
   // Same window as the charts above, so a row's transaction count matches the
   // list it opens.
-  const byCategory = useCashFlowByCategory(kind, months);
+  const byCategory = useCashFlowByCategory("income", months);
 
   if (summary.isError) return <ErrorState onRetry={() => void summary.refetch()} />;
 
@@ -230,33 +233,15 @@ export function CashFlowView() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <SectionLabel as="h2">
-            Largest categories
-          </SectionLabel>
-          <div className="flex gap-1 rounded-[12px] bg-secondary p-1">
-            {(["expense", "income"] as const).map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setKind(k)}
-                aria-pressed={kind === k}
-                className={cn(
-                  "h-7 rounded-[9px] px-2.5 text-[12px] font-medium capitalize",
-                  kind === k ? "bg-card shadow-sm" : "text-muted-foreground",
-                )}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SectionLabel as="h2" className="mb-3">
+          Income by category
+        </SectionLabel>
 
         {byCategory.isLoading ? (
           <Skeleton className="h-[200px] rounded-card" />
         ) : (byCategory.data ?? []).length === 0 ? (
           <Card as="p" className="p-5 text-[14px] text-muted-foreground">
-            No {kind} recorded in this window.
+            No income recorded in this window.
           </Card>
         ) : (
           <Card as="ul" className="divide-y divide-border overflow-hidden">

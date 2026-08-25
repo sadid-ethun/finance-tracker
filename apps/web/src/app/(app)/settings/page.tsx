@@ -7,7 +7,7 @@ export default function SettingsPage() {
       <PageHeader
         settingsLink={false}
         title="Settings"
-        description="Connections, security, categories, and your data."
+        description="Security, categories, rules, and your data."
       />
       <SettingsView />
     </>

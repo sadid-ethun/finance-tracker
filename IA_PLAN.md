@@ -145,7 +145,8 @@ Spending passes `AddTransactionButton`, so that header carries the Add pill
 and the gear side by side.
 
 **Refresh** — the icon in `NetWorthHero` and the page-level sync on
-`investments-view` give way to pull-to-refresh. Restore
+`investments-view` give way to pull-to-refresh, with `RefreshData` on
+Settings -> Data as the desktop path. Restore
 `components/shared/pull-to-refresh.tsx` from `88c4a04` and mount it around
 `<main>` in `(app)/layout.tsx`. Not the route progress bar from that same
 commit. Per-item sync buttons in `settings/connections.tsx` stay — those are
@@ -166,9 +167,10 @@ the title, the Add pill, and the gear. Nothing overflows at 375px, but it is
 the one header worth looking at on a narrow screen, and it is the busiest
 tab.
 
-**No visible refresh affordance on desktop**, where there is no gesture.
-Browser reload covers it. If that grates, a "Refresh data" item on the
-settings screen is the escape hatch.
+**No visible refresh affordance on desktop** — resolved. `RefreshData` on
+Settings -> Data refetches every active query, and says in as many words that
+it is not a bank sync, so it does not read as the button that failed to fetch
+yesterday's purchases.
 
 **Spending becomes the longest screen in the app.** Pull-to-refresh only fires
 at scroll top, so from deep in the transaction list there is no way to
@@ -217,11 +219,25 @@ manifest for `start_url`.
      `SpendThisMonth` already shows the month's spend total against budget —
      so Spending loses nothing. It went to Cash Flow, above the range switcher
      since it is always the current month.
-3. **Move connections, trim Cash Flow.** `Connections` from Settings to
-   Accounts; the Cash Flow breakdown to income-only. Both are self-contained
-   and independent of each other.
+3. **Move connections, trim Cash Flow.** *(Done.)* `Connections` and
+   `connect-bank-button` from `components/settings/` to
+   `components/accounts/`; Settings drops to four tabs and now opens on
+   Security; the Cash Flow breakdown is income-only, with the `kind` toggle
+   gone.
+
+   Also landed here rather than in phase 4: the **Refresh data** card on
+   Settings -> Data, the desktop escape hatch for a gesture desktop does not
+   have.
+
+   One thing found while wiring it: `AccountsView`'s empty-accounts branch
+   returned `AccountList` alone, and that empty state only offers the manual
+   add dialog. On a fresh install that would have hidden the one path that
+   matters most — connect a bank. `Connections` now renders in both
+   branches.
 4. **Gesture and polish.** Pull-to-refresh restore, the Spending sticky filter
-   bar, empty states.
+   bar, empty states. The header refresh icons on `NetWorthHero` and
+   `investments-view` come out here, once the gesture that replaces them
+   exists — the Settings card is already in place as the desktop path.
 
 ## Out of scope
 

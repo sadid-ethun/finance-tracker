@@ -3,20 +3,22 @@
 import { useState } from "react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
-import { Connections } from "@/components/settings/connections";
 import { Appearance } from "@/components/settings/appearance";
 import { DataTools } from "@/components/settings/data-tools";
+import { RefreshData } from "@/components/settings/refresh-data";
 import { TwoFactorSetup } from "@/components/settings/two-factor";
 import { Money } from "@/components/shared/money";
 import { RowSkeleton } from "@/components/shared/states";
 import { useAuditLog, useCategories, useRules, useDeleteRule } from "@/hooks/use-finance";
 import { cn } from "@/lib/utils";
 
-const TABS = ["Connections", "Security", "Categories", "Rules", "Data"] as const;
+// Connections moved to Accounts, where managing a bank is an account
+// action rather than a setting (IA_PLAN.md).
+const TABS = ["Security", "Categories", "Rules", "Data"] as const;
 type Tab = (typeof TABS)[number];
 
 export function SettingsView() {
-  const [tab, setTab] = useState<Tab>("Connections");
+  const [tab, setTab] = useState<Tab>("Security");
 
   return (
     <div className="space-y-6">
@@ -39,7 +41,6 @@ export function SettingsView() {
         </div>
       </div>
 
-      {tab === "Connections" ? <Connections /> : null}
       {tab === "Security" ? (
         <div className="space-y-6">
           <TwoFactorSetup />
@@ -49,7 +50,12 @@ export function SettingsView() {
       ) : null}
       {tab === "Categories" ? <CategoryList /> : null}
       {tab === "Rules" ? <RuleList /> : null}
-      {tab === "Data" ? <DataTools /> : null}
+      {tab === "Data" ? (
+        <div className="space-y-6">
+          <RefreshData />
+          <DataTools />
+        </div>
+      ) : null}
     </div>
   );
 }
