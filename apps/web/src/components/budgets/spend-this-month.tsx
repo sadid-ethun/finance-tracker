@@ -77,7 +77,7 @@ type SeriesPoint = { day: number; current: number | null; previous: number | nul
  * a zero would draw the line back down to the axis and read as spending
  * reversed, where null simply ends it.
  */
-function buildSeries(
+export function buildSeries(
   current: { date: string; cumulative: number }[],
   previous: { date: string; cumulative: number }[],
 ): SeriesPoint[] {
@@ -95,6 +95,26 @@ function buildSeries(
       previous: previousBy.get(day) ?? null,
     };
   });
+}
+
+/**
+ * A month's total: the last cumulative point in its series.
+ *
+ * Read from the daily series rather than from the budget's `total_spent`,
+ * which is where it used to come from. Those two agree right up until the
+ * budget is deleted — /budgets/{month}/daily queries transactions directly,
+ * while total_spent comes off the budget row and returns 0 once that row is
+ * gone. The figure then read $0.00 above a chart still drawing the real line.
+ *
+ * Scanning backwards rather than taking the last element: the current month
+ * stops at today, so its trailing days are null.
+ */
+export function monthTotal(series: SeriesPoint[], key: "current" | "previous"): number {
+  for (let i = series.length - 1; i >= 0; i -= 1) {
+    const value = series[i][key];
+    if (value !== null) return value;
+  }
+  return 0;
 }
 
 /** Month name alone. The year is noise on a series label. */
@@ -128,16 +148,8 @@ export function SpendThisMonth({ month }: { month: string }) {
   const compareOptions = Array.from({ length: 6 }, (_, i) => shiftMonth(month, -(i + 1)));
   const onCompareChange = setCompareMonth;
   const current = useBudget(month);
-  const comparison = useBudget(compareMonth);
   const currentDaily = useDailySpend(month);
   const comparisonDaily = useDailySpend(compareMonth);
-
-  const spent = current.data?.total_spent ?? 0;
-  const budgeted = current.data?.total_budgeted ?? 0;
-  const comparedSpent = comparison.data?.total_spent ?? 0;
-  const comparisonHasData = (comparison.data?.total_spent ?? 0) > 0;
-
-  const delta = spent - comparedSpent;
 
   /**
    * Keyed by day-of-month so a 28-day February aligns with a 31-day January.
@@ -145,6 +157,19 @@ export function SpendThisMonth({ month }: { month: string }) {
    * would never be comparable.
    */
   const chartData = buildSeries(currentDaily.data ?? [], comparisonDaily.data ?? []);
+
+  // Both figures come from the same series the chart draws, so the number and
+  // the line cannot drift apart — the API applies one set of exclusions
+  // (transfers, splits, hidden rows, opt-outs) to it.
+  const spent = monthTotal(chartData, "current");
+  const comparedSpent = monthTotal(chartData, "previous");
+  const comparisonHasData = comparedSpent > 0;
+
+  // Genuinely the budget, so this one still comes from the budget record — and
+  // correctly falls to 0, which hides the threshold line and its legend entry.
+  const budgeted = current.data?.total_budgeted ?? 0;
+
+  const delta = spent - comparedSpent;
 
   // Round ticks, so a label reading "$3k" is 3,000 exactly. The budget line
   // sitting just under it then reads as under budget, which it is.
@@ -159,7 +184,7 @@ export function SpendThisMonth({ month }: { month: string }) {
       <div className="mt-3 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[13px] text-muted-foreground">Spending</p>
-          {current.isLoading ? (
+          {currentDaily.isLoading ? (
             <Skeleton className="mt-1 h-9 w-40" />
           ) : (
             <Money

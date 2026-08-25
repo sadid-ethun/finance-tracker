@@ -93,13 +93,22 @@ export function useCategories() {
   });
 }
 
-/** Cursor-paginated; offset pagination would skip rows as new ones arrive. */
-export function useTransactions(filters: Record<string, string> = {}) {
+/**
+ * Cursor-paginated; offset pagination would skip rows as new ones arrive.
+ *
+ * The page size is part of the query key. Without it, two lists on different
+ * page sizes would share a cache entry and whichever mounted first would
+ * decide how many rows the other got.
+ */
+export function useTransactions(
+  filters: Record<string, string> = {},
+  limit = 25,
+) {
   return useInfiniteQuery({
-    queryKey: qk.transactions.list(filters),
+    queryKey: [...qk.transactions.list(filters), limit],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => {
-      const params = new URLSearchParams({ ...filters, limit: "25" });
+      const params = new URLSearchParams({ ...filters, limit: String(limit) });
       if (pageParam) params.set("cursor", pageParam);
       return apiFetch<Page<Transaction>>(`/transactions?${params}`);
     },

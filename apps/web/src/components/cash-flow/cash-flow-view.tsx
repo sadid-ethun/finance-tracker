@@ -107,40 +107,11 @@ export function CashFlowView() {
 
   return (
     <div className="space-y-8">
-      {/* Above the range switcher, deliberately: this card is always the
-          current month, and sitting it under a control it does not obey would
-          read as though the control changed it. Money in against money out is
-          this tab's subject, so the card lives here rather than on Spending —
-          which owns the outgoing side alone (IA_PLAN.md). */}
+      {/* Always the current month, and the only thing on this screen the range
+          switcher does not touch — so it leads, above everything the switcher
+          governs. Money in against money out is this tab's subject, which is
+          why the card lives here and not on Spending (IA_PLAN.md). */}
       <MonthCard summary={dashboard.data} />
-
-      <div className="flex gap-1 rounded-[14px] bg-secondary p-1">
-        {RANGES.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            onClick={() => setRange(option.key)}
-            aria-pressed={range === option.key}
-            className={cn(
-              "h-8 flex-1 rounded-[11px] text-[13px] font-medium",
-              range === option.key ? "bg-card" : "text-muted-foreground",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="Avg income" value={summary.data?.average_income} />
-        <Stat label="Avg spending" value={summary.data?.average_spending} />
-        <Stat
-          label="Avg net"
-          value={summary.data?.average_net}
-          colored
-          className="col-span-2 sm:col-span-1"
-        />
-      </section>
 
       <section>
         <SectionLabel as="h2" className="mb-3">Trend</SectionLabel>
@@ -231,6 +202,38 @@ export function CashFlowView() {
           </div>
         </Card>
       </section>
+
+      {/* Under the chart it drives, not above it — the same order as the net
+          worth chart on Accounts, and the one people know from every brokerage
+          app. The averages below move with it too. */}
+      <div className="flex gap-1 rounded-[14px] bg-secondary p-1">
+        {RANGES.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            onClick={() => setRange(option.key)}
+            aria-pressed={range === option.key}
+            className={cn(
+              "h-8 flex-1 rounded-[11px] text-[13px] font-medium",
+              range === option.key ? "bg-card" : "text-muted-foreground",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Stat label="Avg income" value={summary.data?.average_income} />
+        <Stat label="Avg spending" value={summary.data?.average_spending} />
+        <Stat
+          label="Avg net"
+          value={summary.data?.average_net}
+          colored
+          className="col-span-2 sm:col-span-1"
+        />
+      </section>
+
 
       <section>
         <SectionLabel as="h2" className="mb-3">

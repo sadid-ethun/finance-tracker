@@ -20,19 +20,22 @@ export function TransactionList({
   selectable = false,
   emptyTitle = "Nothing here yet",
   emptyDescription = "Add a transaction by hand, or connect an account in Phase 4.",
+  pageSize,
 }: {
   filters?: Record<string, string>;
   emptyAction?: React.ReactNode;
   selectable?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Rows per page. Lower it where the list sits under other content. */
+  pageSize?: number;
 }) {
-  const query = useTransactions(filters);
+  const query = useTransactions(filters, pageSize);
   const categories = useCategories();
   const [selected, setSelected] = useState<string[]>([]);
   const [active, setActive] = useState<Transaction | null>(null);
 
-  if (query.isLoading) return <RowSkeleton count={8} />;
+  if (query.isLoading) return <RowSkeleton count={Math.min(pageSize ?? 8, 8)} />;
   if (query.isError) return <ErrorState onRetry={() => void query.refetch()} />;
 
   const rows = query.data?.pages.flatMap((p) => p.data) ?? [];

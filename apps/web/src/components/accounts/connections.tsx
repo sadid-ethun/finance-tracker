@@ -9,7 +9,6 @@ import {
   usePlaidItems,
   useRemovePlaidItem,
   useSyncItem,
-  useSyncRuns,
   type PlaidItem,
 } from "@/hooks/use-finance";
 
@@ -17,7 +16,6 @@ import { ConnectBankButton } from "./connect-bank-button";
 
 export function Connections() {
   const items = usePlaidItems();
-  const runs = useSyncRuns();
 
   if (items.isLoading) return <RowSkeleton count={3} />;
   if (items.isError) return <ErrorState onRetry={() => void items.refetch()} />;
@@ -50,46 +48,6 @@ export function Connections() {
         )}
       </section>
 
-      <section>
-        <SectionLabel as="h2" className="mb-3">
-          Recent syncs
-        </SectionLabel>
-        {runs.data && runs.data.length > 0 ? (
-          <Card as="ul" className="divide-y divide-border overflow-hidden text-[13px]">
-            {runs.data.map((run) => (
-              <li key={run.id} className="flex items-center justify-between gap-3 p-3.5">
-                <span className="min-w-0">
-                  <span className="block font-medium">
-                    {new Date(run.started_at).toLocaleString()}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {run.status === "error"
-                      ? (run.error_code ?? "Failed")
-                      : `+${run.added} added · ${run.modified} updated · ${run.removed} removed`}
-                  </span>
-                </span>
-                <span
-                  className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                  style={{
-                    backgroundColor:
-                      run.status === "error" ? "var(--negative)" : "var(--primary-soft)",
-                    color:
-                      run.status === "error"
-                        ? "var(--destructive-foreground)"
-                        : "var(--accent-foreground)",
-                  }}
-                >
-                  {run.status}
-                </span>
-              </li>
-            ))}
-          </Card>
-        ) : (
-          <Card as="p" className="p-5 text-[14px] text-muted-foreground">
-            No syncs yet.
-          </Card>
-        )}
-      </section>
     </div>
   );
 }

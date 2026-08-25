@@ -31,6 +31,10 @@ export function TransactionsView() {
       <TransactionList
         filters={params}
         selectable
+        // Ten rather than the default 25: the list sits under two charts now,
+        // so a full page pushed the end of the screen a long way down for a
+        // set of rows most visits do not read. "Load more" is unchanged.
+        pageSize={10}
         emptyAction={
           activeCount > 0 ? (
             <button
