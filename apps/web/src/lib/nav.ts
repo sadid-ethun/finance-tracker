@@ -18,34 +18,60 @@ export type NavItem = {
 /** Every destination, in sidebar order. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/accounts", label: "Accounts", icon: CreditCard },
   { href: "/transactions", label: "Spending", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budget", icon: PiggyBank },
-  { href: "/investments", label: "Portfolio", icon: TrendingUp },
   { href: "/cash-flow", label: "Cash Flow", icon: ChartPie },
+  { href: "/accounts", label: "Accounts", icon: CreditCard },
+  { href: "/investments", label: "Portfolio", icon: TrendingUp },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 /**
- * Mobile shows four destinations plus "More"; six tabs is where a tab bar
- * starts to feel cramped (PLAN.md section 21).
+ * The five mobile tabs, in bar order (IA_PLAN.md).
  *
- * The four are the ones worth a thumb-reach on a phone. Accounts and Budget
- * sit under More: balances are already on the dashboard, and a budget is set
- * once a month rather than checked in passing.
+ * Money going out in the first three, what you own in the last two. Accounts
+ * precedes Portfolio because net worth is the total and holdings are one
+ * component of it — summary before detail.
  *
- * This array is the single source of truth — MORE_ITEMS is whatever is left,
- * so a destination can never end up in both places or in neither.
+ * Five is the whole set: there is no More panel, so every destination reachable
+ * on a phone is one tap away. Two destinations are deliberately not tabs:
+ * Settings lives behind the gear in PageHeader, and Home is being dissolved
+ * into Accounts and Spending (IA_PLAN.md phase 2), after which `/` redirects.
  */
-export const MOBILE_TAB_HREFS = ["/", "/transactions", "/investments", "/cash-flow"];
+export const MOBILE_TAB_HREFS = [
+  "/transactions",
+  "/budgets",
+  "/cash-flow",
+  "/accounts",
+  "/investments",
+];
 
 export const MOBILE_TABS = MOBILE_TAB_HREFS.map(
   (href) => NAV_ITEMS.find((item) => item.href === href)!,
 );
 
-export const MORE_ITEMS = NAV_ITEMS.filter(
-  (item) => !MOBILE_TAB_HREFS.includes(item.href),
-);
+/**
+ * Destinations reachable on desktop but not from the mobile tab bar.
+ *
+ * Listed explicitly rather than derived as "whatever is left over". The old
+ * derivation fed a More panel, so anything omitted from the tab list still had
+ * somewhere to go; now there is no overflow, and a destination missing from
+ * both lists would simply vanish on mobile. Naming them makes that a
+ * deliberate choice rather than an accident of set arithmetic.
+ */
+export const NON_TAB_HREFS = ["/", "/settings"];
+
+if (process.env.NODE_ENV !== "production") {
+  const covered = new Set([...MOBILE_TAB_HREFS, ...NON_TAB_HREFS]);
+  const stranded = NAV_ITEMS.filter((item) => !covered.has(item.href));
+  if (stranded.length > 0) {
+    throw new Error(
+      `nav: ${stranded.map((i) => i.href).join(", ")} is in NAV_ITEMS but ` +
+        `neither a mobile tab nor listed in NON_TAB_HREFS, so it would be ` +
+        `unreachable on mobile. Add it to one of them.`,
+    );
+  }
+}
 
 /** Longest-prefix match so nested routes keep their parent tab active. */
 export function isActive(pathname: string, href: string): boolean {

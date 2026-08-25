@@ -1122,7 +1122,7 @@ No shadow at rest. Interactive cards: `hover:border-foreground/12` + `active:sca
 
 ## Navigation
 
-**Mobile — bottom tab bar.** Fixed, 5 tabs max, 64px + safe area, `backdrop-blur` with 92% opacity background. Icon 22px + 11px label. Active = `primary` color + a 3px pill above the icon, animated between tabs with Framer Motion `layoutId` (the shared-element move is the single most "native-feeling" detail in the app). Tabs: **Home · Accounts · Transactions · Budget · More**. Investments, Cash Flow, and Settings live under More, because six tabs is where a tab bar starts feeling cramped.
+**Mobile — bottom tab bar.** Floating glass capsule, `inset-x-4` to match card width, 56px + safe area, `bg-card/65` with heavy blur and saturation. Icon 22px + 10px label. Active = a tinted capsule *behind* the tab, animated between tabs with Framer Motion `layoutId` (the shared-element move is the single most "native-feeling" detail in the app). Tabs: **Spending · Budget · Cash Flow · Accounts · Portfolio** — money going out first, then what you own. Six is where a tab bar starts feeling cramped, so five is the whole set: there is no More panel, and Settings is reached from a gear in the page header instead. See IA_PLAN.md.
 
 **Desktop — left sidebar.** 240px fixed, logo top, full nav (all 7 destinations, no More), net-worth mini-summary at the bottom, collapsible to 72px icons-only. Active item: `primary-soft` background, `primary` text, 20px radius.
 
