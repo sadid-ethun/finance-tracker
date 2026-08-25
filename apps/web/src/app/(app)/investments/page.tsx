@@ -5,7 +5,7 @@ export default function InvestmentsPage() {
   return (
     <>
       <PageHeader
-        title="Investments"
+        title="Portfolio"
         description="Holdings, allocation, and performance."
       />
       <InvestmentsView />

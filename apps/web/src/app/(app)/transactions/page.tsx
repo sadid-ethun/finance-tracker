@@ -6,7 +6,7 @@ export default function TransactionsPage() {
   return (
     <>
       <PageHeader
-        title="Transactions"
+        title="Spending"
         description="Search, filter, split, and categorize."
         action={<AddTransactionButton />}
       />

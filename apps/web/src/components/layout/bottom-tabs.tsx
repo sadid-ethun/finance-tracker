@@ -92,15 +92,13 @@ export function BottomTabs() {
         className={cn(
           // inset-x-4 matches the page's px-4, so the bar lines up with the
           // cards above it rather than sitting a few pixels wider.
-          "fixed inset-x-4 z-50 overflow-hidden rounded-[28px] lg:hidden",
+          "fixed inset-x-4 z-50 overflow-hidden rounded-full lg:hidden",
           "bottom-[var(--tabbar-inset)]",
-          // Glass: 75% with a heavy blur and saturation, which keeps the
-          // colour bleeding through from turning to grey mud. Inactive labels
-          // use --on-glass rather than the usual muted tone — at this opacity
-          // Ash reads 3.60:1 against the brightest chart colour the bar can
-          // pass over, and Silver 5.81:1. Raising the opacity instead would
-          // have bought the same contrast by giving up the glass.
-          "bg-card/75 backdrop-blur-3xl backdrop-saturate-[1.8]",
+          // Glass: 65%, with a heavy blur and saturation keeping the colour
+          // that bleeds through from turning to grey mud. Transparency is
+          // paid for in label contrast, and it is paid in --on-glass rather
+          // than by putting the opacity back — see the token's note.
+          "bg-card/65 backdrop-blur-3xl backdrop-saturate-[1.8]",
           // A hairline of light along the top edge is what separates glass
           // from a flat translucent panel. An explicit colour rather than
           // Tailwind's shadow-colour variable, which composes unreliably with
@@ -130,7 +128,7 @@ export function BottomTabs() {
                       // A capsule behind the tab rather than a rule above it.
                       // On glass a bright bar reads as a separate element
                       // sitting on the surface; a tint reads as part of it.
-                      className="absolute inset-x-1 inset-y-2 rounded-[18px] bg-white/10"
+                      className="absolute inset-x-1 inset-y-1.5 rounded-full bg-white/10"
                       // Eased, not sprung. The reference is explicit: no
                       // bouncy springs, no overshoots (DESIGN_SYSTEM.md).
                       transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
@@ -168,7 +166,7 @@ export function BottomTabs() {
               {selected === "more" ? (
                 <motion.span
                   layoutId="tab-indicator"
-                  className="absolute inset-x-1 inset-y-2 rounded-[18px] bg-white/10"
+                  className="absolute inset-x-1 inset-y-1.5 rounded-full bg-white/10"
                   transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                 />
               ) : null}

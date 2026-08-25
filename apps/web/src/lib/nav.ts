@@ -19,9 +19,9 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/accounts", label: "Accounts", icon: CreditCard },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/transactions", label: "Spending", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budget", icon: PiggyBank },
-  { href: "/investments", label: "Investments", icon: TrendingUp },
+  { href: "/investments", label: "Portfolio", icon: TrendingUp },
   { href: "/cash-flow", label: "Cash Flow", icon: ChartPie },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
