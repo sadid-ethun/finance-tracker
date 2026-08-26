@@ -1,5 +1,7 @@
 "use client";
 
+import { Plus } from "lucide-react";
+
 import { useState } from "react";
 
 import { useCreateAccount } from "@/hooks/use-finance";
@@ -134,5 +136,18 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
         </form>
       </div>
     </div>
+  );
+}
+
+/** The header action, so Accounts opens with Add in the same place Spending does. */
+export function AddAccountButton() {
+  return (
+    <AddAccountDialog
+      trigger={
+        <>
+          <Plus className="size-4" /> Add
+        </>
+      }
+    />
   );
 }

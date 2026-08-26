@@ -28,13 +28,21 @@ export function useTransactionFilters() {
     { history: "replace", shallow: true, throttleMs: 300 },
   );
 
-  /** Only non-empty values, so the query key stays stable. */
-  const params: Record<string, string> = {};
+  /**
+   * Only non-empty values, so the query key stays stable.
+   *
+   * The multi-select filters stay as arrays rather than being joined. FastAPI
+   * reads `list[UUID]` from repeated params — `?category_ids=a&category_ids=b`
+   * — so a comma-joined "a,b" arrived as one value, failed UUID validation,
+   * and 422'd the whole request. Picking a second category emptied the list,
+   * which looked like the filter had become an AND.
+   */
+  const params: Record<string, string | string[]> = {};
   if (filters.q) params.q = filters.q;
   if (filters.from) params.from = filters.from;
   if (filters.to) params.to = filters.to;
-  if (filters.accounts.length) params.account_ids = filters.accounts.join(",");
-  if (filters.categories.length) params.category_ids = filters.categories.join(",");
+  if (filters.accounts.length) params.account_ids = filters.accounts;
+  if (filters.categories.length) params.category_ids = filters.categories;
   if (filters.uncategorized) params.uncategorized = "true";
   if (filters.hideTransfers) params.include_transfers = "false";
 

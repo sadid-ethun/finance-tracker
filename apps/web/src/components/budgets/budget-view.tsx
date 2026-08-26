@@ -42,7 +42,11 @@ export function BudgetView() {
   const budget = useBudget(month);
   const copy = useCopyBudget(month);
 
-  const thisMonth = monthKey(new Date());
+  // One month ahead, so next month's budget can be set before it starts —
+  // which is when you would actually want to set it. Further out is still
+  // blocked: budgets are planned a month at a time here, and an empty
+  // November in August is a screen with nothing to do on it.
+  const lastPlannable = shiftMonth(monthKey(new Date()), 1);
 
   return (
     <div className="space-y-6">
@@ -59,7 +63,7 @@ export function BudgetView() {
         <button
           type="button"
           onClick={() => setMonth((m) => shiftMonth(m, 1))}
-          disabled={month >= thisMonth}
+          disabled={month >= lastPlannable}
           aria-label="Next month"
           className="rounded-[12px] border border-border p-2 hover:bg-secondary disabled:opacity-40"
         >

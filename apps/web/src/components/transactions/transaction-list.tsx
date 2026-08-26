@@ -22,7 +22,7 @@ export function TransactionList({
   emptyDescription = "Add a transaction by hand, or connect a bank on Accounts.",
   pageSize,
 }: {
-  filters?: Record<string, string>;
+  filters?: Record<string, string | string[]>;
   emptyAction?: React.ReactNode;
   selectable?: boolean;
   emptyTitle?: string;
@@ -33,12 +33,26 @@ export function TransactionList({
   const query = useTransactions(filters, pageSize);
   const categories = useCategories();
   const [selected, setSelected] = useState<string[]>([]);
-  const [active, setActive] = useState<Transaction | null>(null);
+  /**
+   * The open row is held by id, not as a copy of the row.
+   *
+   * Holding the object snapshotted it: changing the category from inside the
+   * sheet invalidated the query and the list re-rendered with fresh data, but
+   * the sheet went on rendering the row as it was when it was tapped — so the
+   * category select snapped back to the old value and looked like the change
+   * had not saved.
+   */
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   if (query.isLoading) return <RowSkeleton count={Math.min(pageSize ?? 8, 8)} />;
   if (query.isError) return <ErrorState onRetry={() => void query.refetch()} />;
 
   const rows = query.data?.pages.flatMap((p) => p.data) ?? [];
+
+  // Derived, so the sheet always shows the row as it is now. If the row falls
+  // out of the current page set — the filters changed underneath it, say —
+  // the sheet closes rather than showing a stale copy.
+  const active = rows.find((row) => row.id === activeId) ?? null;
 
   if (rows.length === 0) {
     return (
@@ -75,7 +89,7 @@ export function TransactionList({
               selectable={selectable}
               selected={selected.includes(transaction.id)}
               onToggle={() => toggle(transaction.id)}
-              onOpen={() => setActive(transaction)}
+              onOpen={() => setActiveId(transaction.id)}
             />
           );
         })}
@@ -94,8 +108,11 @@ export function TransactionList({
 
       {active ? (
         <TransactionDetailSheet
+          // Keyed by id so the sheet's own local state (notes, split draft)
+          // resets when a different row is opened rather than carrying over.
+          key={active.id}
           transaction={active}
-          onClose={() => setActive(null)}
+          onClose={() => setActiveId(null)}
         />
       ) : null}
 

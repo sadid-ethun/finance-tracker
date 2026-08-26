@@ -23,7 +23,10 @@ export function SettingsView() {
   return (
     <div className="space-y-6">
       <div className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-        <div className="flex w-max gap-1 rounded-[14px] bg-secondary p-1 lg:w-full">
+        {/* Full width, not content width. With Connections gone there are
+            four tabs, which fit across a phone without scrolling — w-max left
+            them bunched at the left with dead track beside them. */}
+        <div className="flex w-full gap-1 rounded-[14px] bg-secondary p-1">
           {TABS.map((name) => (
             <button
               key={name}
@@ -31,7 +34,7 @@ export function SettingsView() {
               onClick={() => setTab(name)}
               aria-pressed={tab === name}
               className={cn(
-                "h-9 rounded-[11px] px-3.5 text-[13px] font-medium whitespace-nowrap lg:flex-1",
+                "h-9 flex-1 rounded-[11px] px-2 text-[13px] font-medium whitespace-nowrap",
                 tab === name ? "bg-card shadow-sm" : "text-muted-foreground",
               )}
             >

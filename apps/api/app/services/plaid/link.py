@@ -11,7 +11,7 @@ from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.link_token_transactions import LinkTokenTransactions
 from plaid.model.products import Products
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -20,6 +20,7 @@ from app.core.errors import ConflictError, NotFoundError
 from app.core.logging import get_logger
 from app.models.account import Account
 from app.models.plaid_item import PlaidItem
+from app.models.transaction import Transaction
 from app.services.plaid import client
 from app.services.plaid.mappers import map_account
 
@@ -185,7 +186,19 @@ async def remove_item(db: AsyncSession, user_id: str, item_id: UUID) -> None:
 
     Plaid is told to remove the item first — otherwise the access token stays
     live on their side and we keep being billed for a connection we no longer
-    use. Local rows are soft-deleted so transaction history survives.
+    use. Local rows are soft-deleted rather than dropped, so a disconnect is
+    recoverable and nothing cascades away silently.
+
+    The transactions are soft-deleted with their accounts. They used to be
+    left behind: every query filters `Transaction.deleted_at IS NULL` and none
+    of them join back to the account, so an orphaned transaction stayed fully
+    live in the list, in every total, and in every chart, while the account it
+    belonged to was correctly hidden.
+
+    That is invisible until you re-link the same institution — which is what
+    you do to widen the history window. Plaid issues fresh transaction_ids per
+    item, so the new link cannot recognise the old rows as the same
+    transactions, and every one of them is counted twice.
     """
     item = await get_item(db, user_id, item_id)
 
@@ -204,8 +217,25 @@ async def remove_item(db: AsyncSession, user_id: str, item_id: UUID) -> None:
     now = datetime.now(UTC)
     item.deleted_at = now
 
-    accounts = await db.scalars(select(Account).where(Account.plaid_item_id == item.id))
-    for account in accounts:
-        account.deleted_at = now
+    account_ids = list(
+        (
+            await db.scalars(select(Account.id).where(Account.plaid_item_id == item.id))
+        ).all()
+    )
+
+    if account_ids:
+        await db.execute(
+            update(Account).where(Account.id.in_(account_ids)).values(deleted_at=now)
+        )
+        # Only rows that are still live: a transaction the user deleted by hand
+        # keeps the timestamp it already had.
+        await db.execute(
+            update(Transaction)
+            .where(
+                Transaction.account_id.in_(account_ids),
+                Transaction.deleted_at.is_(None),
+            )
+            .values(deleted_at=now)
+        )
 
     await db.commit()

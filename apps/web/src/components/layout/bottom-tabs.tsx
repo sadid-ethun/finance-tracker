@@ -64,6 +64,10 @@ export function BottomTabs() {
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
+                // Every tab is a fixed destination and there are only five, so warm
+                // them all rather than waiting for the tap. These pages are
+                // force-dynamic, which Next will not prefetch on its own default.
+                prefetch
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex h-full flex-col items-center justify-center gap-0.5",

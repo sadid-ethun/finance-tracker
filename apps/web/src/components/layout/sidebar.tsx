@@ -36,6 +36,10 @@ export function Sidebar({ userName }: { userName: string }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  // Every tab is a fixed destination and there are only five, so warm
+                  // them all rather than waiting for the tap. These pages are
+                  // force-dynamic, which Next will not prefetch on its own default.
+                  prefetch
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 rounded-[14px] px-3 py-2.5 text-[15px] font-medium transition-colors",

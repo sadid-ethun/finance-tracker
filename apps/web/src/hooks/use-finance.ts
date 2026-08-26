@@ -101,14 +101,25 @@ export function useCategories() {
  * decide how many rows the other got.
  */
 export function useTransactions(
-  filters: Record<string, string> = {},
+  filters: Record<string, string | string[]> = {},
   limit = 25,
 ) {
   return useInfiniteQuery({
     queryKey: [...qk.transactions.list(filters), limit],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => {
-      const params = new URLSearchParams({ ...filters, limit: String(limit) });
+      // Repeated keys for array values, which is how FastAPI reads a list.
+      // The URLSearchParams object constructor cannot express that — it
+      // stringifies an array to a comma-joined value.
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          for (const item of value) params.append(key, item);
+        } else {
+          params.set(key, value);
+        }
+      }
+      params.set("limit", String(limit));
       if (pageParam) params.set("cursor", pageParam);
       return apiFetch<Page<Transaction>>(`/transactions?${params}`);
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Landmark, Plus, Wallet } from "lucide-react";
+import { Landmark, Wallet } from "lucide-react";
 
 import { Card, SectionLabel } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
@@ -46,10 +46,6 @@ export function AccountList() {
   // AccountsView; this component is the account list again (IA_PLAN.md).
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <AddAccountDialog trigger={<><Plus className="size-4" /> Add account</>} />
-      </div>
-
       {grouped.map((group) => (
         <section key={group.type}>
           <SectionLabel as="h2" className="mb-3">
