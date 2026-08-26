@@ -218,15 +218,11 @@ async def remove_item(db: AsyncSession, user_id: str, item_id: UUID) -> None:
     item.deleted_at = now
 
     account_ids = list(
-        (
-            await db.scalars(select(Account.id).where(Account.plaid_item_id == item.id))
-        ).all()
+        (await db.scalars(select(Account.id).where(Account.plaid_item_id == item.id))).all()
     )
 
     if account_ids:
-        await db.execute(
-            update(Account).where(Account.id.in_(account_ids)).values(deleted_at=now)
-        )
+        await db.execute(update(Account).where(Account.id.in_(account_ids)).values(deleted_at=now))
         # Only rows that are still live: a transaction the user deleted by hand
         # keeps the timestamp it already had.
         await db.execute(
