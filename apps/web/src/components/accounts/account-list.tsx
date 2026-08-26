@@ -29,7 +29,7 @@ export function AccountList() {
       <EmptyState
         icon={Wallet}
         title="No accounts yet"
-        description="Add an account by hand to start tracking. Bank connections arrive in Phase 4."
+        description="Connect a bank below, or add an account by hand to start tracking."
         action={<AddAccountDialog trigger="Add account" />}
       />
     );

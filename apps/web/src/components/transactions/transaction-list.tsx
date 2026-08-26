@@ -19,7 +19,7 @@ export function TransactionList({
   emptyAction,
   selectable = false,
   emptyTitle = "Nothing here yet",
-  emptyDescription = "Add a transaction by hand, or connect an account in Phase 4.",
+  emptyDescription = "Add a transaction by hand, or connect a bank on Accounts.",
   pageSize,
 }: {
   filters?: Record<string, string>;

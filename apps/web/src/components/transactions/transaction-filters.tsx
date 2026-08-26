@@ -25,41 +25,52 @@ export function TransactionFilters() {
 
   return (
     <div className="mb-4 space-y-3">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            strokeWidth={2}
-          />
-          <input
-            type="search"
-            value={filters.q}
-            onChange={(e) => void setFilters({ q: e.target.value || null })}
-            placeholder="Search transactions"
-            aria-label="Search transactions"
-            className="h-11 w-full rounded-[14px] border border-input bg-card pr-3 pl-9 text-[15px] outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
-          />
-        </div>
+      {/* The search row sticks; the expanded panel below does not.
+          Spending puts two charts above this list, so on the way down the
+          controls would otherwise scroll away and searching would mean
+          scrolling back up past both of them.
 
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className={cn(
-            "relative inline-flex h-11 items-center gap-1.5 rounded-[14px] border px-3.5 text-[14px] font-medium",
-            activeCount > 0
-              ? "border-primary bg-accent text-accent-foreground"
-              : "border-border bg-card",
-          )}
-        >
-          <SlidersHorizontal className="size-4" strokeWidth={2} />
-          Filters
-          {activeCount > 0 ? (
-            <span className="tabular ml-0.5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
-              {activeCount}
-            </span>
-          ) : null}
-        </button>
+          Bled to full width with -mx-4 (-mx-8 on desktop, matching the
+          layout's padding): inset by the page gutters, rows would show through
+          the 16px either side as they passed underneath. z-30 stays below the
+          tab bar's z-50. */}
+      <div className="sticky top-0 z-30 -mx-4 bg-background px-4 py-2 lg:-mx-8 lg:px-8">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              strokeWidth={2}
+            />
+            <input
+              type="search"
+              value={filters.q}
+              onChange={(e) => void setFilters({ q: e.target.value || null })}
+              placeholder="Search transactions"
+              aria-label="Search transactions"
+              className="h-11 w-full rounded-[14px] border border-input bg-card pr-3 pl-9 text-[15px] outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className={cn(
+              "relative inline-flex h-11 items-center gap-1.5 rounded-[14px] border px-3.5 text-[14px] font-medium",
+              activeCount > 0
+                ? "border-primary bg-accent text-accent-foreground"
+                : "border-border bg-card",
+            )}
+          >
+            <SlidersHorizontal className="size-4" strokeWidth={2} />
+            Filters
+            {activeCount > 0 ? (
+              <span className="tabular ml-0.5 rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                {activeCount}
+              </span>
+            ) : null}
+          </button>
+        </div>
       </div>
 
       {open ? (

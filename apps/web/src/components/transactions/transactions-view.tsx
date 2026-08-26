@@ -52,7 +52,7 @@ export function TransactionsView() {
         emptyDescription={
           activeCount > 0
             ? "Try widening your date range or clearing a filter."
-            : "Add a transaction by hand, or connect an account in Phase 4."
+            : "Add a transaction by hand, or connect a bank on Accounts."
         }
       />
     </>

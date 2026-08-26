@@ -144,9 +144,10 @@ existing `action` prop stays for page-specific extras — and it *is* used:
 Spending passes `AddTransactionButton`, so that header carries the Add pill
 and the gear side by side.
 
-**Refresh** — the icon in `NetWorthHero` and the page-level sync on
-`investments-view` give way to pull-to-refresh, with `RefreshData` on
-Settings -> Data as the desktop path. Restore
+**Refresh** — the icon in `NetWorthHero` gives way to pull-to-refresh, with
+`RefreshData` on Settings -> Data as the desktop path. The sync buttons on
+Portfolio and on each connection stay: those call the API, and a client
+refetch is not a substitute for one. Restore
 `components/shared/pull-to-refresh.tsx` from `88c4a04` and mount it around
 `<main>` in `(app)/layout.tsx`. Not the route progress bar from that same
 commit. Per-item sync buttons in `settings/connections.tsx` stay — those are
@@ -174,7 +175,8 @@ yesterday's purchases.
 
 **Spending becomes the longest screen in the app.** Pull-to-refresh only fires
 at scroll top, so from deep in the transaction list there is no way to
-refresh. A consequence of the shape of that tab, not a defect.
+refresh. A consequence of the shape of that tab, not a defect — and less sharp
+now that the list opens at ten rows rather than twenty-five.
 
 ## Unrelated fix to fold in
 
@@ -234,10 +236,24 @@ manifest for `start_url`.
    add dialog. On a fresh install that would have hidden the one path that
    matters most — connect a bank. `Connections` now renders in both
    branches.
-4. **Gesture and polish.** Pull-to-refresh restore, the Spending sticky filter
-   bar, empty states. The header refresh icons on `NetWorthHero` and
-   `investments-view` come out here, once the gesture that replaces them
-   exists — the Settings card is already in place as the desktop path.
+4. **Gesture and polish.** *(Done.)* Pull-to-refresh restored from `88c4a04`,
+   the Spending search row made sticky, and three empty states that still
+   promised bank connections were "arriving in Phase 4" rewritten — that
+   feature shipped, and the copy was telling people a working feature did not
+   exist.
+
+   **Only `NetWorthHero`'s refresh icon came out.** The plan also listed the
+   one on `investments-view`, and that was wrong: it POSTs
+   `/investments/sync`, a real Plaid holdings sync, where `NetWorthHero`'s was
+   `queryClient.refetchQueries`. Pull-to-refresh refetches; it cannot reach the
+   API. Removing that button would have deleted the only way to pull fresh
+   holdings, and nothing else on the screen replaces it. The per-connection
+   sync buttons on Accounts are the same case and stay for the same reason.
+
+   The gesture's constants moved to `lib/pull-to-refresh.ts` so the component
+   and its tests share them. The reverted version kept a second copy in the
+   test file, which meant the tests would have gone on passing had the
+   component's numbers changed.
 
 ## Out of scope
 
