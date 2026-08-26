@@ -94,6 +94,35 @@ export function useCategories() {
 }
 
 /**
+ * The seeded "Uncategorized" row, which is a label rather than a destination.
+ *
+ * Having no category is `category_id IS NULL`, and the categorizer leaves it
+ * that way rather than assigning this row — step 5 is "leave uncategorized
+ * rather than guessing". So nothing ever points at it.
+ */
+const SYNTHETIC_CATEGORY_SLUG = "uncategorized";
+
+/**
+ * Categories a transaction can actually be put in.
+ *
+ * Offering the synthetic row as a choice is wrong in both directions. As a
+ * filter it always returned nothing, because no transaction references it —
+ * while the "Uncategorized only" toggle beside it, which filters on NULL,
+ * returned plenty. And as an assignment it would have set a category meaning
+ * "no category", putting the row somewhere neither filter could find it.
+ *
+ * useCategories itself is unchanged: looking up the name for an id still has
+ * to be able to see every row, and so does managing them in Settings.
+ */
+export function useAssignableCategories() {
+  const query = useCategories();
+  return {
+    ...query,
+    data: query.data?.filter((c) => c.slug !== SYNTHETIC_CATEGORY_SLUG),
+  };
+}
+
+/**
  * Cursor-paginated; offset pagination would skip rows as new ones arrive.
  *
  * The page size is part of the query key. Without it, two lists on different

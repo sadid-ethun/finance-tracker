@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import {
-  useCategories,
+  useAssignableCategories,
   useSplitTransaction,
   type Transaction,
 } from "@/hooks/use-finance";
@@ -26,7 +26,7 @@ export function SplitDialog({
   transaction: Transaction;
   onClose: () => void;
 }) {
-  const categories = useCategories();
+  const categories = useAssignableCategories();
   const split = useSplitTransaction();
 
   const totalMinor = transaction.amount;

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { Card } from "@/components/shared/card";
-import { useAccounts, useCategories } from "@/hooks/use-finance";
+import { useAccounts, useAssignableCategories } from "@/hooks/use-finance";
 import { useTransactionFilters } from "@/hooks/use-transaction-filters";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ export function TransactionFilters() {
   const { filters, setFilters, activeCount, clear } = useTransactionFilters();
   const [open, setOpen] = useState(false);
   const accounts = useAccounts();
-  const categories = useCategories();
+  const categories = useAssignableCategories();
 
   function toggleIn(list: string[], id: string): string[] | null {
     const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id];

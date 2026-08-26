@@ -10,7 +10,7 @@ import { Money } from "@/components/shared/money";
 import { ErrorState, RowSkeleton, Skeleton } from "@/components/shared/states";
 import {
   useBudget,
-  useCategories,
+  useAssignableCategories,
   useCopyBudget,
   useDeleteBudget,
   useSetBudgetCategory,
@@ -263,7 +263,7 @@ function AddCategory({
   budgetedIds: Set<string>;
   unbudgeted: { category_id: string; name: string; spent: number }[];
 }) {
-  const categories = useCategories();
+  const categories = useAssignableCategories();
   const setAmount = useSetBudgetCategory(month);
   const [open, setOpen] = useState(false);
   const [categoryId, setCategoryId] = useState("");

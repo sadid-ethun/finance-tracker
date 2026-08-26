@@ -6,7 +6,7 @@ import { Link2Off, Scissors, Trash2 } from "lucide-react";
 import { Money } from "@/components/shared/money";
 import { Sheet } from "@/components/shared/sheet";
 import {
-  useCategories,
+  useAssignableCategories,
   useDeleteTransaction,
   useUnlinkTransfer,
   useUnsplitTransaction,
@@ -31,7 +31,7 @@ export function TransactionDetailSheet({
   transaction: Transaction;
   onClose: () => void;
 }) {
-  const categories = useCategories();
+  const categories = useAssignableCategories();
   const update = useUpdateTransaction();
   const remove = useDeleteTransaction();
   const unsplit = useUnsplitTransaction();

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useAccounts, useCategories, useCreateTransaction } from "@/hooks/use-finance";
+import { useAccounts, useAssignableCategories, useCreateTransaction } from "@/hooks/use-finance";
 import { isLiability } from "@/lib/format";
 
 /**
@@ -28,7 +28,7 @@ export function AddTransactionDialog({
   const [categoryId, setCategoryId] = useState("");
 
   const accounts = useAccounts();
-  const categories = useCategories();
+  const categories = useAssignableCategories();
   const create = useCreateTransaction();
 
   const selected = (accounts.data ?? []).find((a) => a.id === (accountId ?? account));

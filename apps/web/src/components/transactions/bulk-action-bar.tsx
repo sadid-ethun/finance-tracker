@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-import { useBulkCategorize, useCategories, useLinkTransfer } from "@/hooks/use-finance";
+import { useBulkCategorize, useAssignableCategories, useLinkTransfer } from "@/hooks/use-finance";
 
 /**
  * Bulk actions for a selection.
@@ -19,7 +19,7 @@ export function BulkActionBar({
   selected: string[];
   onClear: () => void;
 }) {
-  const categories = useCategories();
+  const categories = useAssignableCategories();
   const bulk = useBulkCategorize();
   const link = useLinkTransfer();
   const [createRule, setCreateRule] = useState(false);
