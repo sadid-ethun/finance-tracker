@@ -194,7 +194,7 @@ export function CashFlowView() {
               </ChartContainer>
             </div>
           )}
-          <div className="mt-3 flex flex-wrap justify-center gap-4 border-t border-border pt-3 text-[12px]">
+          <div className="mt-3 flex flex-wrap justify-center gap-4 text-[12px]">
             <Legend color={chartConfig.income.color} label="Income" />
             <Legend color={chartConfig.spending.color} label="Spending" />
             {/* --primary is the white CTA fill; the line is the data accent. */}

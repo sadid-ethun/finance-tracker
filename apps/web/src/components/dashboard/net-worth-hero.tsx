@@ -20,7 +20,7 @@ import {
   type NetWorthRange,
 } from "@/hooks/use-finance";
 import { chartAnimation, chartConfig } from "@/lib/chart-theme";
-import { formatMoney } from "@/lib/format";
+import { formatDateLong, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const RANGES: NetWorthRange[] = ["1m", "3m", "6m", "ytd", "1y", "all"];
@@ -138,7 +138,19 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
                 content={
                   <ChartTooltipContent
                     hideIndicator
-                    labelKey="date"
+                    // Read the date off the datum rather than via labelKey.
+                    // ChartTooltipContent resolves labelKey through the chart
+                    // config, which has no `date` entry, so the header came
+                    // out empty and the tooltip showed a figure with nothing
+                    // to say which day it belonged to.
+                    labelFormatter={(_label, payload) => {
+                      const date = payload?.[0]?.payload?.date;
+                      return date ? (
+                        <span className="font-mono text-[11px] tracking-[0.08em] uppercase">
+                          {formatDateLong(String(date))}
+                        </span>
+                      ) : null;
+                    }}
                     formatter={(value) => (
                       <span className="tabular font-mono text-[13px]">
                         {formatMoney(Number(value))}

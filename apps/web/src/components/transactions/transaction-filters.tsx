@@ -168,7 +168,13 @@ function FilterChips({
   return (
     <div>
       <p className="mb-1.5 text-[13px] font-medium">{label}</p>
-      <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
+      {/* No max-height. A capped scroll area cut the last row of chips in
+          half with nothing to say it scrolled — on touch there is no
+          scrollbar to see, so it read as clipped rather than scrollable, and
+          nesting a scroller inside the page scroll fights the gesture. The
+          panel is opt-in, so letting it be as tall as it needs is cheaper
+          than hiding half a row. */}
+      <div className="flex flex-wrap gap-1.5">
         {items.map((item) => (
           <Toggle
             key={item.id}

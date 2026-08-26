@@ -9,6 +9,12 @@
  * only for brand, category identity, and positive/negative movement.
  */
 :root {
+  /* Tells the browser which way to paint native chrome: the date input's
+     mm/dd/yyyy placeholder and calendar glyph, select menus, the picker
+     sheet, scrollbars. Unset, it assumes light and paints dark text — which
+     on the dark canvas is invisible, so the From/To fields read as two empty
+     boxes rather than as date fields. */
+  color-scheme: light;
   --background: #fafaf8;
   --foreground: #16181d;
   --card: #ffffff;
@@ -43,6 +49,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* Dark palette — see DESIGN_SYSTEM.md at the repo root for the measured
      contrast behind each value. Surfaces step by colour, never shadow. */
   --background: #0f1011;          /* Obsidian canvas */
@@ -153,6 +160,25 @@
 @layer base {
   * {
     border-color: var(--border);
+  }
+
+  /* Rapid consecutive taps were being dropped — tapping between tabs quickly
+     sometimes did nothing.
+
+     WebKit still runs its double-tap-to-zoom heuristic on interactive
+     elements even with user-scalable off: it holds the first tap back to see
+     whether a second one follows, and a second tap arriving inside that
+     window is consumed as the double-tap rather than delivered as a click.
+     `manipulation` opts out of double-tap zoom specifically, which both
+     removes the delay and stops the swallowing. Panning and pinch are
+     untouched. */
+  a,
+  button,
+  [role="button"],
+  label,
+  select,
+  summary {
+    touch-action: manipulation;
   }
 
   html {

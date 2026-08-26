@@ -21,10 +21,13 @@ const stagger = {
 export function StatTiles({ summary }: { summary: DashboardSummary | undefined }) {
   if (!summary) {
     return (
-      <div className="grid grid-cols-2 gap-3">
-        {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="h-[92px] rounded-card" />
-        ))}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-[92px] rounded-card" />
+          ))}
+        </div>
+        <Skeleton className="h-[150px] rounded-card" />
       </div>
     );
   }
@@ -62,25 +65,29 @@ export function StatTiles({ summary }: { summary: DashboardSummary | undefined }
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        {balances.map((tile, i) => (
-          <motion.div
-            key={tile.label}
-            custom={i + 2}
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-            className={cn(CARD_SURFACE, "p-4")}
-          >
-            <p className="text-[13px] text-muted-foreground">{tile.label}</p>
+      {/* Rows, not a third column of tiles. Three across leaves about 106px
+          per tile at 375px, and a five-figure balance needs more than that
+          before its own padding — so the figures ran to the edges. Label left
+          and value right gives each one the full width and cannot cramp,
+          whatever the number grows to. */}
+      <motion.div
+        custom={2}
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className={cn(CARD_SURFACE, "divide-y divide-border overflow-hidden")}
+      >
+        {balances.map((tile) => (
+          <div key={tile.label} className="flex items-center justify-between gap-3 px-5 py-3.5">
+            <p className="text-[14px] text-muted-foreground">{tile.label}</p>
             <Money
               minorUnits={tile.value}
               currency={summary.currency}
-              className="mt-0.5 block text-[16px] font-semibold"
+              className="tabular text-[16px] font-semibold"
             />
-          </motion.div>
+          </div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
