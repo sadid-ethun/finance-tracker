@@ -34,16 +34,51 @@ const GROUP_LABELS: Record<GroupBy, string> = {
   security: "Holding",
 };
 
-const PERFORMANCE_RANGES = [
-  { days: 30, label: "1M" },
-  { days: 90, label: "3M" },
-  { days: 180, label: "6M" },
-  { days: 365, label: "1Y" },
-] as const;
+type PerformanceRange = "1m" | "3m" | "6m" | "ytd" | "1y";
+
+const PERFORMANCE_RANGES: { key: PerformanceRange; label: string }[] = [
+  { key: "1m", label: "1M" },
+  { key: "3m", label: "3M" },
+  { key: "6m", label: "6M" },
+  { key: "ytd", label: "YTD" },
+  { key: "1y", label: "1Y" },
+];
+
+/**
+ * A range as a number of days.
+ *
+ * YTD is derived here rather than added to the API: the endpoint already
+ * takes a day count, and "since 1 January" is one. Recomputed per render, so
+ * a session left open across midnight on New Year does not keep asking for
+ * last year's window.
+ */
+function daysFor(range: PerformanceRange): number {
+  switch (range) {
+    case "1m":
+      return 30;
+    case "3m":
+      return 90;
+    case "6m":
+      return 180;
+    case "1y":
+      return 365;
+    case "ytd": {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), 0, 1);
+      const elapsed = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+      return Math.max(1, elapsed + 1);
+    }
+  }
+}
 
 function PerformanceChart() {
-  const [days, setDays] = useState<number>(180);
-  const performance = useInvestmentPerformance(days);
+  /**
+   * Selected by key, not by day count. YTD resolves to a number that can equal
+   * a fixed option — it is 90 at the end of March — and keying on the number
+   * would light both buttons. Same reasoning as the Cash Flow switcher.
+   */
+  const [range, setRange] = useState<PerformanceRange>("6m");
+  const performance = useInvestmentPerformance(daysFor(range));
   const points = performance.data ?? [];
 
   return (
@@ -126,18 +161,18 @@ function PerformanceChart() {
         </div>
 
         <div className="mt-3 flex gap-1 rounded-[14px] bg-secondary p-1">
-          {PERFORMANCE_RANGES.map((range) => (
+          {PERFORMANCE_RANGES.map((option) => (
             <button
-              key={range.days}
+              key={option.key}
               type="button"
-              onClick={() => setDays(range.days)}
-              aria-pressed={days === range.days}
+              onClick={() => setRange(option.key)}
+              aria-pressed={range === option.key}
               className={cn(
                 "h-8 flex-1 rounded-[11px] text-[13px] font-medium transition-colors",
-                days === range.days ? "bg-card" : "text-muted-foreground",
+                range === option.key ? "bg-card" : "text-muted-foreground",
               )}
             >
-              {range.label}
+              {option.label}
             </button>
           ))}
         </div>

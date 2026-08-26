@@ -76,24 +76,16 @@ export function TransactionFilters() {
       {open ? (
         <Card className="space-y-4 p-4">
           <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium">From</span>
-              <input
-                type="date"
-                value={filters.from}
-                onChange={(e) => void setFilters({ from: e.target.value || null })}
-                className="h-10 w-full rounded-[12px] border border-input bg-background px-3 text-[14px] outline-none focus:border-ring"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-[13px] font-medium">To</span>
-              <input
-                type="date"
-                value={filters.to}
-                onChange={(e) => void setFilters({ to: e.target.value || null })}
-                className="h-10 w-full rounded-[12px] border border-input bg-background px-3 text-[14px] outline-none focus:border-ring"
-              />
-            </label>
+            <DateField
+              label="From"
+              value={filters.from}
+              onChange={(value) => void setFilters({ from: value })}
+            />
+            <DateField
+              label="To"
+              value={filters.to}
+              onChange={(value) => void setFilters({ to: value })}
+            />
           </div>
 
           <FilterChips
@@ -149,6 +141,51 @@ export function TransactionFilters() {
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * A date input that shows something when it is empty.
+ *
+ * iOS renders an empty `type="date"` with no placeholder at all — no
+ * mm/dd/yyyy, no glyph — so the two fields read as blank boxes with no hint
+ * that they are dates or that empty means unbounded. Declaring color-scheme
+ * fixed the chrome's colour but not this: there is simply nothing drawn to
+ * colour. So the placeholder is ours, overlaid while the value is empty and
+ * inert to pointer events so taps still reach the field underneath.
+ *
+ * appearance-none stops iOS imposing its own height on the control, which
+ * otherwise ignores h-10 and leaves the two fields different sizes.
+ */
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string | null) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[13px] font-medium">{label}</span>
+      <span className="relative block">
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value || null)}
+          className="h-10 w-full appearance-none rounded-[12px] border border-input bg-background px-3 text-left text-[14px] outline-none focus:border-ring"
+        />
+        {value ? null : (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[14px] text-muted-foreground"
+          >
+            Any
+          </span>
+        )}
+      </span>
+    </label>
   );
 }
 

@@ -210,14 +210,8 @@ export function SpendThisMonth({ month }: { month: string }) {
         </label>
       </div>
 
-      {/* Taller, and bled into the card's right padding only.
-          The plot was sitting inside the card's p-5 *and* its own margins, so
-          the drawing took barely half the card it was in. Bleeding both sides
-          would put the 44px y-axis band flush against the card border and
-          leave "$10k" touching the edge — there is no axis on the right, so
-          that is the side with padding to reclaim. */}
-      <ChartContainer config={chartConfig} className="-mr-5 mt-4 h-[220px] w-[calc(100%+1.25rem)]">
-        <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+      <ChartContainer config={chartConfig} className="mt-5 h-[180px] w-full">
+        <ComposedChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
           <CartesianGrid {...gridProps} />
           <XAxis dataKey="day" {...axisProps} interval={6} tickMargin={8} />
           <YAxis
