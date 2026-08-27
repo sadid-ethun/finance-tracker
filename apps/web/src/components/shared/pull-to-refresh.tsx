@@ -123,8 +123,27 @@ export function PullToRefresh({
     ].join("\n");
   }, []);
 
-  /** Writes the current pull to the DOM. Composited; never touches React. */
+  /**
+   * Writes the current pull to the DOM. Composited; never touches React.
+   *
+   * Any frame already queued is dropped first. Without that, a scheduled
+   * repaint outlives the gesture that scheduled it and lands afterwards,
+   * reading `pull.current` at execution time rather than the value it was
+   * queued with — which by then is 0, painted with no transition.
+   *
+   * That is what made a fast swipe show nothing at all. Every touchmove in a
+   * quick flick arrives inside a single frame, so the one queued repaint ran
+   * after touchend had already reset the distance and started the refresh:
+   * step for step, pull to 60, queue a frame, release to 0, paint the resting
+   * position, then the stale frame wipes it. A slow drag hid the bug, because
+   * frames fell between the moves and each one still read a live value.
+   */
   const paint = useCallback((distance: number, animate: boolean) => {
+    if (frame.current !== null) {
+      cancelAnimationFrame(frame.current);
+      frame.current = null;
+    }
+
     const content = surface.current;
     const spinner = indicator.current;
     if (!content || !spinner) return;
