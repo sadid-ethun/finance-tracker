@@ -61,8 +61,26 @@ export function PullToRefresh({
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const [armed, setArmed] = useState(false);
+  // Temporary, with the readout below. Read once so toggling it needs a reload
+  // rather than re-running on every render.
+  const [debugging] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).has("ptrdebug"),
+  );
 
   const root = useRef<HTMLDivElement | null>(null);
+  const debugBox = useRef<HTMLPreElement | null>(null);
+  const trace = useRef({
+    start: "-",
+    moves: 0,
+    maxDelta: 0,
+    claimed: false,
+    cancelable: "-",
+    pull: 0,
+    vel: 0,
+    end: "-",
+  });
   const surface = useRef<HTMLDivElement | null>(null);
   const indicator = useRef<HTMLDivElement | null>(null);
 
@@ -78,6 +96,32 @@ export function PullToRefresh({
   // The native listeners are bound once; state read inside them has to come
   // from a ref or the closure would keep seeing the first render's value.
   const busy = useRef(false);
+
+  /**
+   * Temporary: a readout of the gesture, on screen, enabled with ?ptrdebug=1.
+   *
+   * Three fixes aimed at this bug from reasoning alone have missed, so this
+   * reports what actually happens on the device rather than what should. Like
+   * paint(), it writes to the DOM directly — going through React state would
+   * change the timing of the thing being measured.
+   *
+   * Delete once the gesture is confirmed working.
+   */
+  const report = useCallback(() => {
+    const box = debugBox.current;
+    if (!box) return;
+    const t = trace.current;
+    box.textContent = [
+      `start     ${t.start}`,
+      `moves     ${t.moves}`,
+      `maxDelta  ${t.maxDelta.toFixed(1)}`,
+      `claimed   ${t.claimed}`,
+      `cancelable ${t.cancelable}`,
+      `pull      ${t.pull.toFixed(1)} / ${PULL_THRESHOLD}`,
+      `velocity  ${t.vel.toFixed(3)}`,
+      `end       ${t.end}`,
+    ].join("\n");
+  }, []);
 
   /** Writes the current pull to the DOM. Composited; never touches React. */
   const paint = useCallback((distance: number, animate: boolean) => {
@@ -122,10 +166,24 @@ export function PullToRefresh({
     };
 
     const onStart = (event: TouchEvent) => {
-      if (busy.current) {
+      const target = event.target;
+      trace.current = {
+        start: `y=${(event.touches[0]?.clientY ?? -1).toFixed(0)} scrollY=${window.scrollY.toFixed(2)}`,
+        moves: 0,
+        maxDelta: 0,
+        claimed: false,
+        cancelable: "-",
+        pull: 0,
+        vel: 0,
+        end: "-",
+      };
+      if (busy.current || !(target instanceof Node) || !node.contains(target)) {
+        trace.current.start += busy.current ? " REJECT:busy" : " REJECT:outside";
+        report();
         release();
         return;
       }
+      report();
       // Deliberately not gated on scroll position here.
       //
       // It used to be, and that is what broke fast swipes: if scrollY was not
@@ -145,8 +203,15 @@ export function PullToRefresh({
     };
 
     const onMove = (event: TouchEvent) => {
-      if (startY.current === null || busy.current) return;
+      trace.current.moves += 1;
+      if (startY.current === null || busy.current) {
+        trace.current.end = startY.current === null ? "DEAD:no startY" : "DEAD:busy";
+        report();
+        return;
+      }
       const delta = (event.touches[0]?.clientY ?? 0) - startY.current;
+      trace.current.maxDelta = Math.max(trace.current.maxDelta, delta);
+      trace.current.cancelable = String(event.cancelable);
 
       if (delta <= 0) {
         // Upward: hand it back to the scroller rather than fighting it.
@@ -165,11 +230,14 @@ export function PullToRefresh({
       if (!claimed.current) {
         if (window.scrollY > TOP_TOLERANCE) {
           // A real scroll. Leave it alone for the rest of this gesture.
+          trace.current.end = `REJECT:scrollY=${window.scrollY.toFixed(2)}`;
+          report();
           startY.current = null;
           return;
         }
         if (delta <= CLAIM_AT) return;
         claimed.current = true;
+        trace.current.claimed = true;
         // Re-base so the pull starts from where it was claimed, not from
         // touchstart — otherwise the content jumps by CLAIM_AT on claim.
         startY.current = (event.touches[0]?.clientY ?? 0) - CLAIM_AT;
@@ -185,6 +253,9 @@ export function PullToRefresh({
       lastAt.current = event.timeStamp;
 
       pull.current = pullFor(delta);
+      trace.current.pull = pull.current;
+      trace.current.vel = velocity.current;
+      report();
       // Only when the label under it changes — not per frame.
       setArmed((was) => {
         const now = pull.current >= PULL_THRESHOLD;
@@ -202,26 +273,36 @@ export function PullToRefresh({
     const onEnd = () => {
       const reached =
         claimed.current && shouldRefresh(pull.current, velocity.current);
+      trace.current.end = reached ? "REFRESH" : `no (claimed=${claimed.current})`;
+      report();
       release();
       if (reached && !busy.current) void runRefresh();
       else paint(0, true);
     };
 
-    node.addEventListener("touchstart", onStart, { passive: true });
-    node.addEventListener("touchmove", onMove, { passive: false });
-    node.addEventListener("touchend", onEnd, { passive: true });
-    node.addEventListener("touchcancel", onEnd, { passive: true });
+    // On window, not on `node`.
+    //
+    // Listening on the wrapper means every ancestor and descendant between the
+    // touch target and it has a chance to not deliver — a stopPropagation, a
+    // portal, a subtree that never bubbles. window is the one place the events
+    // are guaranteed to arrive, which removes delivery as a variable. It is
+    // also what pulltorefresh.js does. Containment is checked in onStart
+    // instead, so touching outside this subtree still does nothing.
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchend", onEnd, { passive: true });
+    window.addEventListener("touchcancel", onEnd, { passive: true });
 
     return () => {
-      node.removeEventListener("touchstart", onStart);
-      node.removeEventListener("touchmove", onMove);
-      node.removeEventListener("touchend", onEnd);
-      node.removeEventListener("touchcancel", onEnd);
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchcancel", onEnd);
       // A gesture interrupted by unmount would otherwise leave a frame queued
       // against a detached node.
       if (frame.current !== null) cancelAnimationFrame(frame.current);
     };
-  }, [paint, runRefresh]);
+  }, [paint, runRefresh, report]);
 
   // overscroll-behavior lives on html/body in globals.css, not here: the
   // document is the scroller, so containing it on this div did nothing.
@@ -247,6 +328,17 @@ export function PullToRefresh({
           {refreshing ? "Refreshing" : armed ? "Release to refresh" : ""}
         </span>
       </div>
+
+      {/* Temporary. Delete with the trace/report machinery above once the
+          gesture is confirmed working on device. */}
+      {debugging ? (
+        <pre
+          ref={debugBox}
+          className="pointer-events-none fixed top-2 right-2 z-[100] rounded-md bg-black/85 px-2 py-1.5 font-mono text-[10px] leading-tight text-lime-300"
+        >
+          waiting for a swipe…
+        </pre>
+      ) : null}
 
       <div ref={surface} style={{ willChange: "transform" }} className={className}>
         {children}
