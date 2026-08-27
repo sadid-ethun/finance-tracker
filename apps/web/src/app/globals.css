@@ -181,6 +181,38 @@
     touch-action: manipulation;
   }
 
+  html,
+  body {
+    /* The document is the scroller, so the native rubber-band happens here —
+       not on the element pull-to-refresh listens on, where the class was.
+       Left on, iOS competes for the same downward gesture at the top of the
+       page and can take it mid-swipe. The app draws its own pull indicator
+       instead, so there is nothing to lose by suppressing the bounce. */
+    overscroll-behavior-y: none;
+  }
+
+  /* Press-and-hold does nothing: no selection handles, no callout menu, no
+     drag. On a page of figures a long press is almost always a mis-timed tap,
+     and the selection it started has to be dismissed before anything else
+     works.
+
+     Inputs are exempt below — text you can type is text you must be able to
+     select, and taking that away breaks editing rather than tidying it. */
+  :where(body) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   html {
     /* Tapping anything on mobile WebKit flashes a translucent highlight box.
        It reads as a rendering artefact on cards and chart surfaces, which are

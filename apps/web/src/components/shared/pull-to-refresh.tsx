@@ -11,6 +11,14 @@ import { cn } from "@/lib/utils";
 const CLAIM_AT = 4;
 
 /**
+ * Scroll offset still counted as "the top".
+ *
+ * iOS reports sub-pixel offsets, and negative ones while rubber-banding.
+ * Testing `scrollY > 0` treated both as "the reader has scrolled".
+ */
+const TOP_TOLERANCE = 1;
+
+/**
  * Pull-to-refresh for touch devices.
  *
  * Engages only at the top of the page and only on a downward drag, so it can
@@ -114,12 +122,21 @@ export function PullToRefresh({
     };
 
     const onStart = (event: TouchEvent) => {
-      // Only from a genuine top-of-page. Starting mid-scroll would hijack the
-      // scroll the user was actually performing.
-      if (window.scrollY > 0 || busy.current) {
+      if (busy.current) {
         release();
         return;
       }
+      // Deliberately not gated on scroll position here.
+      //
+      // It used to be, and that is what broke fast swipes: if scrollY was not
+      // exactly 0 at the instant of touchstart — still settling from momentum,
+      // or mid rubber-band, where iOS reports fractional and negative values —
+      // startY was never recorded, and every touchmove after it returned at
+      // the null check. The gesture was dead before it began. A slow swipe let
+      // the position settle first, which is why only fast ones failed.
+      //
+      // Where the page is is a question for touchmove, when a direction is
+      // known and the answer is no longer in flux.
       startY.current = event.touches[0]?.clientY ?? null;
       claimed.current = false;
       lastY.current = startY.current ?? 0;
@@ -138,11 +155,25 @@ export function PullToRefresh({
         return;
       }
 
-      // The page can only rubber-band here, never scroll, so taking the
-      // gesture costs the user nothing — and not taking it is what let a
-      // fast flick get cancelled out from under us.
-      if (!claimed.current && delta > CLAIM_AT) claimed.current = true;
-      if (!claimed.current) return;
+      // Now: at the top, moving down. A fraction of a pixel counts as the top
+      // — iOS reports sub-pixel offsets and, while rubber-banding, negative
+      // ones, and neither means the reader has scrolled anywhere.
+      //
+      // Once claimed, the check is not repeated: the transform moves the page
+      // under the finger, and re-reading scroll position mid-gesture would let
+      // it cancel itself halfway through.
+      if (!claimed.current) {
+        if (window.scrollY > TOP_TOLERANCE) {
+          // A real scroll. Leave it alone for the rest of this gesture.
+          startY.current = null;
+          return;
+        }
+        if (delta <= CLAIM_AT) return;
+        claimed.current = true;
+        // Re-base so the pull starts from where it was claimed, not from
+        // touchstart — otherwise the content jumps by CLAIM_AT on claim.
+        startY.current = (event.touches[0]?.clientY ?? 0) - CLAIM_AT;
+      }
 
       if (event.cancelable) event.preventDefault();
 
@@ -192,8 +223,10 @@ export function PullToRefresh({
     };
   }, [paint, runRefresh]);
 
+  // overscroll-behavior lives on html/body in globals.css, not here: the
+  // document is the scroller, so containing it on this div did nothing.
   return (
-    <div ref={root} className={cn("relative overscroll-y-contain", className)}>
+    <div ref={root} className={cn("relative", className)}>
       {/* Out of flow, so revealing it moves nothing: the old version grew a
           spacer's height and pushed the page down on every frame. */}
       <div
