@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { PULL_THRESHOLD, pullFor } from "@/lib/pull-to-refresh";
+import { PULL_THRESHOLD, pullFor, shouldRefresh } from "@/lib/pull-to-refresh";
 import { cn } from "@/lib/utils";
 
 /** Finger travel before the gesture is claimed as a pull rather than a tap. */
@@ -61,6 +61,11 @@ export function PullToRefresh({
   const startY = useRef<number | null>(null);
   const claimed = useRef(false);
   const pull = useRef(0);
+  // Last sample, for the release velocity. A flick ends before it has
+  // travelled far, so distance alone cannot recognise one.
+  const lastY = useRef(0);
+  const lastAt = useRef(0);
+  const velocity = useRef(0);
   const frame = useRef<number | null>(null);
   // The native listeners are bound once; state read inside them has to come
   // from a ref or the closure would keep seeing the first render's value.
@@ -117,6 +122,9 @@ export function PullToRefresh({
       }
       startY.current = event.touches[0]?.clientY ?? null;
       claimed.current = false;
+      lastY.current = startY.current ?? 0;
+      lastAt.current = event.timeStamp;
+      velocity.current = 0;
     };
 
     const onMove = (event: TouchEvent) => {
@@ -138,6 +146,13 @@ export function PullToRefresh({
 
       if (event.cancelable) event.preventDefault();
 
+      const y = event.touches[0]?.clientY ?? lastY.current;
+      const elapsed = event.timeStamp - lastAt.current;
+      // Guard the divide: coalesced moves can share a timestamp.
+      if (elapsed > 0) velocity.current = (y - lastY.current) / elapsed;
+      lastY.current = y;
+      lastAt.current = event.timeStamp;
+
       pull.current = pullFor(delta);
       // Only when the label under it changes — not per frame.
       setArmed((was) => {
@@ -154,7 +169,8 @@ export function PullToRefresh({
     };
 
     const onEnd = () => {
-      const reached = claimed.current && pull.current >= PULL_THRESHOLD;
+      const reached =
+        claimed.current && shouldRefresh(pull.current, velocity.current);
       release();
       if (reached && !busy.current) void runRefresh();
       else paint(0, true);

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { BottomTabs } from "@/components/layout/bottom-tabs";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
+import { Prewarm } from "@/components/layout/prewarm";
 import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { auth } from "@/lib/auth";
 
@@ -47,6 +48,8 @@ export default async function AppLayout({
         </PullToRefresh>
 
         <BottomTabs />
+        {/* Renders nothing; warms the other tabs into the query cache. */}
+        <Prewarm />
       </div>
     </Providers>
   );
