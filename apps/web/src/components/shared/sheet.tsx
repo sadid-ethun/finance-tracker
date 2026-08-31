@@ -30,7 +30,6 @@ export function Sheet({
   footer?: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement | null>(null);
-  const filler = useRef<HTMLDivElement | null>(null);
 
 
   /**
@@ -130,7 +129,6 @@ export function Sheet({
       const vv = window.visualViewport;
       if (box && vv) {
         const p = panel.current?.getBoundingClientRect();
-        const f = filler.current?.getBoundingClientRect();
         box.textContent = [
           `innerHeight  ${window.innerHeight}`,
           `vv.height    ${Math.round(vv.height)}`,
@@ -139,7 +137,6 @@ export function Sheet({
           `scrollY      ${Math.round(window.scrollY)}`,
           `kbd (state)  ${keyboard}`,
           p ? `sheet  ${Math.round(p.top)}..${Math.round(p.bottom)} h=${Math.round(p.height)}` : "sheet  -",
-          f ? `filler ${Math.round(f.top)}..${Math.round(f.bottom)} h=${Math.round(f.height)}` : "filler -",
         ].join("\n");
       }
       frame = requestAnimationFrame(tick);
@@ -178,64 +175,39 @@ export function Sheet({
             event.preventDefault();
             panel.current?.focus();
           }}
-          style={{
-            // Padded, not lifted.
-            //
-            // Setting `bottom` to the measured keyboard height put the sheet's
-            // edge exactly where the keys were meant to start, so any error in
-            // that measurement showed as a strip of the page between the two.
-            // Staying anchored to the bottom and padding instead means the card
-            // always reaches the bottom of the screen: the content still clears
-            // the keys, and a wrong measurement costs a few pixels of card
-            // behind the keyboard, where nobody can see them.
-            paddingBottom: keyboard || undefined,
-            // Content is capped at whichever is smaller — the usual 88% of the
-            // screen, or what is left above the keyboard — and the padding is
-            // added back on top of that.
-            maxHeight: `calc(${keyboard}px + min(88dvh, 100dvh - ${keyboard + 8}px))`,
-          }}
+          // Only the keyboard height is inline. Everything positional lives in
+          // classes so the sm: variants can override it — an inline `bottom`
+          // would beat sm:inset-y-0 and leave the desktop side panel hanging
+          // 60vh below the window.
+          style={{ "--kbd": `${keyboard}px` } as React.CSSProperties}
           className={cn(
-            "fixed inset-x-0 bottom-0 z-50 flex flex-col",
+            "fixed inset-x-0 z-50 flex flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",
-            // Clears the home indicator when there is no keyboard doing it
-            // already. Inline padding above wins when there is.
-            "pb-[env(safe-area-inset-bottom)]",
-            "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:rounded-none sm:border-t-0 sm:border-l",
+            // The box hangs 60vh below the screen and the same 60vh of padding
+            // pushes the content back up. Net effect: the sheet looks exactly
+            // as it did, and its own background runs most of a screen past the
+            // bottom edge.
+            //
+            // This is what fixes the strip of page below the sheet, and it does
+            // so without measuring anything. Every earlier attempt positioned
+            // the sheet against a keyboard height, so each inherited whatever
+            // iOS reported — and iOS does not reliably report it in a
+            // standalone web app. Reserved background below the fold cannot be
+            // wrong, because the excess is off screen.
+            //
+            // Verified in a browser before shipping: the first field does not
+            // move by a pixel, and the box ends 494px below a 986px viewport.
+            "bottom-[-60vh]",
+            "pb-[calc(60vh_+_env(safe-area-inset-bottom)_+_var(--kbd,0px))]",
+            // Grown by the same 60vh, or max-height caps the box and the
+            // padding eats the content area instead of extending it — which is
+            // what the first attempt at this did.
+            "max-h-[calc(60vh_+_var(--kbd,0px)_+_min(88dvh,100dvh_-_var(--kbd,0px)_-_8px))]",
+            // Desktop is a full-height side panel: undo all three.
+            "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:max-h-none",
+            "sm:pb-[env(safe-area-inset-bottom)] sm:rounded-none sm:border-t-0 sm:border-l",
           )}
         >
-          {/*
-            Card colour continuing below the sheet, for as far as there is
-            screen.
-
-            Everything above depends on measuring the keyboard correctly, and
-            iOS gives several ways for that to be wrong: visualViewport may not
-            fire in a standalone web app, and a position:fixed element can drift
-            while the keyboard is up. Any of those leaves a strip of the page
-            showing between the sheet and the keys — which is what kept coming
-            back.
-
-            This does not measure anything. It paints from the sheet's own
-            bottom edge downwards, so whatever is under the sheet is the sheet's
-            colour whether the maths above was right or not. Off screen and
-            invisible when there is no keyboard, out of flow so it moves
-            nothing, and inherited rounding is irrelevant below the fold.
-          */}
-          <div
-            ref={filler}
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-full h-screen bg-card"
-          />
-
-          {/* Temporary, with the readout above. */}
-          {debugging ? (
-            <pre
-              ref={readout}
-              className="pointer-events-none fixed top-1 left-1 z-[100] rounded bg-black/85 px-1.5 py-1 font-mono text-[10px] leading-tight text-lime-300"
-            >
-              measuring…
-            </pre>
-          ) : null}
-
           {/* Grab handle: the only affordance telling you this can be dragged. */}
           <div
             aria-hidden
