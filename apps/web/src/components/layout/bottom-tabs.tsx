@@ -46,22 +46,30 @@ export function BottomTabs() {
         // softened — you are looking through the bar at something you can
         // still identify, which is the whole effect.
         //
-        // The tint only goes 65% -> 60%, because 60 is the floor. Contrast
-        // against the page is not the constraint — that improves as the bar
-        // gets more transparent, since the page is darker than the card. The
-        // constraint is the white CTAs that scroll under it: "Build a budget",
-        // the Add pill. Against white, an inactive --on-glass icon measures
-        // 4.05:1 at 65%, 3.42:1 at 60%, and 2.13:1 at 45% — under the 3:1
-        // WCAG 1.4.11 asks of a UI component, on the busiest tab in the app.
-        "bg-card/60 backdrop-blur-sm backdrop-saturate-[1.8]",
+        // --tabbar-tint, not --card: see the token. Tinting with the card
+        // colour made the bar disappear over a card, which is most of the
+        // Accounts screen.
+        //
+        // 60% is the floor for the tint. Contrast against the page is not the
+        // constraint — that improves as the bar gets more transparent, since
+        // the page is darker than the card. The constraint is the white CTAs
+        // that scroll under it: "Build a budget", the Add pill. Against white,
+        // an inactive --on-glass icon measures 3.88:1 at 60% and 2.4:1 at
+        // 45% — under the 3:1 WCAG 1.4.11 asks of a UI component.
+        "bg-[color-mix(in_srgb,var(--tabbar-tint)_60%,transparent)]",
+        "backdrop-blur-sm backdrop-saturate-[1.8]",
         // A hairline of light along the top edge is what separates glass
         // from a flat translucent panel. An explicit colour rather than
         // Tailwind's shadow-colour variable, which composes unreliably with
         // an arbitrary inset shadow.
         //
+        // Carrying more of the separation now that the bar is darker than what
+        // it floats over: the edge is what says "object", where the tone step
+        // alone only says "shadow".
+        //
         // Not a drop shadow: the flat-elevation rule is about casting
         // shadow onto the page, and this is a lit edge on the surface.
-        "border border-white/12 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)]",
+        "border border-white/18 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18)]",
       )}
     >
       <ul className="flex h-[var(--tabbar-height)] items-stretch">

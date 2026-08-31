@@ -340,4 +340,19 @@
      area still gets a visible gap rather than snapping flush. */
   --tabbar-inset: max(0.5rem, calc(env(safe-area-inset-bottom) - 1rem));
   --tabbar-clearance: calc(var(--tabbar-inset) + var(--tabbar-height) + var(--tabbar-gap));
+
+  /* Deliberately not --card.
+     
+     Tinting the bar with the card colour made it invisible the moment it
+     floated over a card: 60% of #161719 composited over #161719 is #161719
+     exactly, a ratio of 1.00:1. On the page background it looked fine, which
+     is why it survived — Accounts is a screen of stacked cards and it vanished
+     into them.
+     
+     Darker than both surfaces instead, so the bar steps down from whatever is
+     behind it rather than matching one of them. Over a card it reads close to
+     the page colour, which looks like seeing through to what is beneath —
+     the effect that was wanted. It also buys icon contrast over the white
+     CTAs that scroll under: 3.88:1 against 3.42:1 at the same opacity. */
+  --tabbar-tint: #08090a;
 }
