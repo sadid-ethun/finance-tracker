@@ -30,12 +30,12 @@ const mono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Finance Tracker",
+  title: "Fintrac",
   description: "Personal finance dashboard",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Finance",
+    title: "Fintrac",
     // Matches the canvas so the iOS status bar blends into the page.
     statusBarStyle: "default",
   },

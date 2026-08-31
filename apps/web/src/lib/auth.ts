@@ -68,7 +68,7 @@ function createAuth() {
       // Production: the app holds read access to real bank data, and a
       // password alone is not enough to gate that.
       twoFactor({
-        issuer: "Finance Tracker",
+        issuer: "Fintrac",
         // The code must be verified before 2FA is switched on, so a
         // misconfigured authenticator cannot lock the only account out.
         skipVerificationOnEnable: false,

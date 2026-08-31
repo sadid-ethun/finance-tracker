@@ -1,6 +1,6 @@
 {
-  "name": "Finance Tracker",
-  "short_name": "Finance",
+  "name": "Fintrac",
+  "short_name": "Fintrac",
   "description": "Your accounts, transactions, budgets, and investments in one place.",
   "start_url": "/transactions",
   "scope": "/",

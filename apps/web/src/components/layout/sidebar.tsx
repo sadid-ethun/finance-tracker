@@ -24,7 +24,7 @@ export function Sidebar({ userName }: { userName: string }) {
           className="rounded-[7px]"
         />
         <span className="text-[15px] font-semibold tracking-[-0.01em]">
-          Finance Tracker
+          Fintrac
         </span>
       </div>
 
