@@ -36,14 +36,15 @@ export function BottomTabs() {
         // cards above it rather than sitting a few pixels wider.
         "fixed inset-x-4 z-50 overflow-hidden rounded-full lg:hidden",
         "bottom-[var(--tabbar-inset)]",
-        // Glass: 60% over a 16px blur, with saturation keeping the colour
+        // Glass: 60% over a 4px blur, with saturation keeping the colour
         // that bleeds through from turning to grey mud.
         //
-        // The blur is where the glassiness comes from, and it drops 4x — from
-        // 64px. That much blur is frosted, not glass: whatever passed behind
-        // arrived as an unreadable smear, so the bar read as a solid tinted
-        // slab. At 16px content stays recognisable as it moves under, which is
-        // what makes it look like something you are seeing through.
+        // The blur is where the glassiness comes from, and it is down 16x from
+        // the 64px this started at. That much blur is frosted, not glass:
+        // whatever passed behind arrived as an unreadable smear, so the bar
+        // read as a solid tinted slab. At 4px the content underneath is barely
+        // softened — you are looking through the bar at something you can
+        // still identify, which is the whole effect.
         //
         // The tint only goes 65% -> 60%, because 60 is the floor. Contrast
         // against the page is not the constraint — that improves as the bar
@@ -52,7 +53,7 @@ export function BottomTabs() {
         // the Add pill. Against white, an inactive --on-glass icon measures
         // 4.05:1 at 65%, 3.42:1 at 60%, and 2.13:1 at 45% — under the 3:1
         // WCAG 1.4.11 asks of a UI component, on the busiest tab in the app.
-        "bg-card/60 backdrop-blur-lg backdrop-saturate-[1.8]",
+        "bg-card/60 backdrop-blur-sm backdrop-saturate-[1.8]",
         // A hairline of light along the top edge is what separates glass
         // from a flat translucent panel. An explicit colour rather than
         // Tailwind's shadow-colour variable, which composes unreliably with
