@@ -103,17 +103,27 @@ export function Sheet({
             panel.current?.focus();
           }}
           style={{
-            bottom: keyboard,
-            // Against the visible area, not the window: 88vh with the keyboard
-            // up is taller than the space left to draw in.
-            maxHeight: `calc(88dvh - ${keyboard}px)`,
+            // Padded, not lifted.
+            //
+            // Setting `bottom` to the measured keyboard height put the sheet's
+            // edge exactly where the keys were meant to start, so any error in
+            // that measurement showed as a strip of the page between the two.
+            // Staying anchored to the bottom and padding instead means the card
+            // always reaches the bottom of the screen: the content still clears
+            // the keys, and a wrong measurement costs a few pixels of card
+            // behind the keyboard, where nobody can see them.
+            paddingBottom: keyboard || undefined,
+            // Content is capped at whichever is smaller — the usual 88% of the
+            // screen, or what is left above the keyboard — and the padding is
+            // added back on top of that.
+            maxHeight: `calc(${keyboard}px + min(88dvh, 100dvh - ${keyboard + 8}px))`,
           }}
           className={cn(
-            "fixed inset-x-0 z-50 flex flex-col",
+            "fixed inset-x-0 bottom-0 z-50 flex flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",
-            // Content must clear the home indicator, not sit under it — but
-            // only when the keyboard is not already holding it clear.
-            keyboard === 0 && "pb-[env(safe-area-inset-bottom)]",
+            // Clears the home indicator when there is no keyboard doing it
+            // already. Inline padding above wins when there is.
+            "pb-[env(safe-area-inset-bottom)]",
             "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:rounded-none sm:border-t-0 sm:border-l",
           )}
         >

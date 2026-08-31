@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { FIELD } from "@/components/shared/field";
+import { FIELD, FIELD_DATE } from "@/components/shared/field";
 import { Sheet } from "@/components/shared/sheet";
 import { cn } from "@/lib/utils";
 import { useAccounts, useAssignableCategories, useCreateTransaction } from "@/hooks/use-finance";
@@ -162,7 +162,7 @@ export function AddTransactionDialog({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className={FIELD}
+              className={FIELD_DATE}
             />
           </div>
 
