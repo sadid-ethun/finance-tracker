@@ -245,9 +245,20 @@ export function InvestmentsView() {
             />
           </button>
         </div>
+      </section>
 
+      {/* Directly under the figure, which is the shape it explains: the value
+          above is where the line ends. The gain and basis below read as its
+          footnotes rather than as something standing between the two.
+
+          Portfolio value over time, the investments answer to the net-worth
+          chart. Reads holding_snapshots, written nightly on weekdays — markets
+          are closed at the weekend and a flat Saturday is not information. */}
+      <PerformanceChart />
+
+      <section>
         {summary.data ? (
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Card className="p-4">
               <p className="text-[13px] text-muted-foreground">
                 Unrealized gain
@@ -288,11 +299,6 @@ export function InvestmentsView() {
           </p>
         ) : null}
       </section>
-
-      {/* Portfolio value over time, the investments answer to the net-worth
-          chart. Reads holding_snapshots, written nightly on weekdays — markets
-          are closed at the weekend and a flat Saturday is not information. */}
-      <PerformanceChart />
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-3">

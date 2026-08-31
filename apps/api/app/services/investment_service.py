@@ -153,7 +153,15 @@ async def summary(db: AsyncSession, user_id: str) -> dict[str, Any]:
     today = date.today()
     previous = await db.scalar(
         select(func.sum(HoldingSnapshot.total_value))
-        .where(HoldingSnapshot.user_id == user_id, HoldingSnapshot.date < today)
+        .join(Account, Account.id == HoldingSnapshot.account_id)
+        .where(
+            HoldingSnapshot.user_id == user_id,
+            HoldingSnapshot.date < today,
+            # See performance() below: snapshots outlive the accounts that
+            # produced them, so a disconnected institution keeps contributing
+            # to any sum that does not exclude it.
+            Account.deleted_at.is_(None),
+        )
         .group_by(HoldingSnapshot.date)
         .order_by(HoldingSnapshot.date.desc())
         .limit(1)
@@ -210,7 +218,24 @@ async def allocation(
 
 
 async def performance(db: AsyncSession, user_id: str, *, days: int = 180) -> list[dict[str, Any]]:
-    """Portfolio value over time, summed across accounts per day."""
+    """Portfolio value over time, summed across live accounts per day.
+
+    Live is the operative word. A snapshot is a historical row and outlives the
+    account that produced it, so re-linking an institution — which is how the
+    history window gets widened — leaves the old account's snapshots sitting
+    alongside the new one's. Summing both counts the same holdings twice for
+    every day the two overlapped, which drew a spike to double the real value
+    and then a cliff on the day the old item was disconnected.
+
+    The writer already excludes dead accounts, so nothing new is wrong; this is
+    the read side catching up with it. Every other query in this file joins
+    Account for exactly this reason, and these two did not.
+
+    Filtering rather than deleting the rows: they are an accurate record of an
+    account that existed, and the chart's job is to show the accounts that
+    still do. One consequence worth knowing — history from before a re-link
+    belongs to the old account and drops out of the chart with it.
+    """
     since = date.today() - timedelta(days=days)
 
     rows = (
@@ -220,7 +245,12 @@ async def performance(db: AsyncSession, user_id: str, *, days: int = 180) -> lis
                 func.sum(HoldingSnapshot.total_value).label("value"),
                 func.sum(HoldingSnapshot.total_cost_basis).label("cost"),
             )
-            .where(HoldingSnapshot.user_id == user_id, HoldingSnapshot.date >= since)
+            .join(Account, Account.id == HoldingSnapshot.account_id)
+            .where(
+                HoldingSnapshot.user_id == user_id,
+                HoldingSnapshot.date >= since,
+                Account.deleted_at.is_(None),
+            )
             .group_by(HoldingSnapshot.date)
             .order_by(HoldingSnapshot.date)
         )
