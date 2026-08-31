@@ -127,6 +127,28 @@ export function Sheet({
             "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:rounded-none sm:border-t-0 sm:border-l",
           )}
         >
+          {/*
+            Card colour continuing below the sheet, for as far as there is
+            screen.
+
+            Everything above depends on measuring the keyboard correctly, and
+            iOS gives several ways for that to be wrong: visualViewport may not
+            fire in a standalone web app, and a position:fixed element can drift
+            while the keyboard is up. Any of those leaves a strip of the page
+            showing between the sheet and the keys — which is what kept coming
+            back.
+
+            This does not measure anything. It paints from the sheet's own
+            bottom edge downwards, so whatever is under the sheet is the sheet's
+            colour whether the maths above was right or not. Off screen and
+            invisible when there is no keyboard, out of flow so it moves
+            nothing, and inherited rounding is irrelevant below the fold.
+          */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-full h-screen bg-card"
+          />
+
           {/* Grab handle: the only affordance telling you this can be dragged. */}
           <div
             aria-hidden
