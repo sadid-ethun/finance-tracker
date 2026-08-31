@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { FIELD } from "@/components/shared/field";
 import { Sheet } from "@/components/shared/sheet";
+import { cn } from "@/lib/utils";
 import { useAccounts, useAssignableCategories, useCreateTransaction } from "@/hooks/use-finance";
 import { isLiability } from "@/lib/format";
 
@@ -107,7 +109,7 @@ export function AddTransactionDialog({
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
                 required
-                className="h-11 w-full rounded-[14px] border border-input bg-background px-3 text-[15px] outline-none focus:border-ring"
+                className={FIELD}
               >
                 <option value="">Select an account…</option>
                 {(accounts.data ?? []).map((a) => (
@@ -132,7 +134,7 @@ export function AddTransactionDialog({
               onChange={(e) => setAmount(e.target.value)}
               required
               placeholder="0.00"
-              className="tabular h-11 w-full rounded-[14px] border border-input bg-background px-3.5 text-[15px] outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+              className={cn(FIELD, "tabular")}
             />
           </div>
 
@@ -146,7 +148,7 @@ export function AddTransactionDialog({
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Whole Foods"
-              className="h-11 w-full rounded-[14px] border border-input bg-background px-3.5 text-[15px] outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+              className={FIELD}
             />
           </div>
 
@@ -160,7 +162,7 @@ export function AddTransactionDialog({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="h-11 w-full rounded-[14px] border border-input bg-background px-3.5 text-[15px] outline-none focus:border-ring"
+              className={FIELD}
             />
           </div>
 
@@ -172,7 +174,7 @@ export function AddTransactionDialog({
               id="tx-category"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="h-11 w-full rounded-[14px] border border-input bg-background px-3 text-[15px] outline-none focus:border-ring"
+              className={FIELD}
             >
               <option value="">Uncategorized</option>
               {usableCategories.map((c) => (

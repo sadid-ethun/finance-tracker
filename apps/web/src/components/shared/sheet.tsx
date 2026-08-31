@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Drawer } from "vaul";
 
 import { cn } from "@/lib/utils";
@@ -31,8 +31,50 @@ export function Sheet({
 }) {
   const panel = useRef<HTMLDivElement | null>(null);
 
+  /**
+   * How far the keyboard intrudes from the bottom of the window.
+   *
+   * iOS does not resize the layout viewport when the keyboard opens, so a
+   * bottom-anchored sheet keeps its bottom edge under the keyboard and any
+   * field near it becomes unreachable. Only visualViewport reports the change.
+   *
+   * Vaul offers repositionInputs for this and it is turned off below: it
+   * shifted the whole drawer up by the keyboard height, which on a
+   * content-height sheet left the panel clipped in the middle of the form with
+   * the overlay showing beneath it. Lifting the sheet by the same measurement
+   * keeps it anchored to the top of the keyboard instead, so the form is
+   * whole and the field being typed into is above the keys.
+   */
+  const [keyboard, setKeyboard] = useState(0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!open || !vv) return;
+
+    const measure = () => {
+      // What the window has that the visible area does not.
+      const hidden = window.innerHeight - vv.height - vv.offsetTop;
+      // Rounded, so sub-pixel drift during the keyboard animation does not
+      // re-render on every frame.
+      setKeyboard(Math.max(0, Math.round(hidden)));
+    };
+
+    // Not measured synchronously here. The sheet opens with no field focused
+    // and so no keyboard, which is what 0 already says — and a setState in an
+    // effect body cascades a render the compiler lint rejects. The first real
+    // measurement comes from the event, which is when it first differs.
+    vv.addEventListener("resize", measure);
+    vv.addEventListener("scroll", measure);
+    return () => {
+      vv.removeEventListener("resize", measure);
+      vv.removeEventListener("scroll", measure);
+      // Reset on close, or the next open starts lifted by the last keyboard.
+      setKeyboard(0);
+    };
+  }, [open]);
+
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+    <Drawer.Root open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <Drawer.Portal>
         {/* Heavier than a light-theme scrim would be: on a near-black canvas
             a 30% overlay is barely perceptible, so the sheet would not read
@@ -60,11 +102,18 @@ export function Sheet({
             event.preventDefault();
             panel.current?.focus();
           }}
+          style={{
+            bottom: keyboard,
+            // Against the visible area, not the window: 88vh with the keyboard
+            // up is taller than the space left to draw in.
+            maxHeight: `calc(88dvh - ${keyboard}px)`,
+          }}
           className={cn(
-            "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col",
+            "fixed inset-x-0 z-50 flex flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",
-            // Content must clear the home indicator, not sit under it.
-            "pb-[env(safe-area-inset-bottom)]",
+            // Content must clear the home indicator, not sit under it — but
+            // only when the keyboard is not already holding it clear.
+            keyboard === 0 && "pb-[env(safe-area-inset-bottom)]",
             "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:rounded-none sm:border-t-0 sm:border-l",
           )}
         >
