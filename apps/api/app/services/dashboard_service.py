@@ -22,7 +22,8 @@ from typing import Any
 from sqlalchemy import ColumnElement, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.account import NetWorthSnapshot
+from app.core.money import net_worth_contribution
+from app.models.account import Account, AccountBalanceSnapshot, NetWorthSnapshot
 from app.models.category import Category
 from app.models.transaction import Transaction
 from app.services.account_service import summarize_balances
@@ -224,26 +225,89 @@ async def cash_flow(db: AsyncSession, user_id: str, *, months: int = 6) -> list[
 async def net_worth_series(
     db: AsyncSession, user_id: str, *, range_key: str = "6m"
 ) -> list[dict[str, Any]]:
-    """Historical net worth from daily snapshots."""
-    stmt = select(NetWorthSnapshot).where(NetWorthSnapshot.user_id == user_id)
+    """Historical net worth, summed per day from per-account balances.
 
+    Derived rather than read. net_worth_snapshots holds one pre-aggregated
+    total per user per day, which cannot be corrected after the fact: if two
+    items for the same institution were connected at once, that day's row is a
+    true record of a doubled balance with no account attribution left to
+    filter. Disconnecting the duplicate does not repair it, and the backfill
+    skips days that already have a row, so the wrong figure is permanent.
+
+    account_balance_snapshots holds the same history one row per account, so
+    the total can be recomputed from whichever accounts are live *now*. Remove
+    a duplicated institution and every day it touched corrects itself — the
+    same property that makes the portfolio chart self-healing.
+
+    Falls back to the pre-aggregated table for any date with no per-account
+    rows. Those snapshots began part-way through the app's life, and a chart
+    that silently truncated to where they start would look like lost history.
+    """
     start = _range_start(range_key)
-    if start is not None:
-        stmt = stmt.where(NetWorthSnapshot.date >= start)
 
-    snapshots: Sequence[NetWorthSnapshot] = (
-        await db.scalars(stmt.order_by(NetWorthSnapshot.date))
-    ).all()
-
-    return [
-        {
-            "date": s.date.isoformat(),
-            "net_worth": s.net_worth,
-            "assets": s.assets,
-            "liabilities": s.liabilities,
-        }
-        for s in snapshots
+    account_filters = [
+        Account.user_id == user_id,
+        Account.deleted_at.is_(None),
+        # Matches summarize_balances: hiding an account from the list must not
+        # move the headline figure; only opting out does.
+        Account.include_in_net_worth.is_(True),
     ]
+
+    stmt = (
+        select(
+            AccountBalanceSnapshot.date,
+            Account.type,
+            func.sum(AccountBalanceSnapshot.balance_current).label("balance"),
+        )
+        .join(Account, Account.id == AccountBalanceSnapshot.account_id)
+        .where(*account_filters)
+        .group_by(AccountBalanceSnapshot.date, Account.type)
+    )
+    if start is not None:
+        stmt = stmt.where(AccountBalanceSnapshot.date >= start)
+
+    # date -> {account type: summed balance}
+    by_day: dict[date, dict[str, int]] = {}
+    for row in (await db.execute(stmt)).all():
+        by_day.setdefault(row.date, {})[row.type] = int(row.balance)
+
+    series: dict[date, dict[str, Any]] = {}
+    for on, balances in by_day.items():
+        assets = 0
+        liabilities = 0
+        for account_type, balance in balances.items():
+            # One place converts a balance to a signed contribution, and it is
+            # not here — liabilities are stored positive.
+            contribution = net_worth_contribution(account_type, balance)
+            if contribution >= 0:
+                assets += contribution
+            else:
+                liabilities += -contribution
+
+        series[on] = {
+            "date": on.isoformat(),
+            "net_worth": assets - liabilities,
+            "assets": assets,
+            "liabilities": liabilities,
+        }
+
+    # Older dates, from before per-account snapshots were being written.
+    legacy = select(NetWorthSnapshot).where(NetWorthSnapshot.user_id == user_id)
+    if start is not None:
+        legacy = legacy.where(NetWorthSnapshot.date >= start)
+
+    snapshots: Sequence[NetWorthSnapshot] = (await db.scalars(legacy)).all()
+    for snapshot in snapshots:
+        if snapshot.date in series:
+            continue
+        series[snapshot.date] = {
+            "date": snapshot.date.isoformat(),
+            "net_worth": snapshot.net_worth,
+            "assets": snapshot.assets,
+            "liabilities": snapshot.liabilities,
+        }
+
+    return [series[on] for on in sorted(series)]
 
 
 async def dashboard_summary(
