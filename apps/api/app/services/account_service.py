@@ -211,6 +211,15 @@ async def accrue_interest(db: AsyncSession, on: date | None = None) -> int:
         if not is_liability(account.type):
             continue
 
+        # Narrowed here rather than relied on from the query. The WHERE clause
+        # above already excludes null and zero, but that is a fact about the
+        # rows, not about the type — mypy sees `int | None` and is right to.
+        # A real guard is also the honest one: a rate cleared between the query
+        # and this loop would otherwise divide by nothing.
+        bps = account.interest_rate_bps
+        if not bps:
+            continue
+
         since = account.interest_accrued_on
         # No start date means it predates the column; begin from today rather
         # than compounding an unknown stretch of history in one night.
@@ -223,7 +232,7 @@ async def accrue_interest(db: AsyncSession, on: date | None = None) -> int:
             continue
 
         # Decimal throughout: this compounds, so a float's error would too.
-        rate = Decimal(account.interest_rate_bps) / Decimal(10_000)
+        rate = Decimal(bps) / Decimal(10_000)
         factor = (Decimal(1) + rate / Decimal(365)) ** days
         grown = (Decimal(account.balance_current) * factor).to_integral_value(
             rounding=ROUND_HALF_UP
