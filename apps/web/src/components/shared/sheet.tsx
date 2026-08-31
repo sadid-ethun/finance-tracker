@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Drawer } from "vaul";
 
 import { cn } from "@/lib/utils";
@@ -15,6 +15,37 @@ import { cn } from "@/lib/utils";
  *
  * On desktop it becomes a right-hand panel — the drag affordance is
  * meaningless with a mouse, and the previous layout already did this.
+ *
+ * ## Known limitation: the iOS keyboard
+ *
+ * On an iOS home-screen web app, opening the keyboard leaves a strip of the
+ * page visible between the sheet and the keys. Eight attempts failed to fix
+ * it, so this is a plain bottom sheet again and the strip stands. It is
+ * cosmetic: the form is usable and the fields are reachable.
+ *
+ * What was learned, so the next attempt does not start where these did:
+ *
+ *   - The usual fix is `innerHeight - visualViewport.height -
+ *     visualViewport.offsetTop`. It works in Safari and returns zero in a
+ *     home-screen web app, because innerHeight shrinks with the keyboard
+ *     exactly as visualViewport.height does. Anything built on it is a layout
+ *     driven by a number that is always 0 — which is why the same code could
+ *     measure correctly in a desktop browser and do nothing on the phone.
+ *   - Anchoring to `visualViewport.offsetTop + height`, with top and a -100%
+ *     translate, avoids that and lands exactly on the mark in a browser
+ *     against a simulated keyboard and page shift. It still did not fix the
+ *     device, so something beyond the arithmetic is involved.
+ *   - Vaul owns `transform` on Drawer.Content for its animation and drag, so
+ *     positioning must use the separate `translate` property or be silently
+ *     overwritten.
+ *   - Extending the sheet's own background far below the fold does not help,
+ *     which argues the strip is not simply uncovered ground.
+ *   - repositionInputs is Vaul's own answer and is off below: it shifts the
+ *     drawer up bodily, which on a content-height sheet clips the form in the
+ *     middle. That is worse than the strip.
+ *
+ * If it is picked up again: a wrapper owning position while Vaul keeps the
+ * content, or dropping Vaul here for a plain dialog, are the untried paths.
  */
 export function Sheet({
   open,
@@ -30,129 +61,6 @@ export function Sheet({
   footer?: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement | null>(null);
-
-
-  /**
-   * Where the visible area ends, in layout coordinates.
-   *
-   * The sheet is anchored to this rather than to the bottom of the window, and
-   * that distinction is the whole fix.
-   *
-   * Seven attempts before this one all reduced to the same number:
-   * `innerHeight - visualViewport.height - visualViewport.offsetTop`, which is
-   * the fallback every write-up on this recommends. It works in Safari. In a
-   * home-screen web app it returns zero, because innerHeight shrinks with the
-   * keyboard exactly as visualViewport.height does — subtract two values that
-   * moved together and nothing is left. So no padding was ever applied, and
-   * every fix built on top of it was fixing a layout that already worked.
-   *
-   * innerHeight is not read at all now. `offsetTop + height` is where the
-   * visible area ends whatever the window thinks its own size is, and it also
-   * folds in the page shift: iOS does not merely uncover the keyboard, it
-   * pushes the document up, and offsetTop is that push. The old formula
-   * subtracted it as if it were more hidden height.
-   *
-   * Positioned with `top` plus a -100% translate rather than `bottom`, which
-   * is the documented technique — bottom resolves against the layout viewport,
-   * and the layout viewport is the thing that cannot be trusted here.
-   */
-  const [anchor, setAnchor] = useState<number | null>(null);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!open || !vv) return;
-
-    const measure = () => {
-      // Rounded, so sub-pixel drift during the keyboard animation does not
-      // re-render on every frame.
-      setAnchor(Math.round(vv.offsetTop + vv.height));
-    };
-
-    // Focus is what raises the keyboard, so focus is what starts measuring.
-    //
-    // Relying on visualViewport's resize event alone was the bug. Simulating a
-    // keyboard in a desktop browser showed the arithmetic and the layout both
-    // correct — padding applied, card reaching the bottom of the screen — which
-    // leaves only the event never arriving. iOS does not reliably fire it in a
-    // standalone web app, and with no synchronous measurement either (a
-    // setState in an effect body cascades a render the compiler lint rejects)
-    // the height stayed 0 forever and no padding was ever applied.
-    //
-    // Sampling across the keyboard animation instead: it takes about a quarter
-    // of a second to slide up, and polling for twice that costs a handful of
-    // frames once per focus. The resize listener stays because where it does
-    // fire it is faster and catches the keyboard closing or switching between
-    // the number pad and letters, which differ in height.
-    let poll = 0;
-    const sample = () => {
-      const started = Date.now();
-      cancelAnimationFrame(poll);
-      const step = () => {
-        measure();
-        if (Date.now() - started < 500) poll = requestAnimationFrame(step);
-      };
-      poll = requestAnimationFrame(step);
-    };
-
-    // On document, not on the panel: the panel mounts inside a portal and its
-    // ref may still be null when this runs. Focus is trapped in the sheet
-    // while it is open, so anything focused here is in it.
-    document.addEventListener("focusin", sample);
-    document.addEventListener("focusout", sample);
-    vv.addEventListener("resize", measure);
-    vv.addEventListener("scroll", measure);
-    return () => {
-      cancelAnimationFrame(poll);
-      document.removeEventListener("focusin", sample);
-      document.removeEventListener("focusout", sample);
-      vv.removeEventListener("resize", measure);
-      vv.removeEventListener("scroll", measure);
-      // Reset on close, or the next open starts anchored to the last keyboard.
-      setAnchor(null);
-    };
-  }, [open]);
-
-  /**
-   * Temporary: what the sheet and the viewport actually measure, on device.
-   *
-   * Enabled with ?sheetdebug=1. Five fixes have now reasoned from an
-   * assumption about how iOS reports the keyboard and been wrong, so this
-   * reports the numbers instead. Writes straight to the DOM, like the pull
-   * gesture's readout did — React state would change the timing of what it is
-   * measuring. Delete once the sheet sits right.
-   */
-  const readout = useRef<HTMLPreElement | null>(null);
-  const [debugging] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).has("sheetdebug"),
-  );
-
-  useEffect(() => {
-    if (!debugging || !open) return;
-    let frame = 0;
-
-    const tick = () => {
-      const box = readout.current;
-      const vv = window.visualViewport;
-      if (box && vv) {
-        const p = panel.current?.getBoundingClientRect();
-        box.textContent = [
-          `innerHeight  ${window.innerHeight}`,
-          `vv.height    ${Math.round(vv.height)}`,
-          `vv.offsetTop ${Math.round(vv.offsetTop)}`,
-          `vv.pageTop   ${Math.round(vv.pageTop)}`,
-          `scrollY      ${Math.round(window.scrollY)}`,
-          `anchor       ${anchor}`,
-          p ? `sheet  ${Math.round(p.top)}..${Math.round(p.bottom)} h=${Math.round(p.height)}` : "sheet  -",
-        ].join("\n");
-      }
-      frame = requestAnimationFrame(tick);
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [debugging, open, anchor]);
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange} repositionInputs={false}>
@@ -170,8 +78,8 @@ export function Sheet({
            * The default lands on whatever is focusable first, which in both add
            * dialogs is a text input — so the keyboard sprang up unasked, and
            * iOS scrolled the page behind the sheet to bring that field into
-           * view. That is the jump to the bottom of the page, and it survived
-           * moving these into a portal because it was never about stacking.
+           * view, leaving it at the bottom of the page. This one did work, and
+           * is the reason the sheet still opens quietly.
            *
            * Focus moves to the panel itself rather than nowhere. Leaving it on
            * the trigger would put the next Tab press back in the page behind
@@ -183,39 +91,13 @@ export function Sheet({
             event.preventDefault();
             panel.current?.focus();
           }}
-          style={
-            anchor === null
-              ? undefined
-              : {
-                  // Bottom edge on the bottom of the *visible* area. `bottom`
-                  // would resolve against the layout viewport, which is the
-                  // one thing here that cannot be trusted.
-                  top: `${anchor}px`,
-                  bottom: "auto",
-                  // `translate`, not `transform`. Vaul owns transform on this
-                  // element — it drives the open animation and the drag from
-                  // it — so anything written there is overwritten, which the
-                  // browser showed as the sheet landing 95px off its anchor.
-                  // translate is a separate property that composes with it.
-                  translate: "0 -100%",
-                  // Never taller than the visible area, so the form cannot
-                  // extend behind the keys it is sitting above.
-                  maxHeight: `min(88dvh, ${anchor - 8}px)`,
-                }
-          }
           className={cn(
-            "fixed inset-x-0 z-50 flex flex-col",
+            "fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",
-            // Until the visual viewport has been read — and on anything that
-            // does not implement it — this is an ordinary bottom sheet.
-            "bottom-0 max-h-[88dvh]",
+            // Content must clear the home indicator, not sit under it.
             "pb-[env(safe-area-inset-bottom)]",
-            // Desktop is a full-height side panel. The inline styles above are
-            // mobile-only concerns, so they are cleared here.
-            "sm:inset-y-0! sm:right-0 sm:left-auto sm:w-[420px] sm:max-h-none!",
-            // translate-none clears the property actually being set above.
-            // transform is left alone: it is Vaul's.
-            "sm:translate-none! sm:rounded-none sm:border-t-0 sm:border-l",
+            "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:max-h-none",
+            "sm:rounded-none sm:border-t-0 sm:border-l",
           )}
         >
           {/* Grab handle: the only affordance telling you this can be dragged. */}
