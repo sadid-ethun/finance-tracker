@@ -300,6 +300,18 @@ async def sync_all_investments(db: AsyncSession, user_id: str) -> list[SyncRun]:
     # would then lazy-load an expired attribute and die with MissingGreenlet,
     # so the first broken institution took all the healthy ones down with it:
     # the exact opposite of what the `continue` below is for.
+    #
+    # Restricted to items that actually hold a brokerage account. Asking every
+    # institution nightly meant a bank without one failed every night forever —
+    # NO_INVESTMENT_ACCOUNTS and PRODUCTS_NOT_SUPPORTED, recorded as errors,
+    # accumulating in sync_runs and burying any investments failure that
+    # mattered. Neither is a fault to fix: a chequing account has no holdings,
+    # and it never will.
+    #
+    # Answered from the account types already stored rather than by asking
+    # Plaid, so it costs nothing. import_accounts runs at link time, so the
+    # types are in place before any investments sync, and a brokerage opened
+    # later brings its account with it and starts qualifying on its own.
     item_ids = list(
         (
             await db.scalars(
@@ -307,6 +319,12 @@ async def sync_all_investments(db: AsyncSession, user_id: str) -> list[SyncRun]:
                     PlaidItem.user_id == user_id,
                     PlaidItem.deleted_at.is_(None),
                     PlaidItem.status != "error",
+                    PlaidItem.id.in_(
+                        select(Account.plaid_item_id).where(
+                            Account.type == "investment",
+                            Account.deleted_at.is_(None),
+                        )
+                    ),
                 )
             )
         ).all()
