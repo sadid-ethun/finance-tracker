@@ -31,7 +31,7 @@ from app.models.rule import Rule
 from app.models.transaction import Transaction
 from app.services.categorization import categorize
 from app.services.category_service import ensure_categories
-from app.services.plaid import client
+from app.services.plaid import client, link
 from app.services.plaid.mappers import map_transaction
 from app.services.transfer_service import detect_transfers
 
@@ -71,6 +71,32 @@ async def sync_item_transactions(db: AsyncSession, item: PlaidItem) -> SyncRun:
     # Deliberately before the SyncRun below: this commits, and it must not do so
     # inside the transaction that carries the cursor and its rows.
     await ensure_categories(db, item.user_id)
+
+    # Balances, before the transactions.
+    #
+    # Refreshing them was reachable only from the link flow, so an account's
+    # balance was written once when the bank was connected and never again.
+    # Transactions kept arriving hourly, which hid it: the list grew while net
+    # worth — derived entirely from balance_current — sat frozen at link day.
+    #
+    # Failure here must not stop the sync. A balances call that errors is a
+    # stale figure; a transaction sync that stops is a ledger with holes in it,
+    # and the second is much worse. Logged and stepped over.
+    #
+    # Deliberately no rollback in the handler. import_accounts issues its Plaid
+    # call before touching the ORM, so a PlaidError leaves the session clean and
+    # there is nothing to undo — while a rollback here would expire `item`, and
+    # every line below reads it. That is the MissingGreenlet this module was
+    # bitten by once already, raised from inside the handler for the error it
+    # was supposed to be recording.
+    try:
+        await link.refresh_account_balances(db, item)
+    except client.PlaidError as exc:
+        logger.warning(
+            "balance_refresh_failed",
+            item_id=str(item.id),
+            plaid_error_code=exc.plaid_error_code,
+        )
 
     # Captured while the instance is still live. The except block below runs
     # after a rollback, which expires every ORM object in the session; reading

@@ -156,6 +156,22 @@ async def import_accounts(db: AsyncSession, item: PlaidItem) -> list[Account]:
     return accounts
 
 
+async def refresh_account_balances(db: AsyncSession, item: PlaidItem) -> int:
+    """Re-read an item's balances from the institution.
+
+    import_accounts was reachable only from the link flow, so balances — and
+    with them net worth — were written once when a bank was connected and never
+    again. Transactions kept syncing hourly, which made the staleness invisible:
+    the list grew while the headline figure sat at whatever it was on link day.
+
+    Committed separately from the transaction sync that calls it. The two fail
+    independently and neither should be able to roll the other back.
+    """
+    accounts = await import_accounts(db, item)
+    await db.commit()
+    return len(accounts)
+
+
 async def get_item(db: AsyncSession, user_id: str, item_id: UUID) -> PlaidItem:
     item = await db.scalar(
         select(PlaidItem).where(
