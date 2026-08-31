@@ -78,7 +78,6 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              autoFocus
               placeholder="Everyday Checking"
               className="h-11 w-full rounded-[14px] border border-input bg-background px-3.5 text-[15px] outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
             />

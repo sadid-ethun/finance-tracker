@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Drawer } from "vaul";
 
 import { cn } from "@/lib/utils";
@@ -29,6 +29,8 @@ export function Sheet({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const panel = useRef<HTMLDivElement | null>(null);
+
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
@@ -37,7 +39,27 @@ export function Sheet({
             as separated from the page behind it. */}
         <Drawer.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px]" />
         <Drawer.Content
+          ref={panel}
           aria-describedby={undefined}
+          /**
+           * Do not put focus in the first field on open.
+           *
+           * The default lands on whatever is focusable first, which in both add
+           * dialogs is a text input — so the keyboard sprang up unasked, and
+           * iOS scrolled the page behind the sheet to bring that field into
+           * view. That is the jump to the bottom of the page, and it survived
+           * moving these into a portal because it was never about stacking.
+           *
+           * Focus moves to the panel itself rather than nowhere. Leaving it on
+           * the trigger would put the next Tab press back in the page behind
+           * the sheet; on the panel, tabbing walks the form and the focus trap
+           * holds. Radix gives Content tabIndex={-1}, so it can take focus
+           * without becoming a stop of its own.
+           */
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            panel.current?.focus();
+          }}
           className={cn(
             "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",

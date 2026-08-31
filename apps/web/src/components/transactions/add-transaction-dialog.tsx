@@ -131,7 +131,6 @@ export function AddTransactionDialog({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
-              autoFocus
               placeholder="0.00"
               className="tabular h-11 w-full rounded-[14px] border border-input bg-background px-3.5 text-[15px] outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
