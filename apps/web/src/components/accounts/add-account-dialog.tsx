@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 
 import { useState } from "react";
 
+import { Sheet } from "@/components/shared/sheet";
 import { useCreateAccount } from "@/hooks/use-finance";
 import { ACCOUNT_TYPE_LABELS, isLiability } from "@/lib/format";
 
@@ -38,8 +39,19 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
     setOpen(false);
   }
 
-  if (!open) {
-    return (
+  // The trigger stays mounted and the sheet portals out of the page.
+  //
+  // It used to swap itself for a hand-rolled `fixed inset-0 z-50` panel, which
+  // went wrong twice over. That z-50 ties with the tab bar's, so the winner was
+  // decided by document order — and the tab bar, rendered after the page,
+  // covered the submit button. And unmounting the trigger to mount the panel
+  // moved focus from a node that no longer existed, which sent iOS scrolling
+  // to the bottom of the page behind the sheet.
+  //
+  // Sheet is the component that already solved this: a portal above everything,
+  // scroll locking, focus trapping, and padding that clears the home indicator.
+  return (
+    <>
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -47,12 +59,8 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
       >
         {trigger}
       </button>
-    );
-  }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-md rounded-t-card border border-border bg-card p-5 sm:rounded-card">
+      <Sheet open={open} onOpenChange={setOpen} title="Add account">
         <h2 className="text-[18px] font-semibold">Add account</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
           {isLiability(type)
@@ -134,8 +142,8 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </Sheet>
+    </>
   );
 }
 

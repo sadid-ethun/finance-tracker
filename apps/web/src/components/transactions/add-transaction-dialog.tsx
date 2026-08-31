@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Sheet } from "@/components/shared/sheet";
 import { useAccounts, useAssignableCategories, useCreateTransaction } from "@/hooks/use-finance";
 import { isLiability } from "@/lib/format";
 
@@ -54,8 +55,15 @@ export function AddTransactionDialog({
     setOpen(false);
   }
 
-  if (!open) {
-    return (
+  const usableCategories = (categories.data ?? []).filter((c) =>
+    direction === "income" ? c.kind !== "expense" : c.kind !== "income",
+  );
+
+  // Same reasoning as add-account-dialog: the trigger stays mounted and the
+  // sheet portals out, rather than the trigger swapping itself for a fixed
+  // panel that the tab bar then painted over.
+  return (
+    <>
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -63,16 +71,8 @@ export function AddTransactionDialog({
       >
         {trigger}
       </button>
-    );
-  }
 
-  const usableCategories = (categories.data ?? []).filter((c) =>
-    direction === "income" ? c.kind !== "expense" : c.kind !== "income",
-  );
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:items-center sm:p-4">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-card border border-border bg-card p-5 sm:rounded-card">
+      <Sheet open={open} onOpenChange={setOpen} title="Add transaction">
         <h2 className="text-[18px] font-semibold">Add transaction</h2>
 
         <div className="mt-4 grid grid-cols-2 gap-1 rounded-[14px] bg-secondary p-1">
@@ -207,7 +207,7 @@ export function AddTransactionDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </Sheet>
+    </>
   );
 }
