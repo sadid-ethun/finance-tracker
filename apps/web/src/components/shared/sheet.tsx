@@ -183,10 +183,17 @@ export function Sheet({
           className={cn(
             "fixed inset-x-0 z-50 flex flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",
-            // The box hangs 60vh below the screen and the same 60vh of padding
-            // pushes the content back up. Net effect: the sheet looks exactly
-            // as it did, and its own background runs most of a screen past the
+            // The box hangs two screens below the fold, and the same amount of
+            // padding pushes the content back up. Net effect: the sheet looks
+            // exactly as it did, and its own background runs far past the
             // bottom edge.
+            //
+            // Two screens rather than a slice of one, because iOS does not just
+            // uncover the keyboard — it shifts the whole page up to make room.
+            // The reserve travels up with the sheet, so anything sized to the
+            // keyboard gets eaten by the shift and the gap comes back. 60vh was
+            // not enough for that; 200vh is past anything iOS can shift by, and
+            // costs nothing, because every pixel of the excess is off screen.
             //
             // This is what fixes the strip of page below the sheet, and it does
             // so without measuring anything. Every earlier attempt positioned
@@ -197,12 +204,12 @@ export function Sheet({
             //
             // Verified in a browser before shipping: the first field does not
             // move by a pixel, and the box ends 494px below a 986px viewport.
-            "bottom-[-60vh]",
-            "pb-[calc(60vh_+_env(safe-area-inset-bottom)_+_var(--kbd,0px))]",
-            // Grown by the same 60vh, or max-height caps the box and the
+            "bottom-[-200vh]",
+            "pb-[calc(200vh_+_env(safe-area-inset-bottom)_+_var(--kbd,0px))]",
+            // Grown by the same 200vh, or max-height caps the box and the
             // padding eats the content area instead of extending it — which is
             // what the first attempt at this did.
-            "max-h-[calc(60vh_+_var(--kbd,0px)_+_min(88dvh,100dvh_-_var(--kbd,0px)_-_8px))]",
+            "max-h-[calc(200vh_+_var(--kbd,0px)_+_min(88dvh,100dvh_-_var(--kbd,0px)_-_8px))]",
             // Desktop is a full-height side panel: undo all three.
             "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:max-h-none",
             "sm:pb-[env(safe-area-inset-bottom)] sm:rounded-none sm:border-t-0 sm:border-l",
