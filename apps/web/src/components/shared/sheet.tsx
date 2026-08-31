@@ -33,31 +33,39 @@ export function Sheet({
 
 
   /**
-   * How far the keyboard intrudes from the bottom of the window.
+   * Where the visible area ends, in layout coordinates.
    *
-   * iOS does not resize the layout viewport when the keyboard opens, so a
-   * bottom-anchored sheet keeps its bottom edge under the keyboard and any
-   * field near it becomes unreachable. Only visualViewport reports the change.
+   * The sheet is anchored to this rather than to the bottom of the window, and
+   * that distinction is the whole fix.
    *
-   * Vaul offers repositionInputs for this and it is turned off below: it
-   * shifted the whole drawer up by the keyboard height, which on a
-   * content-height sheet left the panel clipped in the middle of the form with
-   * the overlay showing beneath it. Lifting the sheet by the same measurement
-   * keeps it anchored to the top of the keyboard instead, so the form is
-   * whole and the field being typed into is above the keys.
+   * Seven attempts before this one all reduced to the same number:
+   * `innerHeight - visualViewport.height - visualViewport.offsetTop`, which is
+   * the fallback every write-up on this recommends. It works in Safari. In a
+   * home-screen web app it returns zero, because innerHeight shrinks with the
+   * keyboard exactly as visualViewport.height does — subtract two values that
+   * moved together and nothing is left. So no padding was ever applied, and
+   * every fix built on top of it was fixing a layout that already worked.
+   *
+   * innerHeight is not read at all now. `offsetTop + height` is where the
+   * visible area ends whatever the window thinks its own size is, and it also
+   * folds in the page shift: iOS does not merely uncover the keyboard, it
+   * pushes the document up, and offsetTop is that push. The old formula
+   * subtracted it as if it were more hidden height.
+   *
+   * Positioned with `top` plus a -100% translate rather than `bottom`, which
+   * is the documented technique — bottom resolves against the layout viewport,
+   * and the layout viewport is the thing that cannot be trusted here.
    */
-  const [keyboard, setKeyboard] = useState(0);
+  const [anchor, setAnchor] = useState<number | null>(null);
 
   useEffect(() => {
     const vv = window.visualViewport;
     if (!open || !vv) return;
 
     const measure = () => {
-      // What the window has that the visible area does not.
-      const hidden = window.innerHeight - vv.height - vv.offsetTop;
       // Rounded, so sub-pixel drift during the keyboard animation does not
       // re-render on every frame.
-      setKeyboard(Math.max(0, Math.round(hidden)));
+      setAnchor(Math.round(vv.offsetTop + vv.height));
     };
 
     // Focus is what raises the keyboard, so focus is what starts measuring.
@@ -99,8 +107,8 @@ export function Sheet({
       document.removeEventListener("focusout", sample);
       vv.removeEventListener("resize", measure);
       vv.removeEventListener("scroll", measure);
-      // Reset on close, or the next open starts lifted by the last keyboard.
-      setKeyboard(0);
+      // Reset on close, or the next open starts anchored to the last keyboard.
+      setAnchor(null);
     };
   }, [open]);
 
@@ -135,7 +143,7 @@ export function Sheet({
           `vv.offsetTop ${Math.round(vv.offsetTop)}`,
           `vv.pageTop   ${Math.round(vv.pageTop)}`,
           `scrollY      ${Math.round(window.scrollY)}`,
-          `kbd (state)  ${keyboard}`,
+          `anchor       ${anchor}`,
           p ? `sheet  ${Math.round(p.top)}..${Math.round(p.bottom)} h=${Math.round(p.height)}` : "sheet  -",
         ].join("\n");
       }
@@ -144,7 +152,7 @@ export function Sheet({
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [debugging, open, keyboard]);
+  }, [debugging, open, anchor]);
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange} repositionInputs={false}>
@@ -175,44 +183,39 @@ export function Sheet({
             event.preventDefault();
             panel.current?.focus();
           }}
-          // Only the keyboard height is inline. Everything positional lives in
-          // classes so the sm: variants can override it — an inline `bottom`
-          // would beat sm:inset-y-0 and leave the desktop side panel hanging
-          // 60vh below the window.
-          style={{ "--kbd": `${keyboard}px` } as React.CSSProperties}
+          style={
+            anchor === null
+              ? undefined
+              : {
+                  // Bottom edge on the bottom of the *visible* area. `bottom`
+                  // would resolve against the layout viewport, which is the
+                  // one thing here that cannot be trusted.
+                  top: `${anchor}px`,
+                  bottom: "auto",
+                  // `translate`, not `transform`. Vaul owns transform on this
+                  // element — it drives the open animation and the drag from
+                  // it — so anything written there is overwritten, which the
+                  // browser showed as the sheet landing 95px off its anchor.
+                  // translate is a separate property that composes with it.
+                  translate: "0 -100%",
+                  // Never taller than the visible area, so the form cannot
+                  // extend behind the keys it is sitting above.
+                  maxHeight: `min(88dvh, ${anchor - 8}px)`,
+                }
+          }
           className={cn(
             "fixed inset-x-0 z-50 flex flex-col",
             "rounded-t-[16px] border-t border-border bg-card outline-none",
-            // The box hangs two screens below the fold, and the same amount of
-            // padding pushes the content back up. Net effect: the sheet looks
-            // exactly as it did, and its own background runs far past the
-            // bottom edge.
-            //
-            // Two screens rather than a slice of one, because iOS does not just
-            // uncover the keyboard — it shifts the whole page up to make room.
-            // The reserve travels up with the sheet, so anything sized to the
-            // keyboard gets eaten by the shift and the gap comes back. 60vh was
-            // not enough for that; 200vh is past anything iOS can shift by, and
-            // costs nothing, because every pixel of the excess is off screen.
-            //
-            // This is what fixes the strip of page below the sheet, and it does
-            // so without measuring anything. Every earlier attempt positioned
-            // the sheet against a keyboard height, so each inherited whatever
-            // iOS reported — and iOS does not reliably report it in a
-            // standalone web app. Reserved background below the fold cannot be
-            // wrong, because the excess is off screen.
-            //
-            // Verified in a browser before shipping: the first field does not
-            // move by a pixel, and the box ends 494px below a 986px viewport.
-            "bottom-[-200vh]",
-            "pb-[calc(200vh_+_env(safe-area-inset-bottom)_+_var(--kbd,0px))]",
-            // Grown by the same 200vh, or max-height caps the box and the
-            // padding eats the content area instead of extending it — which is
-            // what the first attempt at this did.
-            "max-h-[calc(200vh_+_var(--kbd,0px)_+_min(88dvh,100dvh_-_var(--kbd,0px)_-_8px))]",
-            // Desktop is a full-height side panel: undo all three.
-            "sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[420px] sm:max-h-none",
-            "sm:pb-[env(safe-area-inset-bottom)] sm:rounded-none sm:border-t-0 sm:border-l",
+            // Until the visual viewport has been read — and on anything that
+            // does not implement it — this is an ordinary bottom sheet.
+            "bottom-0 max-h-[88dvh]",
+            "pb-[env(safe-area-inset-bottom)]",
+            // Desktop is a full-height side panel. The inline styles above are
+            // mobile-only concerns, so they are cleared here.
+            "sm:inset-y-0! sm:right-0 sm:left-auto sm:w-[420px] sm:max-h-none!",
+            // translate-none clears the property actually being set above.
+            // transform is left alone: it is Vaul's.
+            "sm:translate-none! sm:rounded-none sm:border-t-0 sm:border-l",
           )}
         >
           {/* Grab handle: the only affordance telling you this can be dragged. */}
