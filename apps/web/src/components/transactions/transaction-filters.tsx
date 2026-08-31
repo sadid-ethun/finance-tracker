@@ -34,7 +34,7 @@ export function TransactionFilters() {
           layout's padding): inset by the page gutters, rows would show through
           the 16px either side as they passed underneath. z-30 stays below the
           tab bar's z-50. */}
-      <div className="sticky top-0 z-30 -mx-4 bg-background px-4 py-2 lg:-mx-8 lg:px-8">
+      <div className="sticky top-[env(safe-area-inset-top)] z-30 -mx-4 bg-background px-4 py-2 lg:top-0 lg:-mx-8 lg:px-8">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search

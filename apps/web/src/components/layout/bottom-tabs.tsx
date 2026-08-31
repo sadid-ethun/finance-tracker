@@ -36,13 +36,18 @@ export function BottomTabs() {
         // cards above it rather than sitting a few pixels wider.
         "fixed inset-x-4 z-50 overflow-hidden rounded-full lg:hidden",
         "bottom-[var(--tabbar-inset)]",
-        // Glass: 60% over a 4px blur, with saturation keeping the colour
+        // Glass: 60% over an 8px blur, with saturation keeping the colour
         // that bleeds through from turning to grey mud.
         //
-        // The blur is where the glassiness comes from, and it is down 16x from
+        // backdrop-blur-sm is 8px here, not the 4px the same class meant in
+        // Tailwind v3 — the scale shifted in v4 and v3's `sm` is now `xs`.
+        // Worth stating, because every blur class in this file reads one step
+        // stronger than it used to.
+        //
+        // The blur is where the glassiness comes from, and it is down 8x from
         // the 64px this started at. That much blur is frosted, not glass:
         // whatever passed behind arrived as an unreadable smear, so the bar
-        // read as a solid tinted slab. At 4px the content underneath is barely
+        // read as a solid tinted slab. At 8px the content underneath is only
         // softened — you are looking through the bar at something you can
         // still identify, which is the whole effect.
         //

@@ -5,6 +5,7 @@ import { BottomTabs } from "@/components/layout/bottom-tabs";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Providers } from "@/components/providers";
 import { Prewarm } from "@/components/layout/prewarm";
+import { StatusBarScrim } from "@/components/layout/status-bar-scrim";
 import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { auth } from "@/lib/auth";
 
@@ -41,12 +42,17 @@ export default async function AppLayout({
           <div className="flex flex-1 flex-col lg:pl-60">
             {/* Clears the floating tab bar, reading its geometry rather than
                 restating it — see --tabbar-clearance in globals.css. */}
-            <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-[calc(var(--tabbar-clearance)+1rem)] lg:px-8 lg:pb-10">
+            {/* pt clears the status bar before adding its own 6. env() is 0
+                where there is no inset, so this adds nothing on a device or
+                browser that does not overlap the page — no detection needed,
+                and no risk of double-counting an inset iOS already applied. */}
+            <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(var(--tabbar-clearance)+1rem)] lg:px-8 lg:pt-6 lg:pb-10">
               {children}
             </main>
           </div>
         </PullToRefresh>
 
+        <StatusBarScrim />
         <BottomTabs />
         {/* Renders nothing; warms the other tabs into the query cache. */}
         <Prewarm />
