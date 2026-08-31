@@ -30,6 +30,8 @@ export function Sheet({
   footer?: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement | null>(null);
+  const filler = useRef<HTMLDivElement | null>(null);
+
 
   /**
    * How far the keyboard intrudes from the bottom of the window.
@@ -72,6 +74,50 @@ export function Sheet({
       setKeyboard(0);
     };
   }, [open]);
+
+  /**
+   * Temporary: what the sheet and the viewport actually measure, on device.
+   *
+   * Enabled with ?sheetdebug=1. Five fixes have now reasoned from an
+   * assumption about how iOS reports the keyboard and been wrong, so this
+   * reports the numbers instead. Writes straight to the DOM, like the pull
+   * gesture's readout did — React state would change the timing of what it is
+   * measuring. Delete once the sheet sits right.
+   */
+  const readout = useRef<HTMLPreElement | null>(null);
+  const [debugging] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).has("sheetdebug"),
+  );
+
+  useEffect(() => {
+    if (!debugging || !open) return;
+    let frame = 0;
+
+    const tick = () => {
+      const box = readout.current;
+      const vv = window.visualViewport;
+      if (box && vv) {
+        const p = panel.current?.getBoundingClientRect();
+        const f = filler.current?.getBoundingClientRect();
+        box.textContent = [
+          `innerHeight  ${window.innerHeight}`,
+          `vv.height    ${Math.round(vv.height)}`,
+          `vv.offsetTop ${Math.round(vv.offsetTop)}`,
+          `vv.pageTop   ${Math.round(vv.pageTop)}`,
+          `scrollY      ${Math.round(window.scrollY)}`,
+          `kbd (state)  ${keyboard}`,
+          p ? `sheet  ${Math.round(p.top)}..${Math.round(p.bottom)} h=${Math.round(p.height)}` : "sheet  -",
+          f ? `filler ${Math.round(f.top)}..${Math.round(f.bottom)} h=${Math.round(f.height)}` : "filler -",
+        ].join("\n");
+      }
+      frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [debugging, open, keyboard]);
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange} repositionInputs={false}>
@@ -145,9 +191,20 @@ export function Sheet({
             nothing, and inherited rounding is irrelevant below the fold.
           */}
           <div
+            ref={filler}
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-full h-screen bg-card"
           />
+
+          {/* Temporary, with the readout above. */}
+          {debugging ? (
+            <pre
+              ref={readout}
+              className="pointer-events-none fixed top-1 left-1 z-[100] rounded bg-black/85 px-1.5 py-1 font-mono text-[10px] leading-tight text-lime-300"
+            >
+              measuring…
+            </pre>
+          ) : null}
 
           {/* Grab handle: the only affordance telling you this can be dragged. */}
           <div
