@@ -16,7 +16,6 @@ import {
   useSetBudgetCategory,
   type BudgetLine,
 } from "@/hooks/use-finance";
-import { cn } from "@/lib/utils";
 
 import { BudgetSetup } from "./budget-setup";
 
@@ -471,7 +470,9 @@ function ProgressBar({ percent, over }: { percent: number; over: boolean }) {
       aria-valuemax={100}
     >
       <div
-        className={cn("h-full rounded-full transition-[width] duration-300")}
+        // No width transition: the bar is a reading of a number that is
+        // already known, not a value arriving over time.
+        className="h-full rounded-full"
         style={{
           width: `${width}%`,
           backgroundColor: over

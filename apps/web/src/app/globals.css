@@ -294,20 +294,6 @@
   }
 }
 
-/* Skeleton sweep. Translates a highlight across the element rather than
-   pulsing opacity: on a dark surface there is little luminance range below
-   the card colour to pulse into, so the animation has to add light. */
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@utility animate-shimmer {
-  transform: translateX(-100%);
-  animation: shimmer 1.6s infinite;
-}
-
 /*
  * Section label — the anchor of the type system.
  *

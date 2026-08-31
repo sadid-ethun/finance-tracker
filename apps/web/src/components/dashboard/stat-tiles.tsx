@@ -1,22 +1,10 @@
 "use client";
 
-import { motion } from "motion/react";
-
 import { CARD_SURFACE, Card } from "@/components/shared/card";
 import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
 import type { DashboardSummary } from "@/hooks/use-finance";
 import { cn } from "@/lib/utils";
-
-/** Cards stagger in by 40ms — motion confirms, it does not decorate. */
-const stagger = {
-  hidden: { opacity: 0, y: 8 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.04, duration: 0.2, ease: [0.32, 0.72, 0, 1] as const },
-  }),
-};
 
 export function StatTiles({ summary }: { summary: DashboardSummary | undefined }) {
   if (!summary) {
@@ -46,22 +34,15 @@ export function StatTiles({ summary }: { summary: DashboardSummary | undefined }
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        {tiles.map((tile, i) => (
-          <motion.div
-            key={tile.label}
-            custom={i}
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-            className={cn(CARD_SURFACE, "p-5")}
-          >
+        {tiles.map((tile) => (
+          <div key={tile.label} className={cn(CARD_SURFACE, "p-5")}>
             <p className="text-[13px] text-muted-foreground">{tile.label}</p>
             <Money
               minorUnits={tile.value}
               currency={summary.currency}
               className="mt-1 block text-[22px] font-semibold tracking-[-0.02em]"
             />
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -70,13 +51,7 @@ export function StatTiles({ summary }: { summary: DashboardSummary | undefined }
           before its own padding — so the figures ran to the edges. Label left
           and value right gives each one the full width and cannot cramp,
           whatever the number grows to. */}
-      <motion.div
-        custom={2}
-        variants={stagger}
-        initial="hidden"
-        animate="show"
-        className={cn(CARD_SURFACE, "divide-y divide-border overflow-hidden")}
-      >
+      <div className={cn(CARD_SURFACE, "divide-y divide-border overflow-hidden")}>
         {balances.map((tile) => (
           <div key={tile.label} className="flex items-center justify-between gap-3 px-5 py-3.5">
             <p className="text-[14px] text-muted-foreground">{tile.label}</p>
@@ -87,7 +62,7 @@ export function StatTiles({ summary }: { summary: DashboardSummary | undefined }
             />
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }

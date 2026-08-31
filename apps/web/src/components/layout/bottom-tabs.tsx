@@ -2,14 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "motion/react";
 
 import { MOBILE_TABS, isActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 /**
- * Mobile navigation. The active pill animates between tabs via a shared
- * layoutId — the detail that makes the app feel native (PLAN.md section 21).
+ * Mobile navigation. Icons only, in the shape of the apps this sits beside on
+ * a home screen.
+ *
+ * No labels. Five destinations is few enough to learn by icon, and dropping
+ * the text buys the icons enough size to be read at a glance instead of
+ * squinted at — which is the trade every social app has already made.
+ *
+ * No animation on the indicator either. It is a plain element on the active
+ * tab now, not a shared layout id sliding between them: the marker is where
+ * your thumb already is, so animating it describes a journey the reader took
+ * instantly and does not need narrated.
  *
  * Five tabs and no overflow, so this holds no state at all. The More panel it
  * replaced needed an open flag tied to the route it was opened on, and that
@@ -19,20 +27,6 @@ import { cn } from "@/lib/utils";
  */
 export function BottomTabs() {
   const pathname = usePathname();
-
-  /**
-   * Exactly one holder of the shared layout id.
-   *
-   * Two elements carrying the same layoutId at once leaves Framer to pick a
-   * source between them, and the marker animates in from wherever that
-   * resolves — the "slides up from the bottom of the screen" symptom. Deciding
-   * it once here is what makes that unrepresentable.
-   *
-   * Null on the routes that are not tabs (Settings, and Home until it is
-   * dissolved): no tab is active, so nothing is marked.
-   */
-  const selected =
-    MOBILE_TABS.find((item) => isActive(pathname, item.href))?.href ?? null;
 
   return (
     <nav
@@ -64,37 +58,31 @@ export function BottomTabs() {
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
-                // Every tab is a fixed destination and there are only five, so warm
-                // them all rather than waiting for the tap. These pages are
-                // force-dynamic, which Next will not prefetch on its own default.
+                // Every tab is a fixed destination and there are only five, so
+                // warm them all rather than waiting for the tap. These pages
+                // are force-dynamic, which Next will not prefetch by default.
                 prefetch
                 aria-current={active ? "page" : undefined}
+                // The label is gone from the surface, so it has to be here or
+                // the tab is an unnamed glyph to a screen reader.
+                aria-label={item.label}
                 className={cn(
-                  "relative flex h-full flex-col items-center justify-center gap-0.5",
-                  selected === item.href ? "text-foreground" : "text-on-glass",
+                  "relative flex h-full items-center justify-center",
+                  active ? "text-foreground" : "text-on-glass",
                 )}
               >
-                {selected === item.href ? (
-                  <motion.span
-                    layoutId="tab-indicator"
-                    // A capsule behind the tab rather than a rule above it.
-                    // On glass a bright bar reads as a separate element
-                    // sitting on the surface; a tint reads as part of it.
-                    className="absolute inset-x-1 inset-y-1.5 rounded-full bg-white/10"
-                    // Eased, not sprung. The reference is explicit: no
-                    // bouncy springs, no overshoots (DESIGN_SYSTEM.md).
-                    transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                  />
+                {active ? (
+                  // A capsule behind the tab rather than a rule above it. On
+                  // glass a bright bar reads as a separate element sitting on
+                  // the surface; a tint reads as part of it.
+                  <span className="absolute inset-x-1 inset-y-1.5 rounded-full bg-white/10" />
                 ) : null}
                 {/* Above the capsule: it is absolutely positioned, so the
                     content needs its own stacking context to sit on top. */}
-                <item.icon className="relative size-[22px]" strokeWidth={2} />
-                {/* Sans, not mono. The reference assigns nav to the UI
-                    voice and reserves mono for labels and data readouts;
-                    uppercase mono is also simply too wide here — five tabs
-                    at 375px give each label about 68px, and the longest
-                    ("Cash Flow") needs 50px at this size only in sans. */}
-                <span className="relative text-[10px] font-medium">{item.label}</span>
+                <item.icon
+                  className="relative size-[26px]"
+                  strokeWidth={active ? 2.4 : 2}
+                />
               </Link>
             </li>
           );

@@ -135,10 +135,13 @@ export const axisProps = {
 export const CHART_MOTION_MS = 250;
 
 export function chartAnimation(): { isAnimationActive: boolean; animationDuration: number } {
-  const reduced =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  return { isAnimationActive: !reduced, animationDuration: CHART_MOTION_MS };
+  // Off, everywhere. A chart that draws itself in delays the figure the reader
+  // came for, and the delay is paid on every render — including the ones that
+  // follow a refresh, where the data is already on screen and only redrawing.
+  //
+  // Kept as a function rather than deleted at each call site so this is one
+  // decision in one place, and turning motion back on is one edit.
+  return { isAnimationActive: false, animationDuration: 0 };
 }
 
 /**

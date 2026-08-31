@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import NumberFlow from "@number-flow/react";
 
 import { SectionLabel } from "@/components/shared/card";
 import { Area, AreaChart, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
+import { Money } from "@/components/shared/money";
 import { Skeleton } from "@/components/shared/states";
 import {
   ChartContainer,
@@ -85,9 +85,9 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
       <SectionLabel className="pt-2">Net worth</SectionLabel>
 
       {summary ? (
-        <NumberFlow
-          value={summary.net_worth / 100}
-          format={{ style: "currency", currency: summary.currency, maximumFractionDigits: 2 }}
+        <Money
+          minorUnits={summary.net_worth}
+          currency={summary.currency}
           className="tabular mt-1 block font-serif text-[40px] leading-none font-normal tracking-[-0.02em] sm:text-[48px]"
         />
       ) : (
