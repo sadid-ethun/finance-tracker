@@ -18,7 +18,7 @@ from app.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.db.session import SessionLocal
 from app.models.plaid_item import PlaidItem
-from app.services import dashboard_service, investment_service
+from app.services import account_service, dashboard_service, investment_service
 from app.services.plaid import client, sync
 from app.services.plaid import investments as plaid_investments
 
@@ -108,6 +108,18 @@ async def snapshot_net_worth(ctx: dict[str, Any]) -> int:
     return count
 
 
+async def accrue_interest(ctx: dict[str, Any]) -> int:
+    """Nightly: grow manual loans and cards that carry a rate.
+
+    Ahead of the balance snapshot, so the night's figure is the accrued one
+    rather than yesterday's.
+    """
+    async with SessionLocal() as db:
+        count = await account_service.accrue_interest(db)
+    logger.info("interest_accrued", accounts=count)
+    return count
+
+
 async def snapshot_balances(ctx: dict[str, Any]) -> int:
     """Nightly: record each account's balance, upserted per (account, date)."""
     async with SessionLocal() as db:
@@ -155,6 +167,7 @@ class WorkerSettings:
         sync_item,
         sync_all_items,
         refresh_item_health,
+        accrue_interest,
         snapshot_net_worth,
         snapshot_balances,
         snapshot_holdings,
@@ -165,6 +178,9 @@ class WorkerSettings:
         cron(sync_all_items, minute=7),
         # Daily health check, 06:00.
         cron(refresh_item_health, hour=6, minute=0),
+        # Interest first, so the balance it grows is the one snapshotted
+        # minutes later rather than the one before it.
+        cron(accrue_interest, hour=1, minute=45),
         # Snapshots run before dawn so the chart is current each morning.
         # Balances first: net worth is derived from them.
         cron(snapshot_balances, hour=2, minute=0),

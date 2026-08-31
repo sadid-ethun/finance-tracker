@@ -21,6 +21,7 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
   const [name, setName] = useState("");
   const [type, setType] = useState<string>("depository");
   const [balance, setBalance] = useState("");
+  const [rate, setRate] = useState("");
   const create = useCreateAccount();
 
   async function handleSubmit(event: React.FormEvent) {
@@ -28,15 +29,26 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
     const major = Number.parseFloat(balance || "0");
     if (Number.isNaN(major)) return;
 
+    // Percent in, basis points out — 5.5 becomes 550. The API takes an integer
+    // because the rate compounds nightly and a float would compound its error
+    // with it.
+    const apr = Number.parseFloat(rate);
+    const bps =
+      isLiability(type) && rate.trim() !== "" && !Number.isNaN(apr)
+        ? Math.round(apr * 100)
+        : null;
+
     await create.mutateAsync({
       name,
       type,
       balance_current: Math.round(major * 100),
       currency: "USD",
+      interest_rate_bps: bps,
     });
 
     setName("");
     setBalance("");
+    setRate("");
     setType("depository");
     setOpen(false);
   }
@@ -119,6 +131,38 @@ export function AddAccountDialog({ trigger }: { trigger: React.ReactNode }) {
               className={cn(FIELD, "tabular")}
             />
           </div>
+
+          {isLiability(type) ? (
+            <div>
+              <label htmlFor="acct-rate" className="mb-1.5 block text-[13px] font-medium">
+                Interest rate <span className="text-muted-foreground">(optional)</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="acct-rate"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  inputMode="decimal"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                  placeholder="5.50"
+                  className={cn(FIELD, "tabular pr-16")}
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[13px] text-muted-foreground"
+                >
+                  % APR
+                </span>
+              </div>
+              <p className="mt-1.5 text-[12px] text-muted-foreground">
+                Grows the balance a little every night. Leave empty and it only
+                changes when you change it.
+              </p>
+            </div>
+          ) : null}
 
           {create.isError ? (
             <p role="alert" className="text-[13px] text-negative">

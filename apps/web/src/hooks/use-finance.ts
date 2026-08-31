@@ -17,6 +17,7 @@ export type Account = {
   subtype: string | null;
   currency: string;
   balance_current: number;
+  interest_rate_bps: number | null;
   balance_available: number | null;
   balance_limit: number | null;
   is_manual: boolean;

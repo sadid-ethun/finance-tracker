@@ -1,13 +1,14 @@
 """Account CRUD and balance rollups."""
 
 from datetime import UTC, date, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NotFoundError, ValidationError
-from app.core.money import AccountType, net_worth_contribution
+from app.core.money import AccountType, is_liability, net_worth_contribution
 from app.models.account import Account, AccountBalanceSnapshot
 
 
@@ -55,6 +56,7 @@ async def create_account(
     mask: str | None = None,
     balance_limit: int | None = None,
     include_in_net_worth: bool = True,
+    interest_rate_bps: int | None = None,
 ) -> Account:
     try:
         account_type = AccountType(type)
@@ -63,6 +65,11 @@ async def create_account(
 
     if balance_current < 0 and account_type in {AccountType.CREDIT, AccountType.LOAN}:
         raise ValidationError("Liability balances are stored positive as the amount owed.")
+
+    # A rate on an asset would grow it as though it were a debt. Savings
+    # interest is a different calculation and is not what this is.
+    if interest_rate_bps is not None and not is_liability(account_type):
+        raise ValidationError("Only a loan or credit account can carry an interest rate.")
 
     account = Account(
         user_id=user_id,
@@ -74,6 +81,10 @@ async def create_account(
         balance_current=balance_current,
         balance_limit=balance_limit,
         include_in_net_worth=include_in_net_worth,
+        interest_rate_bps=interest_rate_bps,
+        # Dated on creation, so the first night's accrual covers one day rather
+        # than every day since the epoch.
+        interest_accrued_on=date.today() if interest_rate_bps else None,
         is_manual=True,
     )
     db.add(account)
@@ -156,3 +167,71 @@ async def summarize_balances(db: AsyncSession, user_id: str) -> dict[str, int]:
         "investments": by_type.get(AccountType.INVESTMENT.value, 0),
         "credit": by_type.get(AccountType.CREDIT.value, 0),
     }
+
+
+async def accrue_interest(db: AsyncSession, on: date | None = None) -> int:
+    """Grow every manual liability carrying a rate, once per day.
+
+    A manually tracked loan gets its balance from nowhere, so without this it
+    sits at whatever it was the day it was entered while the real debt grows.
+
+    Daily compounding at APR/365. Real lenders vary — many accrue daily and
+    capitalise monthly — so this is an approximation, and it is the one that
+    keeps the figure moving in the right direction by roughly the right amount
+    rather than pretending to model a specific loan agreement.
+
+    Catches up rather than skipping. If the worker was down for three nights,
+    interest_accrued_on is three days behind and three days are compounded now.
+    A job that only ever applied "today" would silently lose them.
+
+    Manual accounts only. A synced loan takes its balance from the institution,
+    which already includes the interest; accruing on top would count it twice.
+
+    No transaction is written. The balance moves with nothing in the ledger to
+    explain it, which is the same shape as a market move on an investment — and
+    the same known gap in the transaction-walking backfill.
+    """
+    on = on or date.today()
+
+    accounts = list(
+        (
+            await db.scalars(
+                select(Account).where(
+                    Account.deleted_at.is_(None),
+                    Account.is_manual.is_(True),
+                    Account.interest_rate_bps.is_not(None),
+                    Account.interest_rate_bps > 0,
+                )
+            )
+        ).all()
+    )
+
+    changed = 0
+    for account in accounts:
+        if not is_liability(account.type):
+            continue
+
+        since = account.interest_accrued_on
+        # No start date means it predates the column; begin from today rather
+        # than compounding an unknown stretch of history in one night.
+        if since is None:
+            account.interest_accrued_on = on
+            continue
+
+        days = (on - since).days
+        if days <= 0:
+            continue
+
+        # Decimal throughout: this compounds, so a float's error would too.
+        rate = Decimal(account.interest_rate_bps) / Decimal(10_000)
+        factor = (Decimal(1) + rate / Decimal(365)) ** days
+        grown = (Decimal(account.balance_current) * factor).to_integral_value(
+            rounding=ROUND_HALF_UP
+        )
+
+        account.balance_current = int(grown)
+        account.interest_accrued_on = on
+        changed += 1
+
+    await db.commit()
+    return changed

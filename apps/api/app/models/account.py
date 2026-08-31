@@ -58,6 +58,17 @@ class Account(Base, TimestampMixin):
     include_in_net_worth: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    #: APR in basis points — 550 is 5.50%. Liabilities only, and optional:
+    #: null means the balance only moves when something says it does.
+    #:
+    #: An integer because a rate that cannot be represented exactly compounds
+    #: its own error every night, and this codebase does not put money or the
+    #: rates applied to it in a float.
+    interest_rate_bps: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Last date interest was applied. Makes the nightly job idempotent, and
+    #: lets it catch up over days the worker was down instead of losing them.
+    interest_accrued_on: Mapped[date_type | None] = mapped_column(Date, nullable=True)
+
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

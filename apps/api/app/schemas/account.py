@@ -21,6 +21,15 @@ class AccountCreate(AccountBase):
     )
     balance_limit: int | None = None
     include_in_net_worth: bool = True
+    interest_rate_bps: int | None = Field(
+        default=None,
+        ge=0,
+        le=100_000,
+        description=(
+            "APR in basis points — 550 is 5.50%. Liabilities only. Null means "
+            "the balance does not accrue on its own."
+        ),
+    )
 
 
 class AccountUpdate(BaseModel):
@@ -30,6 +39,15 @@ class AccountUpdate(BaseModel):
     is_hidden: bool | None = None
     include_in_net_worth: bool | None = None
     display_order: int | None = None
+    interest_rate_bps: int | None = Field(
+        default=None,
+        ge=0,
+        le=100_000,
+        description=(
+            "APR in basis points — 550 is 5.50%. Liabilities only. Null means "
+            "the balance does not accrue on its own."
+        ),
+    )
 
 
 class AccountResponse(AccountBase):
@@ -43,6 +61,7 @@ class AccountResponse(AccountBase):
     is_hidden: bool
     include_in_net_worth: bool
     display_order: int
+    interest_rate_bps: int | None
     last_synced_at: datetime | None
     created_at: datetime
 

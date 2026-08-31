@@ -77,6 +77,12 @@ function AccountRow({ account }: { account: Account }) {
           <span className="block text-[13px] text-muted-foreground">
             {ACCOUNT_TYPE_LABELS[account.type] ?? account.type}
             {account.mask ? ` ···· ${account.mask}` : ""}
+            {/* Shown because it changes the balance on its own overnight. A
+                figure that moves with nothing to explain it is the kind of
+                thing that gets read as a bug. */}
+            {account.interest_rate_bps
+              ? ` ···· ${(account.interest_rate_bps / 100).toFixed(2)}% APR`
+              : ""}
           </span>
         </span>
         <span className="text-right">
