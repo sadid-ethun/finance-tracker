@@ -61,13 +61,43 @@ export function Sheet({
       setKeyboard(Math.max(0, Math.round(hidden)));
     };
 
-    // Not measured synchronously here. The sheet opens with no field focused
-    // and so no keyboard, which is what 0 already says — and a setState in an
-    // effect body cascades a render the compiler lint rejects. The first real
-    // measurement comes from the event, which is when it first differs.
+    // Focus is what raises the keyboard, so focus is what starts measuring.
+    //
+    // Relying on visualViewport's resize event alone was the bug. Simulating a
+    // keyboard in a desktop browser showed the arithmetic and the layout both
+    // correct — padding applied, card reaching the bottom of the screen — which
+    // leaves only the event never arriving. iOS does not reliably fire it in a
+    // standalone web app, and with no synchronous measurement either (a
+    // setState in an effect body cascades a render the compiler lint rejects)
+    // the height stayed 0 forever and no padding was ever applied.
+    //
+    // Sampling across the keyboard animation instead: it takes about a quarter
+    // of a second to slide up, and polling for twice that costs a handful of
+    // frames once per focus. The resize listener stays because where it does
+    // fire it is faster and catches the keyboard closing or switching between
+    // the number pad and letters, which differ in height.
+    let poll = 0;
+    const sample = () => {
+      const started = Date.now();
+      cancelAnimationFrame(poll);
+      const step = () => {
+        measure();
+        if (Date.now() - started < 500) poll = requestAnimationFrame(step);
+      };
+      poll = requestAnimationFrame(step);
+    };
+
+    // On document, not on the panel: the panel mounts inside a portal and its
+    // ref may still be null when this runs. Focus is trapped in the sheet
+    // while it is open, so anything focused here is in it.
+    document.addEventListener("focusin", sample);
+    document.addEventListener("focusout", sample);
     vv.addEventListener("resize", measure);
     vv.addEventListener("scroll", measure);
     return () => {
+      cancelAnimationFrame(poll);
+      document.removeEventListener("focusin", sample);
+      document.removeEventListener("focusout", sample);
       vv.removeEventListener("resize", measure);
       vv.removeEventListener("scroll", measure);
       // Reset on close, or the next open starts lifted by the last keyboard.
