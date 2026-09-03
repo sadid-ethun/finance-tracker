@@ -1,3 +1,6 @@
+"use client";
+
+import { useDecoy } from "@/lib/decoy";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -18,17 +21,21 @@ export function Money({
   signed?: boolean;
   className?: string;
 }) {
+  // Identity everywhere except inside a DecoyScope with the toggle on.
+  const { amount } = useDecoy();
+  const value = amount(minorUnits);
+
   const tone = !colored
     ? undefined
-    : minorUnits > 0
+    : value > 0
       ? "var(--positive)"
-      : minorUnits < 0
+      : value < 0
         ? "var(--negative)"
         : undefined;
 
   return (
     <span className={cn("tabular", className)} style={tone ? { color: tone } : undefined}>
-      {formatMoney(minorUnits, currency, { signed })}
+      {formatMoney(value, currency, { signed })}
     </span>
   );
 }

@@ -6,6 +6,7 @@ import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
 import { StatTiles } from "@/components/dashboard/stat-tiles";
 import { ErrorState } from "@/components/shared/states";
 import { useAccounts, useDashboardSummary } from "@/hooks/use-finance";
+import { DecoyScope } from "@/lib/decoy";
 
 /**
  * Accounts: net worth, what it is made of, and the accounts it is made of.
@@ -42,12 +43,17 @@ export function AccountsView() {
     );
   }
 
+  // Everything below follows the decoy toggle in Settings. Scoped here rather
+  // than applied globally: this is the screen that was asked for, and a total
+  // elsewhere that disagreed with the rows under it would read as a bug.
   return (
-    <div className="space-y-8">
-      <NetWorthHero summary={summary.data} />
-      <StatTiles summary={summary.data} />
-      <AccountList />
-      <Connections />
-    </div>
+    <DecoyScope>
+      <div className="space-y-8">
+        <NetWorthHero summary={summary.data} />
+        <StatTiles summary={summary.data} />
+        <AccountList />
+        <Connections />
+      </div>
+    </DecoyScope>
   );
 }

@@ -20,6 +20,7 @@ import {
   type NetWorthRange,
 } from "@/hooks/use-finance";
 import { chartAnimation, chartConfig } from "@/lib/chart-theme";
+import { useDecoy } from "@/lib/decoy";
 import { formatDateLong, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +76,14 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
   const [range, setRange] = useState<NetWorthRange>("6m");
   const series = useNetWorthSeries(range);
 
-  const points = series.data ?? [];
+  // Money outside the <Money> component still has to follow the toggle: the
+  // change badge, the series the line is drawn from, and the tooltip that
+  // reads that series. Scaling the points covers the last two at once.
+  //
+  // The line's shape does not change — a single factor is a linear scale — so
+  // only the numbers move, which is the point.
+  const { amount } = useDecoy();
+  const points = (series.data ?? []).map((p) => ({ ...p, net_worth: amount(p.net_worth) }));
   const change = summary?.net_worth_change ?? null;
 
   return (
@@ -110,7 +118,7 @@ export function NetWorthHero({ summary }: { summary: DashboardSummary | undefine
           ) : (
             <ArrowDownRight className="size-3" />
           )}
-          {formatMoney(Math.abs(change))} since last snapshot
+          {formatMoney(amount(Math.abs(change)))} since last snapshot
         </span>
       ) : null}
 

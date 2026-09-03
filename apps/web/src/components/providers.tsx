@@ -5,6 +5,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 
+import { DecoyProvider } from "@/lib/decoy";
 import { makeQueryClient } from "@/lib/query";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -18,7 +19,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           back-button correct (PLAN.md section 14). */}
       {/* attribute="class" matches the `.dark` selector in globals.css. */}
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-        <NuqsAdapter>{children}</NuqsAdapter>
+        <NuqsAdapter>
+          <DecoyProvider>{children}</DecoyProvider>
+        </NuqsAdapter>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Card, SectionLabel } from "@/components/shared/card";
 import { Appearance } from "@/components/settings/appearance";
 import { DataTools } from "@/components/settings/data-tools";
+import { DecoyToggle } from "@/components/settings/decoy-toggle";
 import { RebuildHistory } from "@/components/settings/rebuild-history";
 import { RefreshData } from "@/components/settings/refresh-data";
 import { TwoFactorSetup } from "@/components/settings/two-factor";
@@ -49,6 +50,7 @@ export function SettingsView() {
         <div className="space-y-6">
           <TwoFactorSetup />
           <Appearance />
+          <DecoyToggle />
           <AuditLog />
         </div>
       ) : null}
